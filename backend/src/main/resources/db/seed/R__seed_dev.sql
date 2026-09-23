@@ -62,3 +62,16 @@ INSERT INTO cliente (id, barberia_id, nombre, telefono, notas) VALUES
     ('eeeeeeee-0000-0000-0000-000000000002', 'aaaaaaaa-0000-0000-0000-000000000001',
      'Martin Lopez', '+5493584222222', NULL)
 ON CONFLICT (id) DO NOTHING;
+
+-- Usuarios de prueba (contraseñas en texto plano SOLO para dev):
+--   admin@jade.com  / admin123    -> ADMIN
+--   lucas@jade.com  / barbero123  -> BARBERO, vinculado a Lucas Sanchez
+INSERT INTO usuario (id, barberia_id, email, password_hash, rol) VALUES
+    ('ffffffff-0000-0000-0000-000000000001', 'aaaaaaaa-0000-0000-0000-000000000001',
+     'admin@jade.com', '$2a$10$N1CuK5AI91KPYwxruZLIBecKcS/txrG3UUxP.1e57qOf7kep0NYmC', 'ADMIN'),
+    ('ffffffff-0000-0000-0000-000000000002', 'aaaaaaaa-0000-0000-0000-000000000001',
+     'lucas@jade.com', '$2a$10$o4mJUbVgyMIGlMgaG/QYF.b8K5X5DDZkA4tXY1POsfWIcuBtSSe6K', 'BARBERO')
+ON CONFLICT (id) DO NOTHING;
+
+UPDATE barbero SET usuario_id = 'ffffffff-0000-0000-0000-000000000002'
+WHERE id = 'cccccccc-0000-0000-0000-000000000001';
