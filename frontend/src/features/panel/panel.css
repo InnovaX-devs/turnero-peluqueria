@@ -26,3 +26,27 @@
   max-width: 960px;
   margin: 0 auto;
 }
+
+.panel-nav {
+  display: flex;
+  gap: 4px;
+  padding: 0 20px;
+  border-bottom: 1px solid var(--borde);
+  background: var(--fondo-tarjeta);
+  overflow-x: auto;
+}
+
+.panel-nav a {
+  padding: 12px 14px;
+  color: var(--texto-suave);
+  font-weight: 600;
+  font-size: 0.9rem;
+  text-decoration: none;
+  border-bottom: 2px solid transparent;
+  white-space: nowrap;
+}
+
+.panel-nav a.active {
+  color: var(--texto);
+  border-bottom-color: var(--acento);
+}
