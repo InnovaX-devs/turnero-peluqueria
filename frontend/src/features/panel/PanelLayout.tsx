@@ -1,4 +1,4 @@
-import { Outlet } from 'react-router-dom'
+import { NavLink, Outlet } from 'react-router-dom'
 import { useAuth } from '../auth/useAuth'
 import './panel.css'
 
@@ -16,6 +16,12 @@ export function PanelLayout() {
           Cerrar sesión
         </button>
       </header>
+      <nav className="panel-nav" aria-label="Secciones del panel">
+        <NavLink to="/panel" end>
+          Inicio
+        </NavLink>
+        {usuario?.rol === 'ADMIN' && <NavLink to="/panel/configuracion">Configuración</NavLink>}
+      </nav>
       <main className="panel-contenido">
         <Outlet />
       </main>

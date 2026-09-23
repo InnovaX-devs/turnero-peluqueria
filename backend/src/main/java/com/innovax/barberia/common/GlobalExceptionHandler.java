@@ -27,4 +27,16 @@ public class GlobalExceptionHandler {
         return ResponseEntity.badRequest()
                 .body(new ApiError(400, "Datos inválidos", errores));
     }
+
+    @ExceptionHandler(DatosInvalidosException.class)
+    public ResponseEntity<ApiError> datosInvalidos(DatosInvalidosException ex) {
+        return ResponseEntity.badRequest()
+                .body(new ApiError(400, "Datos inválidos", Map.of(ex.getCampo(), ex.getMessage())));
+    }
+
+    @ExceptionHandler(ConflictoException.class)
+    public ResponseEntity<ApiError> conflicto(ConflictoException ex) {
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(new ApiError(409, ex.getMessage(), Map.of(ex.getCampo(), ex.getMessage())));
+    }
 }

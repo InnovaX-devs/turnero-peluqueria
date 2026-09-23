@@ -1,0 +1,201 @@
+.config {
+  max-width: 640px;
+}
+
+.config h1 {
+  font-size: 1.5rem;
+  margin: 0 0 20px;
+}
+
+.config-estado {
+  color: var(--texto-suave);
+}
+
+.config-form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.config-grupo {
+  margin: 0;
+  padding: 20px;
+  background: var(--fondo-tarjeta);
+  border: 1px solid var(--borde);
+  border-radius: 16px;
+}
+
+.config-grupo legend {
+  padding: 0 8px;
+  font-weight: 700;
+}
+
+.config-campo {
+  display: block;
+  margin-bottom: 16px;
+}
+
+.config-campo:last-child {
+  margin-bottom: 0;
+}
+
+.config-etiqueta {
+  display: block;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--texto-suave);
+  margin-bottom: 6px;
+}
+
+.config-campo input[type='text'],
+.config-campo input[type='url'],
+.config-campo input[type='number'],
+.config-campo select {
+  width: 100%;
+  padding: 12px 14px;
+  font-size: 1rem;
+  border: 1px solid var(--borde);
+  border-radius: 12px;
+  background: var(--fondo-tarjeta);
+  color: var(--texto);
+}
+
+.config-campo input:focus,
+.config-campo select:focus {
+  outline: none;
+  border-color: var(--acento);
+  box-shadow: 0 0 0 3px var(--acento-suave);
+}
+
+.config-campo [aria-invalid='true'] {
+  border-color: var(--error);
+}
+
+.config-ayuda,
+.config-aviso,
+.config-campo-error {
+  display: block;
+  margin-top: 6px;
+  font-size: 0.8125rem;
+  overflow-wrap: anywhere;
+}
+
+.config-ayuda {
+  color: var(--texto-suave);
+}
+
+.config-aviso {
+  color: #8a6400;
+}
+
+.config-campo-error {
+  color: var(--error);
+}
+
+.config-logo {
+  display: block;
+  margin-top: 10px;
+  max-width: 120px;
+  max-height: 120px;
+  border-radius: 12px;
+  border: 1px solid var(--borde);
+  object-fit: contain;
+}
+
+.config-fila {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-top: 20px;
+}
+
+@media (max-width: 560px) {
+  .config-fila {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Interruptor (checkbox con rol switch) */
+.interruptor {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  cursor: pointer;
+}
+
+.interruptor input {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.interruptor-pista {
+  flex: none;
+  position: relative;
+  width: 46px;
+  height: 26px;
+  margin-top: 2px;
+  border-radius: 999px;
+  background: var(--boton-deshabilitado);
+  transition: background 0.15s;
+}
+
+.interruptor-pista::after {
+  content: '';
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 3px rgb(0 0 0 / 0.25);
+  transition: transform 0.15s;
+}
+
+.interruptor input:checked + .interruptor-pista {
+  background: var(--boton);
+}
+
+.interruptor input:checked + .interruptor-pista::after {
+  transform: translateX(20px);
+}
+
+.interruptor input:focus-visible + .interruptor-pista {
+  box-shadow: 0 0 0 3px var(--acento-suave), 0 0 0 4px var(--acento);
+}
+
+.interruptor strong {
+  display: block;
+}
+
+.interruptor small {
+  display: block;
+  margin-top: 4px;
+  color: var(--texto-suave);
+  font-size: 0.8125rem;
+  line-height: 1.4;
+}
+
+.config-error {
+  background: var(--error-fondo);
+  color: var(--error);
+  border-radius: 10px;
+  padding: 10px 14px;
+  margin: 0;
+  font-size: 0.9rem;
+}
+
+.config-ok {
+  margin: 0;
+  color: #067647;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.config-guardar {
+  align-self: flex-start;
+  width: auto;
+  padding: 14px 28px;
+}

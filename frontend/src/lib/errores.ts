@@ -11,3 +11,11 @@ export function mensajeDeError(error: unknown): string {
   }
   return 'Ocurrió un error inesperado.'
 }
+
+/** Errores por campo que devuelve la API (ej. { slug: 'Ese slug ya está en uso' }). Vacío si no hay. */
+export function erroresDeCampos(error: unknown): Record<string, string> {
+  if (axios.isAxiosError<ApiError>(error)) {
+    return error.response?.data?.errores ?? {}
+  }
+  return {}
+}
