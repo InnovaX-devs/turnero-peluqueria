@@ -1,0 +1,7 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/${DB_NAME:barberia}
+    username: ${DB_USER:barberia}
+    password: ${DB_PASSWORD:barberia}
+  jpa:
+    show-sql: true

@@ -1,0 +1,14 @@
+spring:
+  application:
+    name: barberia
+  profiles:
+    active: ${SPRING_PROFILES_ACTIVE:dev}
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate   # el esquema lo maneja Flyway, nunca Hibernate
+  flyway:
+    enabled: true
+
+server:
+  port: 8080
