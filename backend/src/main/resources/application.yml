@@ -16,3 +16,10 @@ spring:
 
 server:
   port: 8080
+
+app:
+  jwt:
+    secret: ${JWT_SECRET}          # obligatorio, mínimo 32 caracteres
+    expiracion: ${JWT_EXPIRACION:8h}
+  cors:
+    origenes: ${CORS_ORIGENES:http://localhost:5173}

@@ -8,3 +8,8 @@ spring:
   flyway:
     # en dev también se cargan los datos de prueba
     locations: classpath:db/migration,classpath:db/seed
+
+app:
+  jwt:
+    # solo para desarrollo; en producción se usa la variable JWT_SECRET
+    secret: ${JWT_SECRET:dev-secret-solo-para-desarrollo-local-123456}
