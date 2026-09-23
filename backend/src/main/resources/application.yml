@@ -7,6 +7,10 @@ spring:
     open-in-view: false
     hibernate:
       ddl-auto: validate   # el esquema lo maneja Flyway, nunca Hibernate
+    properties:
+      hibernate:
+        jdbc:
+          time_zone: UTC   # todas las fechas se guardan en UTC
   flyway:
     enabled: true
 

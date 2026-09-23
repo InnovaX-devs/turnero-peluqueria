@@ -5,3 +5,6 @@ spring:
     password: ${DB_PASSWORD:barberia}
   jpa:
     show-sql: true
+  flyway:
+    # en dev también se cargan los datos de prueba
+    locations: classpath:db/migration,classpath:db/seed
