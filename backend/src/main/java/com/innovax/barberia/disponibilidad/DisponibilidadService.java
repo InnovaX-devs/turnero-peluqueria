@@ -79,6 +79,29 @@ public class DisponibilidadService {
         return new DiasDisponiblesResponse(diasConDisponibilidad);
     }
 
+        /**
+     * Chequeo puntual de un slot concreto (barbero + fecha + hora), usado al confirmar una
+     * reserva justo antes de guardarla. Reutiliza la misma lógica que arma la grilla pública
+     * para no mostrar un horario como libre y después rechazarlo por una razón distinta
+     * (fuera de horario laboral, ya pasó la anticipación mínima, etc.).
+     *
+     * <p>Esto NO reemplaza la protección real contra doble reserva: es solo un chequeo rápido
+     * para devolver un error claro en el caso común. La última palabra la tiene la restricción
+     * de la base de datos, que se valida al guardar (ver AtencionService).
+     */
+    @Transactional(readOnly = true)
+    public boolean estaDisponible(UUID sucursalId, UUID servicioId, UUID barberoId, LocalDate fecha, LocalTime hora) {
+        if (barberoId == null) {
+            return false;
+        }
+        Contexto ctx = cargarContexto(sucursalId, servicioId, barberoId);
+        if (ctx.barberos().isEmpty()) {
+            return false;
+        }
+        return slotsDelDia(ctx, fecha).stream()
+                .anyMatch(slot -> slot.hora().equals(hora) && slot.barberos().contains(barberoId));
+    }
+
     private List<SlotDisponibleResponse> slotsDelDia(Contexto ctx, LocalDate fecha) {
         Instant ahora = Instant.now();
         DayOfWeek diaSemana = fecha.getDayOfWeek();
