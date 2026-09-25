@@ -24,4 +24,23 @@ public interface AtencionRepository extends JpaRepository<Atencion, UUID> {
             @Param("estados") Collection<EstadoAtencion> estados,
             @Param("inicioRango") Instant inicioRango,
             @Param("finRango") Instant finRango);
+
+    /**
+     * Turnos de la agenda del panel: todos los de la barbería (en cualquier estado, para que
+     * admin/barbero vean también cancelados y ausentes) que se solapan con [inicioRango, finRango),
+     * opcionalmente acotados a un barbero puntual.
+     */
+    @Query("""
+            select a from Atencion a
+            where a.barberia.id = :barberiaId
+              and (:barberoId is null or a.barbero.id = :barberoId)
+              and a.inicio < :finRango
+              and a.fin > :inicioRango
+            order by a.inicio asc
+            """)
+    List<Atencion> findParaAgenda(
+            @Param("barberiaId") UUID barberiaId,
+            @Param("barberoId") UUID barberoId,
+            @Param("inicioRango") Instant inicioRango,
+            @Param("finRango") Instant finRango);
 }
