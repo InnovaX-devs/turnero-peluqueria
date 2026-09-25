@@ -14,4 +14,7 @@ public interface BarberoRepository extends JpaRepository<Barbero, UUID> {
 
     /** Para "cualquier barbero": todos los que están activos, trabajan en la sucursal y ofrecen el servicio. */
     List<Barbero> findByActivoTrueAndSucursalesContainingAndServiciosContaining(Sucursal sucursal, Servicio servicio);
+
+    /** Lista para el selector de barbero de la agenda del panel. */
+    List<Barbero> findByBarberiaIdAndActivoTrueOrderByNombreAscApellidoAsc(UUID barberiaId);
 }
