@@ -9,7 +9,8 @@ export const api = axios.create({
 // Agrega el token a cada request
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem(TOKEN_KEY)
-  if (token) {
+  const esPublica = config.url?.startsWith('/api/public/')
+  if (token && !esPublica) {
     config.headers.set('Authorization', `Bearer ${token}`)
   }
   return config

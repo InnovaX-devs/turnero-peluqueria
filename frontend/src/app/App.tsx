@@ -6,6 +6,7 @@ import { RutaAdmin } from '../features/auth/RutaAdmin'
 import { RutaProtegida } from '../features/auth/RutaProtegida'
 import { PanelInicio } from '../features/panel/PanelInicio'
 import { PanelLayout } from '../features/panel/PanelLayout'
+import { ReservaPage } from '../features/reserva/ReservaPage'
 
 export function App() {
   return (
@@ -26,7 +27,9 @@ export function App() {
         </Route>
       </Route>
 
-      {/* La reserva pública (/b/:slug) se agrega en la épica 1 */}
+      {/* Reserva pública: sin login */}
+      <Route path="/b/:slug" element={<ReservaPage />} />
+
       <Route path="*" element={<Navigate to="/panel" replace />} />
     </Routes>
   )

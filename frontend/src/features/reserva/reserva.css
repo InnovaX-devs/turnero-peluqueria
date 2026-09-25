@@ -1,0 +1,64 @@
+/* Mobile first: la base es para celular; el media query solo agranda. */
+.reserva {
+  min-height: 100dvh; max-width: 560px; margin: 0 auto;
+  padding: 24px 16px calc(32px + env(safe-area-inset-bottom));
+}
+
+.reserva-encabezado { display: flex; align-items: center; gap: 14px; margin-bottom: 24px; }
+.reserva-logo {
+  width: 56px; height: 56px; flex-shrink: 0; border-radius: 16px; object-fit: cover;
+  background: var(--fondo-tarjeta); border: 1px solid var(--borde);
+}
+.reserva-logo-iniciales {
+  display: grid; place-items: center; background: var(--acento); border-color: var(--acento);
+  font-weight: 800; font-size: 1.25rem;
+}
+.reserva-nombre { margin: 0; font-size: 1.5rem; line-height: 1.2; overflow-wrap: anywhere; }
+
+.reserva-progreso { display: flex; justify-content: space-between; align-items: center; min-height: 44px; }
+.reserva-atras {
+  min-height: 44px; margin-left: -8px; padding: 0 8px; border: none; background: none;
+  font-weight: 600; color: var(--texto); cursor: pointer;
+}
+.reserva-atras span { font-size: 1.4rem; line-height: 0; vertical-align: -1px; }
+.reserva-contador { font-size: 0.875rem; color: var(--texto-suave); }
+.reserva-barra { height: 4px; border-radius: 999px; background: var(--borde); overflow: hidden; }
+.reserva-barra > div { height: 100%; background: var(--acento); transition: width 0.2s ease; }
+.reserva-titulo-paso { font-size: 1.25rem; margin: 24px 0 16px; }
+
+.reserva-opciones { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+.reserva-opcion {
+  width: 100%; min-height: 64px; display: flex; flex-direction: column; align-items: flex-start; gap: 4px;
+  padding: 14px 16px; border: 1.5px solid var(--borde); border-radius: 14px;
+  background: var(--fondo-tarjeta); color: var(--texto); text-align: left; cursor: pointer;
+}
+.reserva-opcion span { font-size: 0.9rem; color: var(--texto-suave); }
+.reserva-opcion[aria-pressed='true'] { border-color: var(--acento); background: var(--acento-suave); }
+.reserva-opcion:focus-visible, .reserva-atras:focus-visible { outline: 3px solid var(--acento); outline-offset: 2px; }
+.reserva-pendiente { color: var(--texto-suave); }
+
+.reserva-cerrada {
+  padding: 20px; border: 1.5px solid var(--acento); border-radius: 20px; background: var(--fondo-tarjeta);
+}
+.reserva-cerrada h2 { font-size: 1.2rem; margin: 0 0 8px; }
+.reserva-cerrada > p { margin: 0 0 16px; color: var(--texto-suave); }
+.reserva-contactos { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 20px; }
+.reserva-contacto { display: flex; flex-direction: column; gap: 8px; }
+.reserva-contacto a:not(.boton-principal) { color: var(--texto); }
+.reserva-llamar { display: block; text-align: center; text-decoration: none; }
+
+.reserva-error { display: flex; flex-direction: column; gap: 12px; padding-top: 20vh; text-align: center; }
+.reserva-no-encontrada { display: flex; flex-direction: column; justify-content: center; text-align: center; }
+.reserva-no-encontrada h1 { font-size: 1.4rem; margin: 0 0 8px; }
+.reserva-no-encontrada p { color: var(--texto-suave); margin: 0; }
+.reserva-no-encontrada .reserva-404 { font-size: 3.5rem; font-weight: 800; color: var(--acento); margin: 0 0 8px; }
+
+@media (min-width: 640px) {
+  .reserva { padding-top: 48px; }
+  .reserva-logo { width: 72px; height: 72px; }
+  .reserva-nombre { font-size: 1.9rem; }
+  .reserva-opcion:hover { border-color: var(--acento); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .reserva-barra > div { transition: none; }
+}
