@@ -13,3 +13,19 @@ export interface BarberiaPublica {
   reservasOnline: boolean
   sucursales: SucursalPublica[]
 }
+export interface ServicioPublico {
+  id: string
+  nombre: string
+  duracionMin: number
+  /** En centavos */
+  precio: number
+}
+
+export interface BarberoPublico {
+  id: string
+  nombre: string
+  apellido: string
+  fotoUrl: string | null
+  /** yyyy-mm-dd, o null si no tiene horarios libres dentro de la anticipación máxima */
+  proximoDiaDisponible: string | null
+}
