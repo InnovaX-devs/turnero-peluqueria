@@ -36,6 +36,28 @@
 .reserva-opcion[aria-pressed='true'] { border-color: var(--acento); background: var(--acento-suave); }
 .reserva-opcion:focus-visible, .reserva-atras:focus-visible { outline: 3px solid var(--acento); outline-offset: 2px; }
 .reserva-pendiente { color: var(--texto-suave); }
+.reserva-cargando, .reserva-vacio { color: var(--texto-suave); }
+
+.reserva-barberos { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.reserva-barbero {
+  width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; gap: 8px;
+  padding: 20px 12px; border: 1.5px solid var(--borde); border-radius: 16px;
+  background: var(--fondo-tarjeta); color: var(--texto); text-align: center; cursor: pointer;
+}
+.reserva-barbero[aria-pressed='true'] { border-color: var(--acento); background: var(--acento-suave); }
+.reserva-barbero:focus-visible { outline: 3px solid var(--acento); outline-offset: 2px; }
+.reserva-barbero:disabled { cursor: not-allowed; opacity: 0.55; }
+.reserva-avatar {
+  width: 72px; height: 72px; border-radius: 50%; border: 1.5px solid var(--acento);
+  display: grid; place-items: center; object-fit: cover;
+  background: var(--acento-suave); font-weight: 700; font-size: 1.25rem; color: var(--texto);
+}
+.reserva-avatar-cualquiera { font-size: 1.5rem; }
+.reserva-barbero-dispo { font-size: 0.875rem; color: var(--texto-suave); }
+
+.reserva-opcion-servicio { flex-direction: row; align-items: center; justify-content: space-between; gap: 16px; }
+.reserva-opcion .reserva-servicio-info { display: flex; flex-direction: column; gap: 4px; font-size: 1rem; color: var(--texto); }
+.reserva-opcion .reserva-servicio-precio { font-size: 1rem; color: var(--texto); white-space: nowrap; }
 
 .reserva-cerrada {
   padding: 20px; border: 1.5px solid var(--acento); border-radius: 20px; background: var(--fondo-tarjeta);

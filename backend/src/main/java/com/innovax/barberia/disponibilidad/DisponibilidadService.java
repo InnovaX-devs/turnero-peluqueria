@@ -33,6 +33,7 @@ import java.util.EnumSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 
@@ -102,8 +103,36 @@ public class DisponibilidadService {
                 .anyMatch(slot -> slot.hora().equals(hora) && slot.barberos().contains(barberoId));
     }
 
+    /**
+     * Primer día (desde hoy) en que el barbero tiene al menos un horario libre para ese servicio,
+     * dentro de la anticipación máxima. Corta en el primer día que encuentra, así que en el caso
+     * común (hoy o mañana) hace muy pocas consultas.
+     */
+    @Transactional(readOnly = true)
+    public Optional<LocalDate> proximoDiaDisponible(UUID sucursalId, UUID servicioId, UUID barberoId) {
+        Contexto ctx = cargarContexto(sucursalId, servicioId, barberoId);
+        if (ctx.barberos().isEmpty()) {
+            return Optional.empty();
+        }
+        LocalDate hoy = LocalDate.now(ctx.zonaHoraria());
+        LocalDate limite = hoy.plusDays(ctx.barberia().getAnticipacionMaximaDias());
+        for (LocalDate fecha = hoy; !fecha.isAfter(limite); fecha = fecha.plusDays(1)) {
+            if (!slotsDelDia(ctx, fecha).isEmpty()) {
+                return Optional.of(fecha);
+            }
+        }
+        return Optional.empty();
+    }
+
     private List<SlotDisponibleResponse> slotsDelDia(Contexto ctx, LocalDate fecha) {
         Instant ahora = Instant.now();
+
+        // Más allá de la anticipación máxima no se ofrece nada (ej. hoy + 30 días)
+        LocalDate hoy = ahora.atZone(ctx.zonaHoraria()).toLocalDate();
+        if (fecha.isAfter(hoy.plusDays(ctx.barberia().getAnticipacionMaximaDias()))) {
+            return List.of();
+        }
+
         DayOfWeek diaSemana = fecha.getDayOfWeek();
         Instant inicioDia = ZonedDateTime.of(fecha, LocalTime.MIN, ctx.zonaHoraria()).toInstant();
         Instant finDia = ZonedDateTime.of(fecha.plusDays(1), LocalTime.MIN, ctx.zonaHoraria()).toInstant();
@@ -142,10 +171,17 @@ public class DisponibilidadService {
     }
 
     private Contexto cargarContexto(UUID sucursalId, UUID servicioId, UUID barberoId) {
+        // Desactivados cuentan como inexistentes: no se pueden consultar ni reservar
         Sucursal sucursal = sucursalRepository.findById(sucursalId)
+                .filter(Sucursal::isActiva)
                 .orElseThrow(() -> new RecursoNoEncontradoException("Sucursal no encontrada"));
         Servicio servicio = servicioRepository.findById(servicioId)
+                .filter(Servicio::isActivo)
                 .orElseThrow(() -> new RecursoNoEncontradoException("Servicio no encontrado"));
+
+        if (!sucursal.getBarberia().isReservasOnline()) {
+            throw new DatosInvalidosException("barberia", "Esta barbería no acepta reservas online por ahora");
+        }
 
         if (!servicio.getBarberia().getId().equals(sucursal.getBarberia().getId())) {
             throw new DatosInvalidosException("servicio", "No pertenece a la barbería de la sucursal");

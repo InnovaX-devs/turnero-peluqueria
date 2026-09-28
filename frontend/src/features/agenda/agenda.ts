@@ -75,10 +75,8 @@ export function formatearFechaCorta(fechaISO: string): string {
   return aFechaLocal(fechaISO).toLocaleDateString('es-AR', { weekday: 'short', day: 'numeric', month: 'short' })
 }
 
-/** precioFinal viene en centavos ($15.000,00 = 1500000). */
-export function formatearPrecio(centavos: number): string {
-  return (centavos / 100).toLocaleString('es-AR', { style: 'currency', currency: 'ARS', maximumFractionDigits: 0 })
-}
+// Se movió a lib/formato.ts para compartirlo con la reserva pública
+export { formatearPrecio } from '../../lib/formato'
 
 export const ETIQUETAS_ESTADO: Record<EstadoAtencion, string> = {
   RESERVADA: 'Reservado',

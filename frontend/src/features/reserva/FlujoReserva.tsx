@@ -1,4 +1,6 @@
 import type { BarberiaPublica } from '../../types/reserva'
+import { PasoBarbero } from './PasoBarbero'
+import { PasoServicio } from './PasoServicio'
 import { PasoSucursal } from './PasoSucursal'
 import { useFlujoReserva } from './useFlujoReserva'
 
@@ -34,8 +36,27 @@ export function FlujoReserva({ barberia }: { barberia: BarberiaPublica }) {
           onElegir={(sucursalId) => avanzar({ sucursalId })}
         />
       )}
+      {paso === 'servicio' && selecciones.sucursalId && (
+        <PasoServicio
+          slug={barberia.slug}
+          sucursalId={selecciones.sucursalId}
+          elegido={selecciones.servicioId}
+          onElegir={(servicioId) => avanzar({ servicioId })}
+        />
+      )}
+      {paso === 'barbero' && selecciones.sucursalId && selecciones.servicioId && (
+        <PasoBarbero
+          slug={barberia.slug}
+          sucursalId={selecciones.sucursalId}
+          servicioId={selecciones.servicioId}
+          elegido={selecciones.barberoId}
+          onElegir={(barberoId) => avanzar({ barberoId })}
+        />
+      )}
       {/* Los pasos siguientes se implementan en sus propios issues */}
-      {paso !== 'sucursal' && <p className="reserva-pendiente">Este paso todavía no está disponible.</p>}
+      {paso !== 'sucursal' && paso !== 'servicio' && paso !== 'barbero' && (
+        <p className="reserva-pendiente">Este paso todavía no está disponible.</p>
+      )}
     </section>
   )
 }

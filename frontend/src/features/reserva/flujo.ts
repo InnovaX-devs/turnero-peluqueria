@@ -1,5 +1,8 @@
 export type Paso = 'sucursal' | 'servicio' | 'barbero' | 'horario' | 'datos'
 
+/** Valor de barberoId cuando el cliente elige "Cualquier barbero". */
+export const BARBERO_CUALQUIERA = 'cualquiera'
+
 export interface Selecciones {
   sucursalId: string | null
   servicioId: string | null
