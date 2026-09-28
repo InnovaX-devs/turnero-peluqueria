@@ -9,10 +9,12 @@ export interface Selecciones {
   barberoId: string | null // 'cualquiera' = primer barbero disponible
   fecha: string | null // YYYY-MM-DD
   hora: string | null // HH:mm
+  /** El barbero real del turno: igual a barberoId, o el que tocó en el horario si eligió "cualquiera" */
+  barberoAsignadoId: string | null
 }
 
 export const SELECCIONES_VACIAS: Selecciones = {
-  sucursalId: null, servicioId: null, barberoId: null, fecha: null, hora: null,
+  sucursalId: null, servicioId: null, barberoId: null, fecha: null, hora: null, barberoAsignadoId: null,
 }
 
 interface DefinicionPaso {
@@ -25,7 +27,7 @@ const TODOS_LOS_PASOS: DefinicionPaso[] = [
   { paso: 'sucursal', titulo: 'Elegí la sucursal', campos: ['sucursalId'] },
   { paso: 'servicio', titulo: 'Elegí el servicio', campos: ['servicioId'] },
   { paso: 'barbero', titulo: 'Elegí el barbero', campos: ['barberoId'] },
-  { paso: 'horario', titulo: 'Elegí día y horario', campos: ['fecha', 'hora'] },
+  { paso: 'horario', titulo: 'Elegí día y horario', campos: ['fecha', 'hora', 'barberoAsignadoId'] },
   { paso: 'datos', titulo: 'Tus datos', campos: [] },
 ]
 

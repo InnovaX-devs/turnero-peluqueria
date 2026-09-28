@@ -55,6 +55,45 @@
 .reserva-avatar-cualquiera { font-size: 1.5rem; }
 .reserva-barbero-dispo { font-size: 0.875rem; color: var(--texto-suave); }
 
+.reserva-calendario-encabezado { margin-bottom: 12px; font-size: 1.05rem; }
+.reserva-semana { display: flex; align-items: center; gap: 4px; }
+.reserva-flecha {
+  flex: none; width: 32px; height: 32px; border: none; border-radius: 50%;
+  background: none; color: var(--texto-suave); font-size: 1.5rem; line-height: 1; cursor: pointer;
+}
+.reserva-flecha:disabled { opacity: 0.3; cursor: not-allowed; }
+.reserva-dias { flex: 1; list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; }
+.reserva-dia {
+  width: 100%; display: flex; flex-direction: column; align-items: center; gap: 6px;
+  padding: 0; border: none; background: none; color: var(--texto); cursor: pointer;
+}
+.reserva-dia-numero {
+  width: 44px; max-width: 100%; aspect-ratio: 1; border-radius: 50%; display: grid; place-items: center;
+  border: 1.5px solid var(--borde); background: var(--fondo-tarjeta); font-weight: 700; font-size: 1.05rem;
+}
+.reserva-dia-nombre { font-size: 0.75rem; color: var(--texto-suave); }
+.reserva-dia[aria-pressed='true'] .reserva-dia-numero { border-color: var(--acento); background: var(--acento-suave); }
+.reserva-dia:disabled { opacity: 0.35; cursor: not-allowed; }
+.reserva-dia:focus-visible .reserva-dia-numero, .reserva-flecha:focus-visible, .reserva-hora:focus-visible {
+  outline: 3px solid var(--acento); outline-offset: 2px;
+}
+
+.reserva-fecha-titulo { font-size: 1.1rem; margin: 24px 0 16px; }
+.reserva-resumen-barbero { display: flex; align-items: center; gap: 14px; margin-bottom: 20px; }
+.reserva-resumen-barbero div { display: flex; flex-direction: column; gap: 2px; }
+.reserva-resumen-barbero span:not(.reserva-avatar) { font-size: 0.875rem; color: var(--texto-suave); }
+.reserva-avatar-chico { width: 52px; height: 52px; font-size: 1rem; }
+
+.reserva-horas { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.reserva-hora {
+  width: 100%; padding: 14px 8px; border: 1.5px solid var(--borde); border-radius: 12px;
+  background: var(--fondo-tarjeta); color: var(--texto); font-size: 1rem; cursor: pointer;
+}
+.reserva-hora[aria-pressed='true'] { border-color: var(--acento); background: var(--acento-suave); font-weight: 700; }
+@media (hover: hover) {
+  .reserva-hora:hover, .reserva-dia:not(:disabled):hover .reserva-dia-numero { border-color: var(--acento); }
+}
+
 .reserva-opcion-servicio { flex-direction: row; align-items: center; justify-content: space-between; gap: 16px; }
 .reserva-opcion .reserva-servicio-info { display: flex; flex-direction: column; gap: 4px; font-size: 1rem; color: var(--texto); }
 .reserva-opcion .reserva-servicio-precio { font-size: 1rem; color: var(--texto); white-space: nowrap; }
@@ -70,6 +109,7 @@
 .reserva-llamar { display: block; text-align: center; text-decoration: none; }
 
 .reserva-error { display: flex; flex-direction: column; gap: 12px; padding-top: 20vh; text-align: center; }
+.reserva-error-inline { padding-top: 16px; }
 .reserva-no-encontrada { display: flex; flex-direction: column; justify-content: center; text-align: center; }
 .reserva-no-encontrada h1 { font-size: 1.4rem; margin: 0 0 8px; }
 .reserva-no-encontrada p { color: var(--texto-suave); margin: 0; }
@@ -84,3 +124,49 @@
 @media (prefers-reduced-motion: reduce) {
   .reserva-barra > div { transition: none; }
 }
+/* ---------- Paso: tus datos ---------- */
+.reserva-resumen {
+  margin: 0 0 24px; padding: 16px; border: 1.5px solid var(--borde); border-radius: 16px;
+  background: var(--fondo-tarjeta); display: flex; flex-direction: column; gap: 10px;
+}
+.reserva-resumen div { display: flex; justify-content: space-between; gap: 16px; }
+.reserva-resumen dt { color: var(--texto-suave); font-size: 0.9rem; flex: none; }
+.reserva-resumen dd { margin: 0; text-align: right; }
+.reserva-resumen dd::first-letter { text-transform: uppercase; }
+.reserva-resumen-total { padding-top: 10px; border-top: 1px solid var(--borde); font-weight: 700; }
+.reserva-resumen-total dt { color: var(--texto); font-size: 1rem; }
+
+.reserva-campo { display: flex; flex-direction: column; gap: 6px; margin-bottom: 18px; }
+.reserva-campo > span, .reserva-campo > label { font-size: 0.875rem; font-weight: 600; color: var(--texto-suave); }
+.reserva-campo input, .reserva-campo select, .reserva-campo textarea {
+  width: 100%; padding: 14px 16px; font-size: 1rem; border: 1px solid var(--borde); border-radius: 12px;
+  background: var(--fondo-tarjeta); color: var(--texto); font-family: inherit;
+}
+.reserva-campo textarea { resize: vertical; }
+.reserva-campo input:focus, .reserva-campo select:focus, .reserva-campo textarea:focus {
+  outline: none; border-color: var(--acento); box-shadow: 0 0 0 3px var(--acento-suave);
+}
+.reserva-campo [aria-invalid='true'] { border-color: var(--error); }
+.reserva-campo small { font-size: 0.8rem; color: var(--texto-suave); }
+.reserva-campo-error, .reserva-campo small.reserva-campo-error { color: var(--error); font-size: 0.85rem; }
+.reserva-telefono { display: flex; gap: 8px; }
+.reserva-telefono select { width: auto; flex: none; padding-right: 8px; }
+
+.reserva-pago { margin: 0 0 16px; color: var(--texto-suave); font-size: 0.9rem; }
+.reserva-legal { margin: 14px 0 0; color: var(--texto-suave); font-size: 0.8rem; text-align: center; }
+.reserva-aviso {
+  display: flex; flex-direction: column; gap: 14px; padding: 16px; border-radius: 14px;
+  background: var(--error-fondo); color: var(--error);
+}
+.reserva-aviso p { margin: 0; }
+
+/* ---------- Turno confirmado ---------- */
+.reserva-confirmada { text-align: center; padding-top: 8px; }
+.reserva-confirmada-icono {
+  width: 64px; height: 64px; margin: 0 auto 16px; border-radius: 50%; display: grid; place-items: center;
+  background: var(--acento); color: var(--texto); font-size: 2rem; font-weight: 700;
+}
+.reserva-confirmada h2 { font-size: 1.4rem; margin: 0 0 8px; }
+.reserva-confirmada-sub { color: var(--texto-suave); margin: 0 0 24px; }
+.reserva-confirmada .reserva-resumen { text-align: left; }
+.reserva-otro-turno { width: 100%; padding: 14px; }
