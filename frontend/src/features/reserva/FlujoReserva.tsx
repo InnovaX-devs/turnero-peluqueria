@@ -27,6 +27,13 @@ export function FlujoReserva({ barberia }: { barberia: BarberiaPublica }) {
 
   const sucursal = barberia.sucursales.find((s) => s.id === selecciones.sucursalId)
 
+  function cancelar() {
+    if (window.confirm('¿Cancelar la reserva? Se va a borrar lo que elegiste.')) {
+      reiniciar() // al borrar lo elegido, el flujo vuelve solo al primer paso
+      window.scrollTo(0, 0)
+    }
+  }
+
   return (
     <section className="reserva-flujo" aria-labelledby="reserva-titulo-paso">
       <div className="reserva-progreso">
@@ -37,7 +44,14 @@ export function FlujoReserva({ barberia }: { barberia: BarberiaPublica }) {
         ) : (
           <span />
         )}
-        <span className="reserva-contador">Paso {indice + 1} de {pasos.length}</span>
+        <div className="reserva-progreso-derecha">
+          <span className="reserva-contador">Paso {indice + 1} de {pasos.length}</span>
+          {indice > 0 && (
+            <button type="button" className="reserva-cancelar" onClick={cancelar}>
+              Cancelar
+            </button>
+          )}
+        </div>
       </div>
       <div className="reserva-barra" role="progressbar" aria-label="Progreso de la reserva"
         aria-valuemin={1} aria-valuemax={pasos.length} aria-valuenow={indice + 1}>

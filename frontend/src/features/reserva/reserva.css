@@ -22,6 +22,14 @@
 }
 .reserva-atras span { font-size: 1.4rem; line-height: 0; vertical-align: -1px; }
 .reserva-contador { font-size: 0.875rem; color: var(--texto-suave); }
+.reserva-progreso-derecha { display: flex; align-items: center; gap: 4px; }
+.reserva-cancelar {
+  min-height: 44px; margin-right: -8px; padding: 0 8px; border: none; background: none;
+  font-size: 0.875rem; font-weight: 600; color: var(--texto-suave); cursor: pointer;
+}
+.reserva-cancelar::before { content: '·'; margin-right: 8px; font-weight: 400; }
+.reserva-cancelar:focus-visible { outline: 3px solid var(--acento); outline-offset: 2px; }
+@media (hover: hover) { .reserva-cancelar:hover { color: var(--error); } }
 .reserva-barra { height: 4px; border-radius: 999px; background: var(--borde); overflow: hidden; }
 .reserva-barra > div { height: 100%; background: var(--acento); transition: width 0.2s ease; }
 .reserva-titulo-paso { font-size: 1.25rem; margin: 24px 0 16px; }
