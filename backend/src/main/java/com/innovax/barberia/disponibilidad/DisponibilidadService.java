@@ -44,6 +44,9 @@ public class DisponibilidadService {
     /** Solo estas ocupan la agenda; canceladas y ausentes liberan el horario. */
     private static final Set<EstadoAtencion> ESTADOS_QUE_OCUPAN = EnumSet.of(EstadoAtencion.RESERVADA, EstadoAtencion.COMPLETADA);
 
+    /** Máximo de días que se pueden pedir de una vez en /dias (el calendario pide de a una semana). */
+    private static final int RANGO_MAXIMO_DIAS = 62;
+
     private final SucursalRepository sucursalRepository;
     private final ServicioRepository servicioRepository;
     private final BarberoRepository barberoRepository;
@@ -65,10 +68,11 @@ public class DisponibilidadService {
 
         Contexto ctx = cargarContexto(sucursalId, servicioId, barberoId);
 
+        // Tope fijo solo para no hacer consultas enormes. Los días más allá de la anticipación
+        // máxima de la barbería no fallan: vuelven sin disponibilidad (ver slotsDelDia).
         long diasPedidos = ChronoUnit.DAYS.between(desde, hasta) + 1;
-        int maxDias = ctx.barberia().getAnticipacionMaximaDias();
-        if (diasPedidos > maxDias) {
-            throw new DatosInvalidosException("hasta", "El rango no puede superar los " + maxDias + " días");
+        if (diasPedidos > RANGO_MAXIMO_DIAS) {
+            throw new DatosInvalidosException("hasta", "El rango no puede superar los " + RANGO_MAXIMO_DIAS + " días");
         }
 
         List<LocalDate> diasConDisponibilidad = new ArrayList<>();

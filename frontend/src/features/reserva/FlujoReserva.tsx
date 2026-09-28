@@ -1,14 +1,31 @@
-import type { BarberiaPublica } from '../../types/reserva'
+import { useState } from 'react'
+import type { BarberiaPublica, ReservaCreada } from '../../types/reserva'
 import { PasoBarbero } from './PasoBarbero'
+import { PasoDatos } from './PasoDatos'
+import { PasoHorario } from './PasoHorario'
 import { PasoServicio } from './PasoServicio'
 import { PasoSucursal } from './PasoSucursal'
+import { ReservaConfirmada } from './ReservaConfirmada'
 import { useFlujoReserva } from './useFlujoReserva'
 
 export function FlujoReserva({ barberia }: { barberia: BarberiaPublica }) {
-  const { pasos, indice, paso, titulo, selecciones, avanzar, volver } = useFlujoReserva(
+  const { pasos, indice, paso, titulo, selecciones, avanzar, volver, reiniciar } = useFlujoReserva(
     barberia.slug,
     barberia.sucursales,
   )
+  const [confirmada, setConfirmada] = useState<{ reserva: ReservaCreada; sucursalId: string } | null>(null)
+
+  if (confirmada) {
+    return (
+      <ReservaConfirmada
+        reserva={confirmada.reserva}
+        sucursal={barberia.sucursales.find((s) => s.id === confirmada.sucursalId)}
+        onOtroTurno={() => setConfirmada(null)}
+      />
+    )
+  }
+
+  const sucursal = barberia.sucursales.find((s) => s.id === selecciones.sucursalId)
 
   return (
     <section className="reserva-flujo" aria-labelledby="reserva-titulo-paso">
@@ -53,9 +70,34 @@ export function FlujoReserva({ barberia }: { barberia: BarberiaPublica }) {
           onElegir={(barberoId) => avanzar({ barberoId })}
         />
       )}
-      {/* Los pasos siguientes se implementan en sus propios issues */}
-      {paso !== 'sucursal' && paso !== 'servicio' && paso !== 'barbero' && (
-        <p className="reserva-pendiente">Este paso todavía no está disponible.</p>
+      {paso === 'horario' && selecciones.sucursalId && selecciones.servicioId && selecciones.barberoId && (
+        <PasoHorario
+          slug={barberia.slug}
+          anticipacionMaximaDias={barberia.anticipacionMaximaDias}
+          sucursalId={selecciones.sucursalId}
+          servicioId={selecciones.servicioId}
+          barberoId={selecciones.barberoId}
+          fechaElegida={selecciones.fecha}
+          horaElegida={selecciones.hora}
+          onElegir={(eleccion) => avanzar(eleccion)}
+        />
+      )}
+      {paso === 'datos' && sucursal && selecciones.servicioId && selecciones.barberoAsignadoId
+        && selecciones.fecha && selecciones.hora && (
+        <PasoDatos
+          slug={barberia.slug}
+          sucursal={sucursal}
+          servicioId={selecciones.servicioId}
+          barberoId={selecciones.barberoAsignadoId}
+          fecha={selecciones.fecha}
+          hora={selecciones.hora}
+          onConfirmada={(reserva) => {
+            setConfirmada({ reserva, sucursalId: sucursal.id })
+            reiniciar()
+            window.scrollTo(0, 0)
+          }}
+          onElegirOtroHorario={volver}
+        />
       )}
     </section>
   )

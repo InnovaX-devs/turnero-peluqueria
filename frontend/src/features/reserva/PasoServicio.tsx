@@ -23,7 +23,7 @@ export function PasoServicio({ slug, sucursalId, elegido, onElegir }: Props) {
 
   if (error) {
     return (
-      <div className="reserva-error" role="alert">
+      <div className="reserva-error reserva-error-inline" role="alert">
         <p>{mensajeDeError(error)}</p>
         <button type="button" className="boton-principal" onClick={() => refetch()}>
           Reintentar

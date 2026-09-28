@@ -12,6 +12,8 @@ public record BarberiaPublicaResponse(
         String slug,
         String logoUrl,
         boolean reservasOnline,
+        /** Hasta cuántos días adelante se puede reservar: el calendario no deja avanzar más. */
+        int anticipacionMaximaDias,
         List<SucursalPublica> sucursales
 ) {
 
@@ -22,7 +24,7 @@ public record BarberiaPublicaResponse(
     }
 
     public static BarberiaPublicaResponse de(Barberia b, List<Sucursal> sucursales) {
-        return new BarberiaPublicaResponse(b.getNombre(), b.getSlug(), b.getLogoUrl(), b.isReservasOnline(),
+        return new BarberiaPublicaResponse(b.getNombre(), b.getSlug(), b.getLogoUrl(), b.isReservasOnline(), b.getAnticipacionMaximaDias(),
                 sucursales.stream().map(SucursalPublica::de).toList());
     }
 }

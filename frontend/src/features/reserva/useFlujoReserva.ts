@@ -50,7 +50,12 @@ export function useFlujoReserva(slug: string, sucursales: SucursalPublica[]) {
     else setSearchParams({ paso: pasos[indice - 1].paso }, { replace: true })
   }, [indice, location.state, navigate, pasos, setSearchParams])
 
-  return { pasos, indice, paso: actual.paso, titulo: actual.titulo, selecciones, avanzar, volver }
+  /** Después de confirmar: borra lo elegido para que un reload no muestre el turno ya reservado. */
+  const reiniciar = useCallback(() => {
+    setSelecciones(normalizar({}, sucursales))
+  }, [sucursales])
+
+  return { pasos, indice, paso: actual.paso, titulo: actual.titulo, selecciones, avanzar, volver, reiniciar }
 }
 
 function leerGuardadas(clave: string): Partial<Selecciones> {

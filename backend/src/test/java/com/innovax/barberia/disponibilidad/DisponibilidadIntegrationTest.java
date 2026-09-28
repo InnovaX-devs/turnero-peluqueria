@@ -23,6 +23,8 @@ import java.time.temporal.TemporalAdjusters;
 import java.util.UUID;
 
 import static org.hamcrest.Matchers.empty;
+import static org.hamcrest.Matchers.everyItem;
+import static org.hamcrest.Matchers.lessThanOrEqualTo;
 import static org.hamcrest.Matchers.not;
 import static org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -114,5 +116,35 @@ class DisponibilidadIntegrationTest {
         consultar(proximoLunes)
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.errores.barberia").exists());
+    }
+
+    // ---------- /dias ----------
+
+    private ResultActions consultarDias(LocalDate desde, LocalDate hasta) throws Exception {
+        return mvc.perform(get("/api/public/disponibilidad/dias")
+                .param("sucursal", SUCURSAL.toString())
+                .param("servicio", SERVICIO_CORTE.toString())
+                .param("desde", desde.toString())
+                .param("hasta", hasta.toString()));
+    }
+
+    @Test
+    void unaSemanaConAnticipacionMaximaMasCortaNoFallaYSeCortaEnElLimite() throws Exception {
+        Barberia jade = barberias.findById(BARBERIA_JADE).orElseThrow();
+        jade.setAnticipacionMaximaDias(3);
+        barberias.saveAndFlush(jade);
+
+        LocalDate hoy = LocalDate.now(ZONA);
+        consultarDias(hoy, hoy.plusDays(6))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.dias", everyItem(lessThanOrEqualTo(hoy.plusDays(3).toString()))));
+    }
+
+    @Test
+    void unRangoDemasiadoLargoDevuelve400() throws Exception {
+        LocalDate hoy = LocalDate.now(ZONA);
+        consultarDias(hoy, hoy.plusDays(100))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errores.hasta").exists());
     }
 }

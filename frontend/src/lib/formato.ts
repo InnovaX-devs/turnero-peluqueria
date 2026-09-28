@@ -1,3 +1,5 @@
+import { aFechaLocal } from './fechas'
+
 /** Los precios vienen en centavos desde la API ($15.000,00 = 1500000). */
 export function formatearPrecio(centavos: number): string {
   return (centavos / 100).toLocaleString('es-AR', { style: 'currency', currency: 'ARS', maximumFractionDigits: 0 })
@@ -9,11 +11,6 @@ export function formatearDuracion(minutos: number): string {
   const resto = minutos % 60
   if (horas === 0) return `${resto} min`
   return resto === 0 ? `${horas} h` : `${horas} h ${resto} min`
-}
-
-function aFechaLocal(fechaISO: string): Date {
-  const [y, m, d] = fechaISO.split('-').map(Number)
-  return new Date(y, m - 1, d)
 }
 
 /** "hoy", "mañana", "el jueves" (dentro de la semana) o "el 12/10". */
