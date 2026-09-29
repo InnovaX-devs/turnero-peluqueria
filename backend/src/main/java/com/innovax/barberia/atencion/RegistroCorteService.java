@@ -165,7 +165,12 @@ public class RegistroCorteService {
             throw new DatosInvalidosException("fecha", "Indicá la fecha y la hora");
         }
         
-        return ZonedDateTime.of(fecha, hora, zona).toInstant();
+        Instant inicio = ZonedDateTime.of(fecha, hora, zona).toInstant();
+        if(inicio.isAfter(ahora.plus(TOLERANCIA_FUTURO))){
+            throw new DatosInvalidosException("fecha", "No se puede registar un corte en el futuro");
+        }
+
+        return inicio;
     }
 
     /**
