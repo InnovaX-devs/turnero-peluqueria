@@ -1,5 +1,6 @@
 package com.innovax.barberia.atencion;
 
+import com.innovax.barberia.agenda.dto.TurnoAgendaResponse;
 import com.innovax.barberia.atencion.dto.AtencionResponse;
 import com.innovax.barberia.atencion.dto.CambiarEstadoTurnoRequest;
 import com.innovax.barberia.atencion.dto.CrearReservaRequest;
@@ -126,9 +127,14 @@ public class AtencionService {
      * <p>Al completar, {@code precioFinal} y {@code metodoPago} del request permiten ajustar el
      * precio (por si se agregó algo o se hizo un descuento) y registrar cómo pagó; para los demás
      * estados se ignoran. Siempre se guarda quién hizo el cambio y cuándo.
+     *
+     * <p>La respuesta se arma acá adentro, todavía con la transacción abierta: si se armara
+     * después (en el controller), las asociaciones lazy de {@code atencion} (barbero, servicio,
+     * cliente) ya no tendrían sesión de Hibernate para cargarse y tirarían
+     * {@code LazyInitializationException}.
      */
     @Transactional
-    public Atencion cambiarEstado(UUID turnoId, CambiarEstadoTurnoRequest request) {
+    public TurnoAgendaResponse cambiarEstado(UUID turnoId, CambiarEstadoTurnoRequest request) {
         Atencion atencion = atenciones.findById(turnoId)
                 .orElseThrow(() -> new RecursoNoEncontradoException("Turno no encontrado"));
 
@@ -165,7 +171,7 @@ public class AtencionService {
         atencion.setEstadoCambiadoPor(usuario);
         atencion.setEstadoCambiadoEn(Instant.now());
 
-        return atenciones.save(atencion);
+        return TurnoAgendaResponse.de(atenciones.save(atencion));
     }
 
     private Cliente obtenerOCrearCliente(Barberia barberia, String nombre, String telefono) {

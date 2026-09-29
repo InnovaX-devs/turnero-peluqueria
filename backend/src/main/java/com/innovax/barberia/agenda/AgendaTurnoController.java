@@ -27,6 +27,6 @@ public class AgendaTurnoController {
 
     @PatchMapping("/{id}/estado")
     public TurnoAgendaResponse cambiarEstado(@PathVariable UUID id, @Valid @RequestBody CambiarEstadoTurnoRequest request) {
-        return TurnoAgendaResponse.de(atencionService.cambiarEstado(id, request));
+        return atencionService.cambiarEstado(id, request);
     }
 }
