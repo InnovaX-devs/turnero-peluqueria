@@ -1,7 +1,12 @@
 package com.innovax.barberia.atencion;
 
+import com.innovax.barberia.agenda.dto.TurnoAgendaResponse;
 import com.innovax.barberia.atencion.dto.AtencionResponse;
+import com.innovax.barberia.atencion.dto.CambiarEstadoTurnoRequest;
 import com.innovax.barberia.atencion.dto.CrearReservaRequest;
+import com.innovax.barberia.auth.Usuario;
+import com.innovax.barberia.auth.UsuarioActual;
+import com.innovax.barberia.auth.UsuarioRepository;
 import com.innovax.barberia.barberia.Barberia;
 import com.innovax.barberia.barbero.Barbero;
 import com.innovax.barberia.barbero.BarberoRepository;
@@ -24,6 +29,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
+import java.util.UUID;
 
 /**
  * Reserva online (página pública, sin login). Épica 1: evitar que dos personas se queden
@@ -52,6 +58,8 @@ public class AtencionService {
     private final ServicioRepository servicios;
     private final BarberoRepository barberos;
     private final DisponibilidadService disponibilidadService;
+    private final UsuarioActual usuarioActual;
+    private final UsuarioRepository usuarios;
 
     @Transactional
     public AtencionResponse reservarOnline(CrearReservaRequest request) {
@@ -109,6 +117,61 @@ public class AtencionService {
         }
 
         return AtencionResponse.de(atencion);
+    }
+
+    /**
+     * Cambia el estado de un turno desde el detalle del panel (marcar completado, ausente o
+     * cancelado). Solo se puede cambiar un turno que está RESERVADA: una vez completado,
+     * cancelado o marcado ausente, no se puede volver a tocar desde acá.
+     *
+     * <p>Al completar, {@code precioFinal} y {@code metodoPago} del request permiten ajustar el
+     * precio (por si se agregó algo o se hizo un descuento) y registrar cómo pagó; para los demás
+     * estados se ignoran. Siempre se guarda quién hizo el cambio y cuándo.
+     *
+     * <p>La respuesta se arma acá adentro, todavía con la transacción abierta: si se armara
+     * después (en el controller), las asociaciones lazy de {@code atencion} (barbero, servicio,
+     * cliente) ya no tendrían sesión de Hibernate para cargarse y tirarían
+     * {@code LazyInitializationException}.
+     */
+    @Transactional
+    public TurnoAgendaResponse cambiarEstado(UUID turnoId, CambiarEstadoTurnoRequest request) {
+        Atencion atencion = atenciones.findById(turnoId)
+                .orElseThrow(() -> new RecursoNoEncontradoException("Turno no encontrado"));
+
+        // Aislamiento entre barberías: si no es de la barbería del usuario logueado, se responde
+        // igual que si no existiera (no se revela que el id pertenece a otra barbería).
+        if (!atencion.getBarberia().getId().equals(usuarioActual.barberiaId())) {
+            throw new RecursoNoEncontradoException("Turno no encontrado");
+        }
+        usuarioActual.verificarAccesoABarbero(atencion.getBarbero().getId());
+
+        if (atencion.getEstado() != EstadoAtencion.RESERVADA) {
+            throw new ConflictoException("estado", "Este turno ya no está reservado");
+        }
+
+        EstadoAtencion nuevoEstado = request.estado();
+        if (nuevoEstado == EstadoAtencion.RESERVADA) {
+            throw new DatosInvalidosException("estado", "No es un estado válido para actualizar un turno");
+        }
+
+        if (nuevoEstado == EstadoAtencion.COMPLETADA) {
+            if (request.metodoPago() == null) {
+                throw new DatosInvalidosException("metodoPago", "Es obligatorio para marcar el turno como completado");
+            }
+            if (request.precioFinal() != null) {
+                atencion.setPrecioFinal(request.precioFinal());
+            }
+            atencion.setMetodoPago(request.metodoPago());
+        }
+
+        atencion.setEstado(nuevoEstado);
+
+        Usuario usuario = usuarios.findById(usuarioActual.id())
+                .orElseThrow(() -> new IllegalStateException("El usuario del token no existe"));
+        atencion.setEstadoCambiadoPor(usuario);
+        atencion.setEstadoCambiadoEn(Instant.now());
+
+        return TurnoAgendaResponse.de(atenciones.save(atencion));
     }
 
     private Cliente obtenerOCrearCliente(Barberia barberia, String nombre, String telefono) {
