@@ -1,0 +1,15 @@
+# Perfil "local": el Postgres de Docker (docker compose up -d) con los datos de prueba.
+# Está fijo a propósito: aunque el .env tenga los datos de Supabase, este perfil nunca los usa,
+# así el seed de prueba no puede terminar en la base compartida.
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/barberia
+    username: barberia
+    password: barberia
+  flyway:
+    # Carga admin@jade.com, lucas@jade.com, la barbería Jade, etc.
+    locations: classpath:db/migration,classpath:db/seed
+
+app:
+  jwt:
+    secret: dev-secret-solo-para-desarrollo-local-123456

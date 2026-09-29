@@ -4,8 +4,10 @@ spring:
   application:
     name: barberia
 
+  # Sin .env (o con SPRING_PROFILES_ACTIVE=local) se usa el Docker local con datos de prueba.
+  # Con SPRING_PROFILES_ACTIVE=dev en el .env se usa Supabase (DB_HOST, DB_USER, etc.).
   profiles:
-    active: ${SPRING_PROFILES_ACTIVE:dev}
+    active: ${SPRING_PROFILES_ACTIVE:local}
 
   datasource:
     url: jdbc:postgresql://${DB_HOST}:${DB_PORT}/${DB_NAME}
