@@ -7,6 +7,7 @@ import { RutaProtegida } from '../features/auth/RutaProtegida'
 import { PanelInicio } from '../features/panel/PanelInicio'
 import { PanelLayout } from '../features/panel/PanelLayout'
 import { ReservaPage } from '../features/reserva/ReservaPage'
+import { CajaPage } from '../features/caja/CajaPage'
 import { BarberoEditarPage, BarberoNuevoPage } from '../features/barberos/BarberoPage'
 import { BarberosPage } from '../features/barberos/BarberosPage'
 
@@ -28,6 +29,7 @@ export function App() {
             <Route path="barberos" element={<BarberosPage />} />
             <Route path="barberos/nuevo" element={<BarberoNuevoPage />} />
             <Route path="barberos/:id" element={<BarberoEditarPage />} />
+            <Route path="caja" element={<CajaPage />} />
           </Route>
         </Route>
       </Route>
