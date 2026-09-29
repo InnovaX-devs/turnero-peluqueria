@@ -7,6 +7,8 @@ import { RutaProtegida } from '../features/auth/RutaProtegida'
 import { PanelInicio } from '../features/panel/PanelInicio'
 import { PanelLayout } from '../features/panel/PanelLayout'
 import { ReservaPage } from '../features/reserva/ReservaPage'
+import { BarberoEditarPage, BarberoNuevoPage } from '../features/barberos/BarberoPage'
+import { BarberosPage } from '../features/barberos/BarberosPage'
 
 export function App() {
   return (
@@ -23,6 +25,9 @@ export function App() {
           {/* Solo admin */}
           <Route element={<RutaAdmin />}>
             <Route path="configuracion" element={<ConfiguracionBarberiaPage />} />
+            <Route path="barberos" element={<BarberosPage />} />
+            <Route path="barberos/nuevo" element={<BarberoNuevoPage />} />
+            <Route path="barberos/:id" element={<BarberoEditarPage />} />
           </Route>
         </Route>
       </Route>
