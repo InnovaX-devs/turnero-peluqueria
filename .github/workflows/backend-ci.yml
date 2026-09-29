@@ -24,7 +24,7 @@ jobs:
       postgres:
         image: postgres:16
         env:
-          POSTGRES_DB: barberia
+          POSTGRES_DB: barberia_test
           POSTGRES_USER: barberia
           POSTGRES_PASSWORD: barberia
         ports:
