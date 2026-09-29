@@ -24,6 +24,12 @@ spring:
   flyway:
     enabled: true
 
+  # Fotos de barberos: Spring corta en 1 MB por defecto, el código permite hasta 5 MB
+  servlet:
+    multipart:
+      max-file-size: 5MB
+      max-request-size: 6MB
+
 server:
   port: 8080
 
