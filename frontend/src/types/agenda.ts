@@ -20,6 +20,18 @@ export interface Turno {
   clienteNombre: string | null
   clienteTelefono: string | null
   notas: string | null
+  /** Quién marcó el turno como completado/ausente/cancelado. Null = nunca se cambió. */
+  estadoCambiadoPorEmail: string | null
+  estadoCambiadoEn: string | null
+}
+
+/** Body para cambiar el estado de un turno desde el detalle del panel. */
+export interface CambiarEstadoTurno {
+  estado: EstadoAtencion
+  /** En centavos. Solo aplica al completar; si se omite se mantiene el precio actual. */
+  precioFinal?: number
+  /** Obligatorio al completar; se ignora para los demás estados. */
+  metodoPago?: MetodoPago
 }
 
 export interface Bloqueo {

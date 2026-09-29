@@ -330,3 +330,84 @@ button.agenda-item:active {
     border-radius: 16px;
   }
 }
+
+/* ---------- Cambiar estado del turno ---------- */
+
+.agenda-modal-estado {
+  margin: 0 0 20px;
+  padding: 16px;
+  background: var(--fondo);
+  border-radius: 12px;
+}
+
+.agenda-modal-acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.agenda-modal-acciones button {
+  flex: 1 1 auto;
+}
+
+.agenda-modal-accion-cancelar {
+  color: var(--error);
+  border-color: var(--error-fondo);
+}
+
+.agenda-modal-formulario {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.agenda-modal-campo {
+  display: block;
+}
+
+.agenda-modal-campo-etiqueta {
+  display: block;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--texto-suave);
+  margin-bottom: 6px;
+}
+
+.agenda-modal-campo input,
+.agenda-modal-campo select {
+  width: 100%;
+  padding: 12px 14px;
+  font-size: 1rem;
+  border: 1px solid var(--borde);
+  border-radius: 12px;
+  background: var(--fondo-tarjeta);
+  color: var(--texto);
+}
+
+.agenda-modal-campo input:focus,
+.agenda-modal-campo select:focus {
+  outline: none;
+  border-color: var(--acento);
+  box-shadow: 0 0 0 3px var(--acento-suave);
+}
+
+.agenda-modal-confirmacion-texto {
+  margin: 0;
+  font-weight: 600;
+}
+
+.agenda-modal-error {
+  margin: 0;
+  color: var(--error);
+  font-size: 0.875rem;
+}
+
+.agenda-modal-confirmar {
+  display: flex;
+  gap: 8px;
+}
+
+.agenda-modal-confirmar .boton-principal {
+  width: auto;
+  flex: 1 1 auto;
+}

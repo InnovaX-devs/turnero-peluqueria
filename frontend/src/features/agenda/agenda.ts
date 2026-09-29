@@ -75,6 +75,11 @@ export function formatearFechaCorta(fechaISO: string): string {
   return aFechaLocal(fechaISO).toLocaleDateString('es-AR', { weekday: 'short', day: 'numeric', month: 'short' })
 }
 
+/** Para mostrar "quién y cuándo" cambió el estado de un turno. */
+export function formatearFechaHora(iso: string): string {
+  return new Date(iso).toLocaleString('es-AR', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })
+}
+
 // Se movió a lib/formato.ts para compartirlo con la reserva pública
 export { formatearPrecio } from '../../lib/formato'
 

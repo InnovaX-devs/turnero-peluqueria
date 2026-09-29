@@ -1,5 +1,6 @@
 package com.innovax.barberia.atencion;
 
+import com.innovax.barberia.auth.Usuario;
 import com.innovax.barberia.barberia.Barberia;
 import com.innovax.barberia.barbero.Barbero;
 import com.innovax.barberia.cliente.Cliente;
@@ -80,6 +81,14 @@ public class Atencion {
 
     @Column(length = 2000)
     private String notas;
+
+    /** Quién marcó el turno como completado, ausente o cancelado. Null: nunca se cambió. */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "estado_cambiado_por")
+    private Usuario estadoCambiadoPor;
+
+    /** Cuándo se hizo ese último cambio de estado. */
+    private Instant estadoCambiadoEn;
 
     @CreationTimestamp
     @Column(nullable = false, updatable = false)
