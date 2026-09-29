@@ -1,9 +1,23 @@
+import { useEffect, useState } from 'react'
 import { NavLink, Outlet } from 'react-router-dom'
 import { useAuth } from '../auth/useAuth'
+import { RegistrarCorte } from '../atenciones/RegistrarCorte'
+import { useOpcionesRegistro } from '../atenciones/useOpcionesRegistro'
 import './panel.css'
 
 export function PanelLayout() {
   const { usuario, cerrarSesion } = useAuth()
+  const [registrando, setRegistrando] = useState(false)
+  const [aviso, setAviso] = useState<string | null>(null)
+
+  // Precarga servicios y barberos: así el formulario abre al instante
+  useOpcionesRegistro()
+
+  useEffect(() => {
+    if (!aviso) return
+    const timer = setTimeout(() => setAviso(null), 3000)
+    return () => clearTimeout(timer)
+  }, [aviso])
 
   return (
     <div className="panel">
@@ -25,6 +39,27 @@ export function PanelLayout() {
       <main className="panel-contenido">
         <Outlet />
       </main>
+
+      {/* Siempre visible, en cualquier pantalla del panel */}
+      <button type="button" className="boton-registrar" onClick={() => setRegistrando(true)}>
+        + Registrar corte
+      </button>
+
+      {registrando && (
+        <RegistrarCorte
+          onCerrar={() => setRegistrando(false)}
+          onRegistrado={() => {
+            setRegistrando(false)
+            setAviso('Corte registrado')
+          }}
+        />
+      )}
+
+      {aviso && (
+        <div className="panel-aviso" role="status">
+          {aviso}
+        </div>
+      )}
     </div>
   )
 }

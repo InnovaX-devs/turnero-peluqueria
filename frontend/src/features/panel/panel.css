@@ -50,3 +50,42 @@
   color: var(--texto);
   border-bottom-color: var(--acento);
 }
+
+.boton-registrar {
+  position: fixed;
+  right: 16px;
+  bottom: calc(16px + env(safe-area-inset-bottom));
+  z-index: 10;
+  padding: 16px 22px;
+  border: none;
+  border-radius: 999px;
+  background: var(--boton);
+  color: #fff;
+  font-weight: 700;
+  font-size: 1rem;
+  box-shadow: 0 6px 18px rgb(0 0 0 / 0.2);
+  cursor: pointer;
+}
+
+.boton-registrar:focus-visible {
+  outline: 3px solid var(--acento);
+  outline-offset: 3px;
+}
+
+/* Que el botón flotante no tape lo último de la página */
+.panel-contenido {
+  padding-bottom: 104px;
+}
+
+.panel-aviso {
+  position: fixed;
+  left: 50%;
+  bottom: calc(88px + env(safe-area-inset-bottom));
+  transform: translateX(-50%);
+  z-index: 11;
+  padding: 10px 18px;
+  border-radius: 999px;
+  background: #1f7a4d;
+  color: #fff;
+  font-weight: 600;
+}
