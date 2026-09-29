@@ -244,7 +244,6 @@ function FormularioCorte({ opciones, onRegistrado }: FormularioProps) {
             className="registro-input"
             type="datetime-local"
             value={fechaHora}
-            max={ahoraEnZona(opciones.zonaHoraria)}
             onChange={(e) => {
               setFechaHora(e.target.value)
               setFechaEditada(true)

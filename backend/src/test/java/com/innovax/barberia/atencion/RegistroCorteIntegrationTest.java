@@ -43,6 +43,7 @@ class RegistroCorteIntegrationTest {
     private static final UUID SUCURSAL = UUID.fromString("bbbbbbbb-0000-0000-0000-000000000001");
     private static final String ANDRES = "cccccccc-0000-0000-0000-000000000002";
 
+    
     @Autowired
     private WebApplicationContext context;
     @Autowired
@@ -176,3 +177,4 @@ class RegistroCorteIntegrationTest {
                 .andExpect(status().isConflict());
     }
 }
+
