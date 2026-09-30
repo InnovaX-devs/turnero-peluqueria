@@ -199,3 +199,39 @@
   width: auto;
   padding: 14px 28px;
 }
+
+/* Logo: subida de archivo */
+.config-logo-subida {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.config-logo-subida .config-logo {
+  margin-top: 0;
+}
+
+.config-logo-vacio {
+  display: grid;
+  place-items: center;
+  width: 96px;
+  height: 96px;
+  border-radius: 12px;
+  border: 1px dashed var(--borde);
+  font-size: 0.8rem;
+  text-align: center;
+  opacity: 0.7;
+}
+
+.config-logo-acciones {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.config-logo-acciones .config-ayuda,
+.config-logo-acciones .config-campo-error {
+  flex-basis: 100%;
+  margin-top: 0;
+}

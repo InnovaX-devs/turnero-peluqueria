@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from 'react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { actualizarBarberia } from '../../api/barberia'
+import { LogoBarberia } from './LogoBarberia'
 import { erroresDeCampos, mensajeDeError } from '../../lib/errores'
 import type { Barberia } from '../../types/barberia'
 import {
@@ -35,7 +36,6 @@ export function FormularioBarberia({ barberia }: { barberia: Barberia }) {
   const [errores, setErrores] = useState<Record<string, string>>({})
   const [errorGeneral, setErrorGeneral] = useState<string | null>(null)
   const [guardado, setGuardado] = useState(false)
-  const [logoRoto, setLogoRoto] = useState<string | null>(null)
 
   const guardar = useMutation({
     mutationFn: actualizarBarberia,
@@ -67,7 +67,13 @@ export function FormularioBarberia({ barberia }: { barberia: Barberia }) {
   const hayCambios = !sonIguales(datos, barberia)
   const slugCambio = datos.slug !== barberia.slug
   const urlPublica = `${window.location.origin}/b/${datos.slug || 'tu-barberia'}`
-  const mostrarLogo = datos.logoUrl !== null && /^https?:\/\/\S+$/.test(datos.logoUrl) && logoRoto !== datos.logoUrl
+
+  // El logo se sube/quita al instante (como la foto del barbero). Se sincroniza el form para que
+  // "Guardar cambios" no pise el logo nuevo con el valor viejo.
+  function alCambiarLogo(actualizada: Barberia) {
+    queryClient.setQueryData(['barberia'], actualizada)
+    setForm((f) => ({ ...f, logoUrl: actualizada.logoUrl ?? '' }))
+  }
 
   function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault()
@@ -121,27 +127,10 @@ export function FormularioBarberia({ barberia }: { barberia: Barberia }) {
           {errores.slug && <span className="config-campo-error" role="alert">{errores.slug}</span>}
         </label>
 
-        <label className="config-campo">
-          <span className="config-etiqueta">Logo (URL de la imagen)</span>
-          <input
-            type="url"
-            inputMode="url"
-            value={form.logoUrl}
-            maxLength={500}
-            placeholder="https://…"
-            onChange={(e) => cambiar('logoUrl', e.target.value)}
-            aria-invalid={!!errores.logoUrl}
-          />
-          {errores.logoUrl && <span className="config-campo-error" role="alert">{errores.logoUrl}</span>}
-          {mostrarLogo && (
-            <img
-              className="config-logo"
-              src={datos.logoUrl ?? undefined}
-              alt="Vista previa del logo"
-              onError={() => setLogoRoto(datos.logoUrl)}
-            />
-          )}
-        </label>
+        <div className="config-campo">
+          <span className="config-etiqueta">Logo</span>
+          <LogoBarberia logoUrl={barberia.logoUrl} onCambio={alCambiarLogo} />
+        </div>
       </fieldset>
 
       {/* ---------- Reservas online ---------- */}
@@ -272,7 +261,6 @@ export function FormularioBarberia({ barberia }: { barberia: Barberia }) {
   )
 }
 
-/** Las opciones habituales, más el valor actual si es uno personalizado (para no perderlo). */
 /** Las opciones fijas, más el valor actual si alguien lo guardó con otro número. */
 function opcionesAnticipacion(actual: number, opciones: number[] = ANTICIPACIONES_MINIMAS): number[] {
   return opciones.includes(actual) ? opciones : [...opciones, actual].sort((a, b) => a - b)
