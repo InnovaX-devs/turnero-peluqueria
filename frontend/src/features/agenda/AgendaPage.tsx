@@ -4,6 +4,7 @@ import { obtenerAgenda } from '../../api/agenda'
 import { mensajeDeError } from '../../lib/errores'
 import type { Bloqueo, Turno } from '../../types/agenda'
 import { useAuth } from '../auth/useAuth'
+import { BloqueoForm } from './BloqueoForm'
 import { TurnoDetalle } from './TurnoDetalle'
 import {
   ETIQUETAS_ESTADO,
@@ -19,6 +20,7 @@ import {
   rangoDeVista,
   sumarDias,
 } from './agenda'
+import { esDiaCompleto } from './bloqueos'
 import './agenda.css'
 
 export function AgendaPage() {
@@ -29,7 +31,8 @@ export function AgendaPage() {
   const [vista, setVista] = useState<Vista>('dia')
   const [barberoId, setBarberoId] = useState<string | null>(null)
   const [seleccionado, setSeleccionado] = useState<Turno | null>(null)
-
+  // null = cerrado; { bloqueo: null } = bloqueo nuevo; { bloqueo } = editar ese bloqueo
+ const [formBloqueo, setFormBloqueo] = useState<{ bloqueo: Bloqueo | null } | null>(null)
   const { desde, hasta } = rangoDeVista(vista, fecha)
   const filtroBarbero = esAdmin ? (barberoId ?? undefined) : undefined
 
@@ -77,6 +80,10 @@ export function AgendaPage() {
               Semana
             </button>
           </div>
+
+          <button type="button" className="boton-secundario" onClick={() => setFormBloqueo({ bloqueo: null })}>
+            + Bloquear horario
+          </button>
 
           {esAdmin && data && data.barberos.length > 0 && (
             <select
@@ -132,9 +139,13 @@ export function AgendaPage() {
                               <TarjetaTurno turno={turno} mostrarBarbero={mostrarBarbero} />
                             </button>
                           ) : bloqueo ? (
-                            <div className="agenda-item agenda-item-bloqueo">
+                            <button
+                              type="button"
+                              className="agenda-item agenda-item-bloqueo"
+                              onClick={() => setFormBloqueo({ bloqueo })}
+                            >
                               <TarjetaBloqueo bloqueo={bloqueo} mostrarBarbero={mostrarBarbero} />
-                            </div>
++                            </button>
                           ) : null}
                         </li>
                       )
@@ -148,6 +159,15 @@ export function AgendaPage() {
       )}
 
       {seleccionado && <TurnoDetalle turno={seleccionado} onCerrar={() => setSeleccionado(null)} />}
+
+      {formBloqueo && (
+        <BloqueoForm
+          bloqueo={formBloqueo.bloqueo}
+          fechaInicial={fecha}
+          barberoInicialId={filtroBarbero ?? null}
+          onCerrar={() => setFormBloqueo(null)}
+        />
+      )}
     </section>
   )
 }
@@ -176,8 +196,14 @@ function TarjetaBloqueo({ bloqueo, mostrarBarbero }: { bloqueo: Bloqueo; mostrar
   return (
     <>
       <div className="agenda-item-hora">
-        {formatearHora(bloqueo.inicio)}
-        <span className="agenda-item-hora-fin">–{formatearHora(bloqueo.fin)}</span>
+        {esDiaCompleto(bloqueo) ? (
+          'Todo el día'
+        ) : (
+          <>
+            {formatearHora(bloqueo.inicio)}
+            <span className="agenda-item-hora-fin">–{formatearHora(bloqueo.fin)}</span>
+          </>
+        )}
       </div>
       <div className="agenda-item-cuerpo">
         <strong>{bloqueo.motivo ?? 'Bloqueado'}</strong>
