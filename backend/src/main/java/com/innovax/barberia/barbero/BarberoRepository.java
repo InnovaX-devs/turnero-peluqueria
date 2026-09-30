@@ -2,6 +2,8 @@ package com.innovax.barberia.barbero;
 
 import com.innovax.barberia.servicio.Servicio;
 import com.innovax.barberia.sucursal.Sucursal;
+
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
@@ -17,4 +19,10 @@ public interface BarberoRepository extends JpaRepository<Barbero, UUID> {
 
     /** Lista para el selector de barbero de la agenda del panel. */
     List<Barbero> findByBarberiaIdAndActivoTrueOrderByNombreAscApellidoAsc(UUID barberiaId);
+
+    @EntityGraph(attributePaths = {"sucursales", "servicios", "usuario"})
+    List<Barbero> findByBarberiaIdOrderByNombreAscApellidoAsc(UUID barberiaId);
+
+    @EntityGraph(attributePaths = {"sucursales", "servicios", "usuario"})
+    Optional<Barbero> findByIdAndBarberiaId(UUID id, UUID barberiaId);
 }

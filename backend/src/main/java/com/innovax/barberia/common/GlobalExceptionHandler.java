@@ -7,6 +7,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -51,5 +52,10 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ApiError> conflicto(ConflictoException ex) {
         return ResponseEntity.status(HttpStatus.CONFLICT)
                 .body(new ApiError(409, ex.getMessage(), Map.of(ex.getCampo(), ex.getMessage())));
+    }
+
+    @ExceptionHandler(MaxUploadSizeExceededException.class)
+    public ResponseEntity<ApiError> archivoMuyGrande(MaxUploadSizeExceededException ex) {
+        return ResponseEntity.status(413).body(ApiError.of(413, "El archivo pesa más de 5 MB"));
     }
 }
