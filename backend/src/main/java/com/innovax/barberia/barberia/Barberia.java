@@ -41,6 +41,10 @@ public class Barberia {
     @Column(nullable = false)
     private int anticipacionMaximaDias = 30;
 
+    /** Hasta cuántos minutos antes del turno el cliente puede cancelarlo o reprogramarlo online. */
+    @Column(nullable = false)
+    private int anticipacionCancelacionMin = 120;
+
     @Column(nullable = false)
     private int intervaloSlotsMin = 30;
 

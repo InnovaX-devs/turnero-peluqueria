@@ -7,6 +7,7 @@ import { RutaProtegida } from '../features/auth/RutaProtegida'
 import { PanelInicio } from '../features/panel/PanelInicio'
 import { PanelLayout } from '../features/panel/PanelLayout'
 import { ReservaPage } from '../features/reserva/ReservaPage'
+import { GestionTurnoPage } from '../features/turno/GestionTurnoPage'
 import { CajaPage } from '../features/caja/CajaPage'
 import { ReportesPage } from '../features/reportes/ReportesPage'
 import { BarberoEditarPage, BarberoNuevoPage } from '../features/barberos/BarberoPage'
@@ -40,6 +41,7 @@ export function App() {
 
       {/* Reserva pública: sin login */}
       <Route path="/b/:slug" element={<ReservaPage />} />
+      <Route path="/turno/:token" element={<GestionTurnoPage />} />
 
       <Route path="*" element={<Navigate to="/panel" replace />} />
     </Routes>

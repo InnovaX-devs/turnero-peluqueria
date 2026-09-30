@@ -2,6 +2,7 @@ services:
   db:
     image: postgres:16
     container_name: barberia-db
+    restart: unless-stopped
     environment:
       POSTGRES_DB: ${DB_NAME:-barberia}
       POSTGRES_USER: ${DB_USER:-barberia}

@@ -2,6 +2,7 @@ import type { ActualizarBarberia } from '../../types/barberia'
 
 export const INTERVALOS = [15, 30]
 export const ANTICIPACIONES_MINIMAS = [0, 15, 30, 60, 120, 180, 360, 720, 1440, 2880]
+export const ANTICIPACIONES_CANCELACION = [0, 30, 60, 120, 180, 360, 720, 1440, 2880]
 
 /** Estado del formulario: los campos de texto/número se guardan como string mientras se editan. */
 export interface Formulario {
@@ -12,6 +13,7 @@ export interface Formulario {
   anticipacionMinimaMin: number
   anticipacionMaximaDias: string
   intervaloSlotsMin: number
+  anticipacionCancelacionMin: number
 }
 
 const SLUG_VALIDO = /^[a-z0-9]+(-[a-z0-9]+)*$/
@@ -37,6 +39,7 @@ export function aDatos(f: Formulario): ActualizarBarberia {
     anticipacionMinimaMin: f.anticipacionMinimaMin,
     anticipacionMaximaDias: Number(f.anticipacionMaximaDias),
     intervaloSlotsMin: f.intervaloSlotsMin,
+    anticipacionCancelacionMin: f.anticipacionCancelacionMin,
   }
 }
 
@@ -48,7 +51,8 @@ export function sonIguales(a: ActualizarBarberia, b: ActualizarBarberia): boolea
     a.reservasOnline === b.reservasOnline &&
     a.anticipacionMinimaMin === b.anticipacionMinimaMin &&
     a.anticipacionMaximaDias === b.anticipacionMaximaDias &&
-    a.intervaloSlotsMin === b.intervaloSlotsMin
+    a.intervaloSlotsMin === b.intervaloSlotsMin &&
+    a.anticipacionCancelacionMin === b.anticipacionCancelacionMin
   )
 }
 

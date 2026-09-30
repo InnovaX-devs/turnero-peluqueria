@@ -12,12 +12,13 @@ public record BarberiaResponse(
         boolean reservasOnline,
         int anticipacionMinimaMin,
         int anticipacionMaximaDias,
-        int intervaloSlotsMin
+        int intervaloSlotsMin,
+        int anticipacionCancelacionMin
 ) {
 
     public static BarberiaResponse de(Barberia b) {
         return new BarberiaResponse(b.getId(), b.getNombre(), b.getSlug(), b.getLogoUrl(),
                 b.isReservasOnline(), b.getAnticipacionMinimaMin(), b.getAnticipacionMaximaDias(),
-                b.getIntervaloSlotsMin());
+                b.getIntervaloSlotsMin(), b.getAnticipacionCancelacionMin());
     }
 }

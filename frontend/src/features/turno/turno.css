@@ -1,0 +1,43 @@
+.turno-encabezado { margin-bottom: 20px; }
+.turno-encabezado h1 { margin: 4px 0 0; font-size: 1.5rem; line-height: 1.25; }
+.turno-barberia { margin: 0; font-weight: 700; color: var(--texto-suave); }
+
+.turno-aviso {
+  margin: 0 0 16px; padding: 12px 14px; border-radius: 12px;
+  background: var(--acento-suave); border: 1px solid var(--acento); font-weight: 600;
+}
+.turno-estado {
+  display: flex; flex-direction: column; align-items: flex-start; gap: 12px;
+  margin-bottom: 16px; padding: 14px 16px; border-radius: 12px;
+  background: var(--fondo-tarjeta); border: 1px solid var(--borde);
+}
+.turno-estado p { margin: 0; }
+.turno-estado-cancelado { border-color: var(--error); }
+.turno-link { text-decoration: none; color: var(--texto); }
+
+.turno-acciones { display: flex; flex-direction: column; gap: 10px; margin-top: 20px; }
+.turno-acciones > button { width: 100%; }
+.turno-acciones-fila { display: flex; flex-wrap: wrap; gap: 10px; }
+.turno-limite { margin: 4px 0 0; font-size: 0.875rem; color: var(--texto-suave); }
+
+.turno-confirmar {
+  display: flex; flex-direction: column; gap: 12px; margin-top: 20px; padding: 16px;
+  border-radius: 12px; background: var(--fondo-tarjeta); border: 1px solid var(--borde);
+}
+.turno-confirmar p { margin: 0; }
+.turno-error { color: var(--error); }
+
+.boton-peligro {
+  padding: 12px 18px; border: none; border-radius: 12px; cursor: pointer;
+  font: inherit; font-weight: 700; color: #fff; background: var(--error);
+}
+.boton-peligro:disabled { opacity: 0.6; cursor: not-allowed; }
+.boton-peligro:focus-visible { outline: 3px solid var(--acento); outline-offset: 2px; }
+
+/* En el link guardado */
+.reserva-link-turno {
+  margin: 20px 0; padding: 14px 16px; border-radius: 12px;
+  background: var(--fondo-tarjeta); border: 1px dashed var(--borde); text-align: left;
+}
+.reserva-link-turno p { margin: 0 0 10px; }
+.reserva-link-turno .turno-acciones-fila > * { flex: 1; text-align: center; text-decoration: none; color: var(--texto); }

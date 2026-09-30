@@ -44,6 +44,11 @@ public record ActualizarBarberiaRequest(
 
         /** Solo 15 o 30 (se valida en el service). */
         @NotNull(message = "El intervalo de horarios es obligatorio")
-        Integer intervaloSlotsMin
+        Integer intervaloSlotsMin,
+
+        /** Opcional: si no viene, se mantiene el valor actual. */
+        @Min(value = 0, message = "La anticipación para cancelar no puede ser negativa")
+        @Max(value = 10080, message = "La anticipación para cancelar puede ser de hasta 7 días")
+        Integer anticipacionCancelacionMin
 ) {
 }
