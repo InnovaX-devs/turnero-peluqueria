@@ -1,6 +1,7 @@
 package com.innovax.barberia.barberia;
 
 import com.innovax.barberia.auth.UsuarioActual;
+import com.innovax.barberia.barbero.FotoStorageService;
 import com.innovax.barberia.barberia.dto.ActualizarBarberiaRequest;
 import com.innovax.barberia.barberia.dto.BarberiaResponse;
 import com.innovax.barberia.common.ConflictoException;
@@ -9,6 +10,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.Set;
 
@@ -21,6 +23,7 @@ public class BarberiaService {
 
     private final BarberiaRepository barberias;
     private final UsuarioActual usuarioActual;
+    private final FotoStorageService fotos;
 
     @Transactional(readOnly = true)
     public BarberiaResponse obtener() {
@@ -69,6 +72,24 @@ public class BarberiaService {
             }
             throw e;
         }
+        return BarberiaResponse.de(barberia);
+    }
+
+    @Transactional
+    public BarberiaResponse subirLogo(MultipartFile archivo) {
+        Barberia barberia = barberiaActual();
+        String anterior = barberia.getLogoUrl();
+        barberia.setLogoUrl(fotos.subirLogo(barberia.getId(), archivo));
+        fotos.borrarSilencioso(anterior);
+        return BarberiaResponse.de(barberia);
+    }
+
+    @Transactional
+    public BarberiaResponse quitarLogo() {
+        Barberia barberia = barberiaActual();
+        String anterior = barberia.getLogoUrl();
+        barberia.setLogoUrl(null);
+        fotos.borrarSilencioso(anterior);
         return BarberiaResponse.de(barberia);
     }
 

@@ -90,3 +90,4 @@ export function etiquetaMinutos(min: number): string {
   const resto = min % 60
   return resto === 0 ? `${horas} h` : `${horas} h ${resto} min`
 }
+

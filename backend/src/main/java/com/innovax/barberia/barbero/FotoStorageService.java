@@ -39,6 +39,15 @@ public class FotoStorageService {
 
     /** Devuelve la URL pública de la foto subida. */
     public String subir(UUID barberiaId, UUID barberoId, MultipartFile archivo) {
+        return subirArchivo(barberiaId, barberoId.toString(), archivo);
+    }
+
+    /** Sube el logo de la barbería (mismo bucket, carpeta de la barbería). Devuelve la URL pública. */
+    public String subirLogo(UUID barberiaId, MultipartFile archivo) {
+        return subirArchivo(barberiaId, "logo", archivo);
+    }
+
+    private String subirArchivo(UUID barberiaId, String nombre, MultipartFile archivo) {
         if (baseUrl.isBlank() || serviceKey.isBlank()) {
             throw new IllegalStateException("Falta configurar SUPABASE_URL y SUPABASE_SERVICE_KEY");
         }
@@ -61,7 +70,7 @@ public class FotoStorageService {
         }
 
         // Nombre único por subida: evita que el navegador/CDN muestre la foto vieja cacheada
-        String ruta = barberiaId + "/" + barberoId + "-" + UUID.randomUUID() + "." + formato.ext();
+        String ruta = barberiaId + "/" + nombre + "-" + UUID.randomUUID() + "." + formato.ext();
         try {
             http.post()
                     .uri(baseUrl + "/storage/v1/object/" + bucket + "/" + ruta)
