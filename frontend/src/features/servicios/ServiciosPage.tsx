@@ -17,6 +17,7 @@ export function ServiciosPage() {
   const [formulario, setFormulario] = useState<string | null>(null)
   const [verInactivos, setVerInactivos] = useState(false)
   const [errorAccion, setErrorAccion] = useState<string | null>(null)
+  const [confirmandoBaja, setConfirmandoBaja] = useState<string | null>(null)
 
   const { data, isPending, error, refetch } = useQuery({
     queryKey: CLAVE_LISTA_SERVICIOS,
@@ -57,14 +58,9 @@ export function ServiciosPage() {
     reordenar.mutate(ids)
   }
 
-  function darDeBaja(s: Servicio) {
-    if (
-      window.confirm(
-        `¿Dar de baja "${s.nombre}"? Deja de mostrarse para reservar y para registrar cortes. Las atenciones ya registradas se conservan.`,
-      )
-    ) {
-      cambiarActivo.mutate({ id: s.id, activo: false })
-    }
+  function confirmarBaja(id: string) {
+    setConfirmandoBaja(null)
+    cambiarActivo.mutate({ id, activo: false })
   }
 
   function datos(s: Servicio) {
@@ -156,7 +152,7 @@ export function ServiciosPage() {
                   />
                 </li>
               ) : (
-                <li key={s.id} className="barbero-tarjeta">
+                <li key={s.id} className="barbero-tarjeta servicio-tarjeta">
                   <div className="servicio-orden">
                     <button
                       type="button"
@@ -179,14 +175,41 @@ export function ServiciosPage() {
                     <strong>{s.nombre}</strong>
                     {datos(s)}
                   </div>
-                  <div className="barbero-acciones">
-                    <button type="button" className="boton-secundario" onClick={() => setFormulario(s.id)}>
-                      Editar
-                    </button>
-                    <button type="button" className="boton-texto" disabled={ocupado} onClick={() => darDeBaja(s)}>
-                      Dar de baja
-                    </button>
-                  </div>
+                  {confirmandoBaja !== s.id && (
+                    <div className="barbero-acciones">
+                      <button type="button" className="boton-secundario" onClick={() => setFormulario(s.id)}>
+                        Editar
+                      </button>
+                      <button
+                        type="button"
+                        className="boton-texto"
+                        disabled={ocupado}
+                        onClick={() => setConfirmandoBaja(s.id)}
+                      >
+                        Dar de baja
+                      </button>
+                    </div>
+                  )}
+                  {confirmandoBaja === s.id && (
+                    <div className="servicio-confirmacion" role="alert">
+                      <span>
+                        Deja de mostrarse para reservar y registrar cortes. Las atenciones ya registradas se conservan.
+                      </span>
+                      <div className="barbero-acciones">
+                        <button
+                          type="button"
+                          className="boton-secundario servicio-baja-confirmar"
+                          disabled={ocupado}
+                          onClick={() => confirmarBaja(s.id)}
+                        >
+                          Sí, dar de baja
+                        </button>
+                        <button type="button" className="boton-texto" onClick={() => setConfirmandoBaja(null)}>
+                          Cancelar
+                        </button>
+                      </div>
+                    </div>
+                  )}
                 </li>
               ),
             )}

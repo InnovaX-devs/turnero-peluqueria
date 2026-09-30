@@ -27,7 +27,7 @@ public record BarberoResponse(
                 b.getFotoUrl(),
                 b.isActivo(),
                 b.getSucursales().stream().map(Sucursal::getId).toList(),
-                b.getServicios().stream().map(Servicio::getId).toList(),
+                b.getServicios().stream().filter(Servicio::isActivo).map(Servicio::getId).toList(),
                 b.getUsuario() == null ? null : b.getUsuario().getEmail());
     }
 }

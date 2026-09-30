@@ -58,3 +58,26 @@
 .servicio-form .config-ayuda {
   margin-top: 0;
 }
+
+.servicio-tarjeta {
+  flex-wrap: wrap;
+}
+
+.servicio-confirmacion {
+  flex-basis: 100%;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding-top: 12px;
+  border-top: 1px solid var(--borde);
+  font-size: 0.875rem;
+  color: var(--texto-suave);
+}
+
+.servicio-baja-confirmar {
+  color: var(--error);
+  border-color: var(--error);
+  font-weight: 600;
+}
