@@ -161,7 +161,12 @@ export function AgendaPage() {
       {seleccionado && <TurnoDetalle turno={seleccionado} onCerrar={() => setSeleccionado(null)} />}
 
       {formBloqueo && (
-        <BloqueoForm bloqueo={formBloqueo.bloqueo} fechaInicial={fecha} onCerrar={() => setFormBloqueo(null)} />
+        <BloqueoForm
+          bloqueo={formBloqueo.bloqueo}
+          fechaInicial={fecha}
+          barberoInicialId={filtroBarbero ?? null}
+          onCerrar={() => setFormBloqueo(null)}
+        />
       )}
     </section>
   )

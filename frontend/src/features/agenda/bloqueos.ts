@@ -38,6 +38,7 @@ export function valoresIniciales(
   bloqueo: Bloqueo | null,
   fechaInicial: string,
   opciones: OpcionesRegistro,
+  barberoInicialId: string | null,
 ): ValoresBloqueo {
   if (bloqueo) {
     const inicio = partesEnZona(bloqueo.inicio, opciones.zonaHoraria)
@@ -53,6 +54,9 @@ export function valoresIniciales(
     }
   }
   
-  const barberoId = opciones.barberoPropioId ?? (opciones.barberos.length === 1 ? opciones.barberos[0].id : null)
+  const barberoId =
+    barberoInicialId ??
+    opciones.barberoPropioId ??
+    (opciones.barberos.length === 1 ? opciones.barberos[0].id : null)
   return { barberoId, diaCompleto: false, fecha: fechaInicial, desde: '', hasta: '', motivo: '' }
 }

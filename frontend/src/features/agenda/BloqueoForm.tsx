@@ -11,14 +11,13 @@ import '../atenciones/registro.css'
 import './bloqueo.css'
 
 interface Props {
-  /** null = bloqueo nuevo */
   bloqueo: Bloqueo | null
-  /** Día que se está viendo en la agenda: es el que se propone para un bloqueo nuevo */
   fechaInicial: string
+  barberoInicialId: string | null
   onCerrar: () => void
 }
 
-export function BloqueoForm({ bloqueo, fechaInicial, onCerrar }: Props) {
+export function BloqueoForm({ bloqueo, fechaInicial, barberoInicialId, onCerrar }: Props) {
   const ref = useRef<HTMLDialogElement>(null)
   const { data, isPending, error, refetch } = useOpcionesRegistro()
 
@@ -57,7 +56,15 @@ export function BloqueoForm({ bloqueo, fechaInicial, onCerrar }: Props) {
             </button>
           </div>
         )}
-        {data && <Formulario bloqueo={bloqueo} fechaInicial={fechaInicial} opciones={data} onCerrar={onCerrar} />}
+        {data && (
+          <Formulario
+            bloqueo={bloqueo}
+            fechaInicial={fechaInicial}
+            barberoInicialId={barberoInicialId}
+            opciones={data}
+            onCerrar={onCerrar}
+          />
+        )}
       </div>
     </dialog>
   )
@@ -72,13 +79,14 @@ function textoDeError(error: unknown): string {
 interface FormularioProps {
   bloqueo: Bloqueo | null
   fechaInicial: string
+  barberoInicialId: string | null
   opciones: OpcionesRegistro
   onCerrar: () => void
 }
 
-function Formulario({ bloqueo, fechaInicial, opciones, onCerrar }: FormularioProps) {
+function Formulario({ bloqueo, fechaInicial, barberoInicialId, opciones, onCerrar }: FormularioProps) {
   const queryClient = useQueryClient()
-  const [inicial] = useState(() => valoresIniciales(bloqueo, fechaInicial, opciones))
+  const [inicial] = useState(() => valoresIniciales(bloqueo, fechaInicial, opciones, barberoInicialId))
 
   const [barberoId, setBarberoId] = useState<string | null>(inicial.barberoId)
   const [diaCompleto, setDiaCompleto] = useState(inicial.diaCompleto)
