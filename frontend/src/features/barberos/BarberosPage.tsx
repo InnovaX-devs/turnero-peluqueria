@@ -3,7 +3,6 @@ import { Link } from 'react-router-dom'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { cambiarActivoBarbero, listarBarberos } from '../../api/barberos'
 import { mensajeDeError } from '../../lib/errores'
-import type { Barbero } from '../../types/barbero'
 import { Avatar } from './FotoBarbero'
 import '../admin/configuracion.css'
 import './barberos.css'
@@ -11,6 +10,7 @@ import './barberos.css'
 export function BarberosPage() {
   const queryClient = useQueryClient()
   const [verInactivos, setVerInactivos] = useState(false)
+  const [confirmandoBaja, setConfirmandoBaja] = useState<string | null>(null)
   const [errorAccion, setErrorAccion] = useState<string | null>(null)
 
   const { data, isPending, error, refetch } = useQuery({
@@ -28,11 +28,9 @@ export function BarberosPage() {
     onError: (err) => setErrorAccion(mensajeDeError(err)),
   })
 
-  function desactivar(b: Barbero) {
-    const aviso = b.usuarioEmail ? ' También va a dejar de poder entrar al panel.' : ''
-    if (window.confirm(`¿Desactivar a ${b.nombre} ${b.apellido}?${aviso} Su historial se conserva.`)) {
-      cambiarActivo.mutate({ id: b.id, activo: false })
-    }
+  function confirmarBaja(id: string) {
+    setConfirmandoBaja(null)
+    cambiarActivo.mutate({ id, activo: false })
   }
 
   const visibles = (data ?? []).filter((b) => verInactivos || b.activo)
@@ -69,7 +67,14 @@ export function BarberosPage() {
 
       <ul className="barberos-lista">
         {visibles.map((b) => (
-          <li key={b.id} className={b.activo ? 'barbero-tarjeta' : 'barbero-tarjeta barbero-inactivo'}>
+          <li
+            key={b.id}
+            className={
+              b.activo
+                ? 'barbero-tarjeta barbero-confirmable'
+                : 'barbero-tarjeta barbero-confirmable barbero-inactivo'
+            }
+          >
             <Avatar barbero={b} />
             <div className="barbero-info">
               <strong>
@@ -81,25 +86,52 @@ export function BarberosPage() {
               </span>
               {!b.activo && <span className="badge badge-inactivo">Inactivo</span>}
             </div>
-            <div className="barbero-acciones">
-              <Link to={`/panel/barberos/${b.id}`} className="boton-secundario">
-                Editar
-              </Link>
-              {b.activo ? (
-                <button type="button" className="boton-texto" disabled={cambiarActivo.isPending} onClick={() => desactivar(b)}>
-                  Desactivar
-                </button>
-              ) : (
-                <button
-                  type="button"
-                  className="boton-texto"
-                  disabled={cambiarActivo.isPending}
-                  onClick={() => cambiarActivo.mutate({ id: b.id, activo: true })}
-                >
-                  Reactivar
-                </button>
-              )}
-            </div>
+            {confirmandoBaja !== b.id && (
+              <div className="barbero-acciones">
+                <Link to={`/panel/barberos/${b.id}`} className="boton-secundario">
+                  Editar
+                </Link>
+                {b.activo ? (
+                  <button
+                    type="button"
+                    className="boton-texto"
+                    disabled={cambiarActivo.isPending}
+                    onClick={() => setConfirmandoBaja(b.id)}
+                  >
+                    Desactivar
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    className="boton-texto"
+                    disabled={cambiarActivo.isPending}
+                    onClick={() => cambiarActivo.mutate({ id: b.id, activo: true })}
+                  >
+                    Reactivar
+                  </button>
+                )}
+              </div>
+            )}
+            {confirmandoBaja === b.id && (
+              <div className="barbero-confirmacion" role="alert">
+                <span>
+                  {b.usuarioEmail ? 'También va a dejar de poder entrar al panel. ' : ''}Su historial se conserva.
+                </span>
+                <div className="barbero-acciones">
+                  <button
+                    type="button"
+                    className="boton-secundario barbero-baja-confirmar"
+                    disabled={cambiarActivo.isPending}
+                    onClick={() => confirmarBaja(b.id)}
+                  >
+                    Sí, desactivar
+                  </button>
+                  <button type="button" className="boton-texto" onClick={() => setConfirmandoBaja(null)}>
+                    Cancelar
+                  </button>
+                </div>
+              </div>
+            )}
           </li>
         ))}
       </ul>
