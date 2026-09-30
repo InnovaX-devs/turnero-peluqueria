@@ -34,7 +34,7 @@ public class BloqueoController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public BloqueoAgendaResponse crear(@Valid @RequestBody BloqueoRequest request) {
+    public List<BloqueoAgendaResponse> crear(@Valid @RequestBody BloqueoRequest request) {
         return bloqueoService.crear(request);
     }
 

@@ -52,31 +52,43 @@ public class BloqueoService {
     @Transactional(readOnly = true)
     public List<TurnoAgendaResponse> turnosEnConflicto(BloqueoRequest request) {
         Barberia barberia = barberiaActual();
-        Barbero barbero = resolverBarbero(barberia, request.barberoId());
+        List<Barbero> destino = resolverBarberos(barberia, request.barberoIds());
         Rango rango = calcularRango(barberia, request);
-        return atenciones.findOcupadas(barbero.getId(), Set.of(EstadoAtencion.RESERVADA), rango.inicio(), rango.fin())
-                .stream()
+        return destino.stream()
+                .flatMap(barbero -> atenciones
+                        .findOcupadas(barbero.getId(), Set.of(EstadoAtencion.RESERVADA), rango.inicio(), rango.fin())
+                        .stream())
                 .sorted(Comparator.comparing(Atencion::getInicio))
                 .map(TurnoAgendaResponse::de)
                 .toList();
     }
 
     @Transactional
-    public BloqueoAgendaResponse crear(BloqueoRequest request) {
+    public List<BloqueoAgendaResponse> crear(BloqueoRequest request) {
         Barberia barberia = barberiaActual();
-        Barbero barbero = resolverBarbero(barberia, request.barberoId());
-        Bloqueo bloqueo = new Bloqueo();
-        aplicar(bloqueo, barberia, barbero, request);
-        return BloqueoAgendaResponse.de(bloqueos.saveAndFlush(bloqueo));
+        // Se valida todo antes de guardar: si un barbero o el horario no sirven, no se crea ningún bloqueo
+        List<Barbero> destino = resolverBarberos(barberia, request.barberoIds());
+        Rango rango = calcularRango(barberia, request);
+
+        List<Bloqueo> nuevos = destino.stream().map(barbero -> {
+            Bloqueo bloqueo = new Bloqueo();
+            aplicar(bloqueo, barbero, rango, request.motivo());
+            return bloqueo;
+        }).toList();
+        return bloqueos.saveAllAndFlush(nuevos).stream().map(BloqueoAgendaResponse::de).toList();
     }
 
     @Transactional
     public BloqueoAgendaResponse actualizar(UUID id, BloqueoRequest request) {
         Barberia barberia = barberiaActual();
         Bloqueo bloqueo = bloqueoPropio(barberia, id);
-        UUID barberoId = request.barberoId() != null ? request.barberoId() : bloqueo.getBarbero().getId();
+        List<UUID> pedidos = request.barberoIds() == null ? List.of() : request.barberoIds();
+        if (pedidos.size() > 1) {
+            throw new DatosInvalidosException("barberoIds", "Al editar un bloqueo se puede elegir un solo barbero");
+        }
+        UUID barberoId = pedidos.isEmpty() ? bloqueo.getBarbero().getId() : pedidos.get(0);
         Barbero barbero = resolverBarbero(barberia, barberoId);
-        aplicar(bloqueo, barberia, barbero, request);
+        aplicar(bloqueo, barbero, calcularRango(barberia, request), request.motivo());
         return BloqueoAgendaResponse.de(bloqueos.saveAndFlush(bloqueo));
     }
 
@@ -85,12 +97,11 @@ public class BloqueoService {
         bloqueos.delete(bloqueoPropio(barberiaActual(), id));
     }
 
-    private void aplicar(Bloqueo bloqueo, Barberia barberia, Barbero barbero, BloqueoRequest request) {
-        Rango rango = calcularRango(barberia, request);
+    private void aplicar(Bloqueo bloqueo, Barbero barbero, Rango rango, String motivoPedido) {
         bloqueo.setBarbero(barbero);
         bloqueo.setInicio(rango.inicio());
         bloqueo.setFin(rango.fin());
-        String motivo = request.motivo() == null ? "" : request.motivo().trim();
+        String motivo = motivoPedido == null ? "" : motivoPedido.trim();
         bloqueo.setMotivo(motivo.isEmpty() ? null : motivo);
     }
 
@@ -125,6 +136,14 @@ public class BloqueoService {
                 .orElseThrow(() -> new RecursoNoEncontradoException("Bloqueo no encontrado"));
         usuarioActual.verificarAccesoABarbero(bloqueo.getBarbero().getId());
         return bloqueo;
+    }
+
+    /** Sin barberos indicados: el del usuario logueado. Repetidos se cuentan una sola vez. */
+    private List<Barbero> resolverBarberos(Barberia barberia, List<UUID> pedidos) {
+        if (pedidos == null || pedidos.isEmpty()) {
+            return List.of(resolverBarbero(barberia, null));
+        }
+        return pedidos.stream().distinct().map(id -> resolverBarbero(barberia, id)).toList();
     }
 
     /** Barbero logueado: siempre él mismo. Admin: el que elija (o él mismo si también corta). */

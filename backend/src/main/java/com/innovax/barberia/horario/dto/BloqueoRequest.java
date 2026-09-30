@@ -5,17 +5,21 @@ import jakarta.validation.constraints.Size;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.util.List;
 import java.util.UUID;
 
 /**
- * Bloqueo de un barbero en un día. Fecha y horas en la zona horaria de la barbería.
+ * Bloqueo de uno o varios barberos en un día. Fecha y horas en la zona horaria de la barbería.
  * Con horaDesde y horaHasta es un rango horario (ej. almuerzo); sin ninguna de las dos,
  * bloquea el día completo (ej. franco).
  */
 public record BloqueoRequest(
 
-        /** null = el barbero logueado (al editar, null = no cambiar de barbero) */
-        UUID barberoId,
+        /**
+         * Barberos a bloquear (se crea un bloqueo por cada uno). null o vacío = el barbero logueado.
+         * Al editar un bloqueo: máximo uno (null o vacío = no cambiar de barbero).
+         */
+        List<UUID> barberoIds,
 
         @NotNull(message = "La fecha es obligatoria")
         LocalDate fecha,

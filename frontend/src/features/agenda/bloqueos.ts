@@ -26,7 +26,7 @@ export function partesEnZona(iso: string, zona: string): { fecha: string; hora: 
 }
 
 export interface ValoresBloqueo {
-  barberoId: string | null
+  barberoIds: string[]
   diaCompleto: boolean
   fecha: string
   desde: string
@@ -34,18 +34,19 @@ export interface ValoresBloqueo {
   motivo: string
 }
 
+
 export function valoresIniciales(
   bloqueo: Bloqueo | null,
   fechaInicial: string,
   opciones: OpcionesRegistro,
-  barberoInicialId: string | null,
+  barberoInicialId?: string | null,
 ): ValoresBloqueo {
   if (bloqueo) {
     const inicio = partesEnZona(bloqueo.inicio, opciones.zonaHoraria)
     const fin = partesEnZona(bloqueo.fin, opciones.zonaHoraria)
     const completo = esDiaCompleto(bloqueo)
     return {
-      barberoId: bloqueo.barberoId,
+      barberoIds: [bloqueo.barberoId],
       diaCompleto: completo,
       fecha: inicio.fecha,
       desde: completo ? '' : inicio.hora,
@@ -54,9 +55,14 @@ export function valoresIniciales(
     }
   }
   
-  const barberoId =
-    barberoInicialId ??
-    opciones.barberoPropioId ??
-    (opciones.barberos.length === 1 ? opciones.barberos[0].id : null)
-  return { barberoId, diaCompleto: false, fecha: fechaInicial, desde: '', hasta: '', motivo: '' }
+  const propuesto =
+    barberoInicialId ?? opciones.barberoPropioId ?? (opciones.barberos.length === 1 ? opciones.barberos[0].id : null)
+  return {
+    barberoIds: propuesto ? [propuesto] : [],
+    diaCompleto: false,
+    fecha: fechaInicial,
+    desde: '',
+    hasta: '',
+    motivo: '',
+  }
 }

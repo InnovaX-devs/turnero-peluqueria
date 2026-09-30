@@ -7,8 +7,8 @@ export async function verificarConflictos(datos: BloqueoDatos): Promise<Turno[]>
   return data
 }
 
-export async function crearBloqueo(datos: BloqueoDatos): Promise<Bloqueo> {
-  const { data } = await api.post<Bloqueo>('/api/bloqueos', datos)
+export async function crearBloqueo(datos: BloqueoDatos): Promise<Bloqueo[]> {
+  const { data } = await api.post<Bloqueo[]>('/api/bloqueos', datos)
   return data
 }
 

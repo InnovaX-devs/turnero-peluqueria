@@ -34,6 +34,12 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+
+import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Collectors;
+
+
 /**
  * Usa los datos del seed de dev (necesita la base levantada).
  * Es @Transactional: todo lo que crea se revierte al terminar.
@@ -84,18 +90,31 @@ class BloqueoIntegrationTest {
         return ZonedDateTime.of(fecha, LocalTime.of(hora, minuto), ZONA).toInstant();
     }
 
-    /** Body de un bloqueo por rango horario. */
+        /** ["id1","id2"], o null si no se indica ninguno (= el barbero logueado). */
+    private static String lista(String... ids) {
+        if (ids.length == 0 || ids[0] == null) {
+            return "null";
+        }
+        return Arrays.stream(ids).map(id -> "\"" + id + "\"").collect(Collectors.joining(",", "[", "]"));
+    }
+
+    /** Body de un bloqueo por rango horario, para un barbero (null = el logueado). */
     private String rango(String barberoId, int desdeHora, int hastaHora, String motivo) {
+        return rangoVarios(new String[]{barberoId}, desdeHora, hastaHora, motivo);
+    }
+
+    /** Body de un bloqueo por rango horario, para varios barberos. */
+    private String rangoVarios(String[] barberoIds, int desdeHora, int hastaHora, String motivo) {
         return """
-                {"barberoId":%s,"fecha":"%s","horaDesde":"%02d:00","horaHasta":"%02d:00","motivo":%s}
-                """.formatted(barberoId == null ? "null" : "\"" + barberoId + "\"", lunes, desdeHora, hastaHora,
+                {"barberoIds":%s,"fecha":"%s","horaDesde":"%02d:00","horaHasta":"%02d:00","motivo":%s}
+                """.formatted(lista(barberoIds), lunes, desdeHora, hastaHora,
                 motivo == null ? "null" : "\"" + motivo + "\"");
     }
 
     private String diaCompleto(String barberoId) {
         return """
-                {"barberoId":%s,"fecha":"%s"}
-                """.formatted(barberoId == null ? "null" : "\"" + barberoId + "\"", lunes);
+                {"barberoIds":%s,"fecha":"%s"}
+                """.formatted(lista(barberoId), lunes);
     }
 
     private String crear(String token, String json, int statusEsperado) throws Exception {
@@ -219,6 +238,70 @@ class BloqueoIntegrationTest {
         mvc.perform(post("/api/bloqueos/conflictos").header("Authorization", lucas())
                         .contentType(MediaType.APPLICATION_JSON).content(rango(null, 9, 11, null)))
                 .andExpect(jsonPath("$", hasSize(0)));
+    }
+
+        // ---------- Varios barberos a la vez ----------
+
+    private long bloqueosDe(String barberoId) {
+        return bloqueos.findSolapados(UUID.fromString(barberoId), a(lunes, 0, 0), a(lunes.plusDays(1), 0, 0)).size();
+    }
+
+    @Test
+    void adminBloqueaVariosBarberosDeUnaVez() throws Exception {
+        String respuesta = crear(admin(), rangoVarios(new String[]{LUCAS, ANDRES}, 13, 14, "Feriado"), 201);
+
+        assertThat((List<?>) JsonPath.read(respuesta, "$")).hasSize(2); // uno por barbero
+        assertThat(bloqueosDe(LUCAS)).isEqualTo(1);
+        assertThat(bloqueosDe(ANDRES)).isEqualTo(1);
+    }
+
+    @Test
+    void unBarberoRepetidoEnLaListaSeBloqueaUnaSolaVez() throws Exception {
+        String respuesta = crear(admin(), rangoVarios(new String[]{LUCAS, LUCAS}, 13, 14, null), 201);
+        assertThat((List<?>) JsonPath.read(respuesta, "$")).hasSize(1);
+    }
+
+    @Test
+    void siUnBarberoDeLaListaNoExisteNoSeCreaNingunBloqueo() throws Exception {
+        String token = admin();
+        crear(token, rangoVarios(new String[]{LUCAS, UUID.randomUUID().toString()}, 13, 14, null), 404);
+        assertThat(bloqueosDe(LUCAS)).isZero();
+    }
+
+    @Test
+    void barberoNoPuedeIncluirAOtroBarberoEnLaLista() throws Exception {
+        crear(lucas(), rangoVarios(new String[]{LUCAS, ANDRES}, 13, 14, null), 403);
+        assertThat(bloqueosDe(LUCAS)).isZero();
+        assertThat(bloqueosDe(ANDRES)).isZero();
+    }
+
+    @Test
+    void losConflictosSeBuscanEnTodosLosBarberosElegidos() throws Exception {
+        reservar(LUCAS, 10, "+5493584990014");
+        reservar(ANDRES, 10, "+5493584990015");
+
+        mvc.perform(post("/api/bloqueos/conflictos").header("Authorization", admin())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(rangoVarios(new String[]{LUCAS, ANDRES}, 9, 11, null)))
+                .andExpect(jsonPath("$", hasSize(2)));
+
+        // Solo con Lucas tildado, el turno de Andrés no cuenta
+        mvc.perform(post("/api/bloqueos/conflictos").header("Authorization", admin())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(rangoVarios(new String[]{LUCAS}, 9, 11, null)))
+                .andExpect(jsonPath("$", hasSize(1)));
+    }
+
+    @Test
+    void alEditarSoloSePuedeElegirUnBarbero() throws Exception {
+        String token = admin();
+        String id = JsonPath.read(crear(token, rango(LUCAS, 13, 14, null), 201), "$[0].id");
+
+        mvc.perform(put("/api/bloqueos/" + id).header("Authorization", token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(rangoVarios(new String[]{LUCAS, ANDRES}, 13, 14, null)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errores.barberoIds").exists());
     }
 
     // ---------- Editar y borrar ----------

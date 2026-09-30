@@ -13,7 +13,7 @@ import './bloqueo.css'
 interface Props {
   bloqueo: Bloqueo | null
   fechaInicial: string
-  barberoInicialId: string | null
+  barberoInicialId?: string | null
   onCerrar: () => void
 }
 
@@ -79,7 +79,7 @@ function textoDeError(error: unknown): string {
 interface FormularioProps {
   bloqueo: Bloqueo | null
   fechaInicial: string
-  barberoInicialId: string | null
+  barberoInicialId?: string | null
   opciones: OpcionesRegistro
   onCerrar: () => void
 }
@@ -88,7 +88,7 @@ function Formulario({ bloqueo, fechaInicial, barberoInicialId, opciones, onCerra
   const queryClient = useQueryClient()
   const [inicial] = useState(() => valoresIniciales(bloqueo, fechaInicial, opciones, barberoInicialId))
 
-  const [barberoId, setBarberoId] = useState<string | null>(inicial.barberoId)
+ const [barberoIds, setBarberoIds] = useState<string[]>(inicial.barberoIds)
   const [diaCompleto, setDiaCompleto] = useState(inicial.diaCompleto)
   const [fecha, setFecha] = useState(inicial.fecha)
   const [desde, setDesde] = useState(inicial.desde)
@@ -99,10 +99,21 @@ function Formulario({ bloqueo, fechaInicial, barberoInicialId, opciones, onCerra
 
   const horasInvalidas = !diaCompleto && desde !== '' && hasta !== '' && hasta <= desde
   const listo =
-    barberoId !== null && fecha !== '' && (diaCompleto || (desde !== '' && hasta !== '' && !horasInvalidas))
+    barberoIds.length > 0 && fecha !== '' && (diaCompleto || (desde !== '' && hasta !== '' && !horasInvalidas))
+
+  const todosMarcados = opciones.barberos.length > 0 && barberoIds.length === opciones.barberos.length
+  function elegirBarbero(id: string) {
+    setBarberoIds((actual) => {
+      if (bloqueo) return [id]
+      return actual.includes(id) ? actual.filter((x) => x !== id) : [...actual, id]
+    })
+  }
+  function marcarTodos() {
+    setBarberoIds(todosMarcados ? [] : opciones.barberos.map((b) => b.id))
+  }
 
   const datos: BloqueoDatos = {
-    barberoId,
+    barberoIds,
     fecha,
     horaDesde: diaCompleto ? null : desde,
     horaHasta: diaCompleto ? null : hasta,
@@ -201,17 +212,27 @@ function Formulario({ bloqueo, fechaInicial, barberoInicialId, opciones, onCerra
   // ---------- Formulario ----------
   return (
     <form className="registro-form" onSubmit={enviar}>
-      {opciones.barberos.length > 1 && (
+            {opciones.barberos.length > 1 && (
         <fieldset className="registro-grupo">
-          <legend>Barbero</legend>
+          <legend>{bloqueo ? 'Barbero' : 'Barberos (podés marcar varios)'}</legend>
           <div className="registro-opciones">
+            {!bloqueo && (
+              <button
+                type="button"
+                className="registro-opcion registro-opcion-centrada"
+                aria-pressed={todosMarcados}
+                onClick={marcarTodos}
+              >
+                Todos
+              </button>
+            )}
             {opciones.barberos.map((b) => (
               <button
                 key={b.id}
                 type="button"
                 className="registro-opcion"
-                aria-pressed={b.id === barberoId}
-                onClick={() => setBarberoId(b.id)}
+                aria-pressed={barberoIds.includes(b.id)}
+                onClick={() => elegirBarbero(b.id)}
               >
                 {b.nombre}
               </button>
@@ -323,7 +344,13 @@ function Formulario({ bloqueo, fechaInicial, barberoInicialId, opciones, onCerra
           </p>
         )}
         <button type="submit" className="boton-principal" disabled={!listo || guardar.isPending}>
-          {guardar.isPending ? 'Guardando…' : bloqueo ? 'Guardar cambios' : 'Bloquear'}
+          {guardar.isPending
+            ? 'Guardando…'
+            : bloqueo
+              ? 'Guardar cambios'
+              : barberoIds.length > 1
+                ? 'Bloquear (' + barberoIds.length + ' barberos)'
+                : 'Bloquear'}
         </button>
       </div>
     </form>
