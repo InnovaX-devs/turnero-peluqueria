@@ -20,7 +20,7 @@ Monorepo con backend en Spring Boot y frontend en React.
 3. Backend (http://localhost:8080)
    ```bash
    cd backend
-   ./mvnw spring-boot:run
+   mvn clean spring-boot:run
    ```
 4. Frontend (http://localhost:5173)
    ```bash
