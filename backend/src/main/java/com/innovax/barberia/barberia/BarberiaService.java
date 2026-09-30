@@ -55,6 +55,9 @@ public class BarberiaService {
         barberia.setReservasOnline(request.reservasOnline());
         barberia.setAnticipacionMinimaMin(request.anticipacionMinimaMin());
         barberia.setAnticipacionMaximaDias(request.anticipacionMaximaDias());
+        if (request.anticipacionCancelacionMin() != null) {
+            barberia.setAnticipacionCancelacionMin(request.anticipacionCancelacionMin());
+        }
         barberia.setIntervaloSlotsMin(request.intervaloSlotsMin());
 
         try {

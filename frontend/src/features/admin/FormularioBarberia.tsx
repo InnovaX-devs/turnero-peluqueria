@@ -4,6 +4,7 @@ import { actualizarBarberia } from '../../api/barberia'
 import { erroresDeCampos, mensajeDeError } from '../../lib/errores'
 import type { Barberia } from '../../types/barberia'
 import {
+  ANTICIPACIONES_CANCELACION,
   ANTICIPACIONES_MINIMAS,
   INTERVALOS,
   aDatos,
@@ -23,6 +24,7 @@ function aFormulario(b: Barberia): Formulario {
     anticipacionMinimaMin: b.anticipacionMinimaMin,
     anticipacionMaximaDias: String(b.anticipacionMaximaDias),
     intervaloSlotsMin: b.intervaloSlotsMin,
+    anticipacionCancelacionMin: b.anticipacionCancelacionMin,
   }
 }
 
@@ -202,6 +204,30 @@ export function FormularioBarberia({ barberia }: { barberia: Barberia }) {
             </label>
           </div>
         )}
+
+        {form.reservasOnline && (
+          <label className="config-campo">
+            <span className="config-etiqueta">Cancelar o cambiar el turno</span>
+            <select
+              value={form.anticipacionCancelacionMin}
+              onChange={(e) => cambiar('anticipacionCancelacionMin', Number(e.target.value))}
+              aria-invalid={!!errores.anticipacionCancelacionMin}
+            >
+              {opcionesAnticipacion(form.anticipacionCancelacionMin, ANTICIPACIONES_CANCELACION).map((min) => (
+                <option key={min} value={min}>
+                  {min === 0 ? 'Hasta el horario del turno' : `Hasta ${etiquetaMinutos(min)} antes`}
+                </option>
+              ))}
+            </select>
+            <span className="config-ayuda">
+              Hasta cuándo el cliente puede cancelar o cambiar su turno desde el link que recibe. Después
+              tiene que comunicarse con vos.
+            </span>
+            {errores.anticipacionCancelacionMin && (
+              <span className="config-campo-error" role="alert">{errores.anticipacionCancelacionMin}</span>
+            )}
+          </label>
+        )}
       </fieldset>
 
       {/* ---------- Agenda ---------- */}
@@ -247,8 +273,7 @@ export function FormularioBarberia({ barberia }: { barberia: Barberia }) {
 }
 
 /** Las opciones habituales, más el valor actual si es uno personalizado (para no perderlo). */
-function opcionesAnticipacion(actual: number): number[] {
-  return ANTICIPACIONES_MINIMAS.includes(actual)
-    ? ANTICIPACIONES_MINIMAS
-    : [...ANTICIPACIONES_MINIMAS, actual].sort((a, b) => a - b)
+/** Las opciones fijas, más el valor actual si alguien lo guardó con otro número. */
+function opcionesAnticipacion(actual: number, opciones: number[] = ANTICIPACIONES_MINIMAS): number[] {
+  return opciones.includes(actual) ? opciones : [...opciones, actual].sort((a, b) => a - b)
 }

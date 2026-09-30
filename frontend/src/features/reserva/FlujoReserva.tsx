@@ -20,6 +20,7 @@ export function FlujoReserva({ barberia }: { barberia: BarberiaPublica }) {
       <ReservaConfirmada
         reserva={confirmada.reserva}
         sucursal={barberia.sucursales.find((s) => s.id === confirmada.sucursalId)}
+        barberiaNombre={barberia.nombre}
         onOtroTurno={() => setConfirmada(null)}
       />
     )
