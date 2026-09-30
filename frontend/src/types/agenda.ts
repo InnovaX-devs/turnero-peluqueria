@@ -43,3 +43,11 @@ export interface Agenda {
   turnos: Turno[]
   bloqueos: Bloqueo[]
 }
+
+export interface BloqueoDatos {
+  barberoId: string | null
+  fecha: string
+  horaDesde: string | null
+  horaHasta: string | null
+  motivo: string | null
+}
