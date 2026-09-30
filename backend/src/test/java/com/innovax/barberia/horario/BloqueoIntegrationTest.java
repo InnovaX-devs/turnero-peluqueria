@@ -125,7 +125,7 @@ class BloqueoIntegrationTest {
     }
 
     private Bloqueo bloqueoDe(String respuesta) {
-        return bloqueos.findById(UUID.fromString(JsonPath.read(respuesta, "$.id"))).orElseThrow();
+        return bloqueos.findById(UUID.fromString(JsonPath.read(respuesta, "$[0].id"))).orElseThrow();
     }
 
     // ---------- Crear ----------
@@ -310,7 +310,7 @@ class BloqueoIntegrationTest {
     void editaUnBloqueo() throws Exception {
         String token = lucas();
         String creado = crear(token, rango(null, 13, 14, "Almuerzo"), 201);
-        String id = JsonPath.read(creado, "$.id");
+        String id = JsonPath.read(creado, "$[0].id");
 
         mvc.perform(put("/api/bloqueos/" + id).header("Authorization", token)
                         .contentType(MediaType.APPLICATION_JSON).content(rango(null, 12, 15, "Trámite")))
@@ -325,7 +325,7 @@ class BloqueoIntegrationTest {
     @Test
     void borraUnBloqueo() throws Exception {
         String token = lucas();
-        String id = JsonPath.read(crear(token, rango(null, 13, 14, null), 201), "$.id");
+        String id = JsonPath.read(crear(token, rango(null, 13, 14, null), 201), "$[0].id");
 
         mvc.perform(delete("/api/bloqueos/" + id).header("Authorization", token))
                 .andExpect(status().isNoContent());
@@ -337,7 +337,7 @@ class BloqueoIntegrationTest {
 
     @Test
     void barberoNoPuedeEditarNiBorrarBloqueosDeOtro() throws Exception {
-        String id = JsonPath.read(crear(admin(), rango(ANDRES, 13, 14, null), 201), "$.id");
+        String id = JsonPath.read(crear(admin(), rango(ANDRES, 13, 14, null), 201), "$[0].id");
         String token = lucas();
 
         mvc.perform(put("/api/bloqueos/" + id).header("Authorization", token)
@@ -394,7 +394,7 @@ class BloqueoIntegrationTest {
     @Test
     void alBorrarElBloqueoLosHorariosVuelven() throws Exception {
         String token = lucas();
-        String id = JsonPath.read(crear(token, rango(null, 10, 13, null), 201), "$.id");
+        String id = JsonPath.read(crear(token, rango(null, 10, 13, null), 201), "$[0].id");
         horariosLibresDeLucas().andExpect(jsonPath("$.slots[*].hora", not(hasItem(startsWith("10:00")))));
 
         mvc.perform(delete("/api/bloqueos/" + id).header("Authorization", token)).andExpect(status().isNoContent());
