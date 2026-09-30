@@ -25,12 +25,10 @@ export interface Turno {
   estadoCambiadoEn: string | null
 }
 
-/** Body para cambiar el estado de un turno desde el detalle del panel. */
+
 export interface CambiarEstadoTurno {
   estado: EstadoAtencion
-  /** En centavos. Solo aplica al completar; si se omite se mantiene el precio actual. */
   precioFinal?: number
-  /** Obligatorio al completar; se ignora para los demás estados. */
   metodoPago?: MetodoPago
 }
 
@@ -54,4 +52,12 @@ export interface Agenda {
   barberos: BarberoResumen[]
   turnos: Turno[]
   bloqueos: Bloqueo[]
+}
+
+export interface BloqueoDatos {
+  barberoIds: string[]
+  fecha: string
+  horaDesde: string | null
+  horaHasta: string | null
+  motivo: string | null
 }

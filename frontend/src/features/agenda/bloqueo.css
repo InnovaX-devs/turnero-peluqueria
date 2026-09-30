@@ -1,0 +1,89 @@
+/* Formulario de bloqueos. Reutiliza las clases base de features/atenciones/registro.css */
+
+.bloqueo-dos-columnas {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.bloqueo-ayuda {
+  margin: 6px 0 0;
+  font-size: 0.85rem;
+  color: var(--error);
+}
+
+.bloqueo-aviso {
+  padding: 12px 14px;
+  border: 1.5px solid var(--acento);
+  border-radius: 12px;
+  background: var(--acento-suave);
+}
+
+.bloqueo-aviso p {
+  margin: 6px 0 0;
+  font-size: 0.9rem;
+}
+
+.bloqueo-conflictos {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.bloqueo-conflictos li {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 10px 12px;
+  border: 1px solid var(--borde);
+  border-radius: 12px;
+}
+
+.bloqueo-conflictos small {
+  color: var(--texto-suave);
+}
+
+.bloqueo-conflictos a {
+  align-self: flex-start;
+  margin-top: 4px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #1f7a4d;
+}
+
+.bloqueo-acciones {
+  display: flex;
+  gap: 8px;
+}
+
+.bloqueo-acciones > button {
+  flex: 1;
+  width: auto;
+}
+
+.bloqueo-eliminar {
+  margin: 4px 0 18px;
+  text-align: center;
+}
+
+.bloqueo-eliminar-boton {
+  color: var(--error);
+}
+
+.bloqueo-confirmar-borrado {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.bloqueo-confirmar-borrado p {
+  margin: 0;
+  font-weight: 600;
+}
+
+.bloqueo-boton-peligro {
+  background: var(--error);
+}
