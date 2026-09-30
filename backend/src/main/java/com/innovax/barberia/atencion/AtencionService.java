@@ -73,6 +73,9 @@ public class AtencionService {
         Barberia barberia = sucursal.getBarberia();
         validarPertenecenALaMismaBarberia(barberia, servicio, barbero);
 
+        if (!servicio.isActivo()) {
+            throw new DatosInvalidosException("servicioId", "Ese servicio ya no está disponible");
+        }
         if (!barberia.isReservasOnline()) {
             throw new DatosInvalidosException("barberia", "Esta barbería no acepta reservas online por ahora");
         }

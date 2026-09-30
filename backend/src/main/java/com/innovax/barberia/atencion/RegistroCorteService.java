@@ -79,6 +79,7 @@ public class RegistroCorteService {
         Barbero barbero = resolverBarbero(barberia, request.barberoId());
         Sucursal sucursal = resolverSucursal(barberia, barbero, request.sucursalId());
         Servicio servicio = servicios.findById(request.servicioId())
+                .filter(Servicio::isActivo) 
                 .filter(s -> s.getBarberia().getId().equals(barberia.getId()))
                 .orElseThrow(() -> new RecursoNoEncontradoException("Servicio no encontrado"));
         Cliente cliente = null;

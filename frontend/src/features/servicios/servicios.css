@@ -1,0 +1,83 @@
+.servicios-ayuda {
+  margin: 0 0 12px;
+}
+
+.servicios-filtro {
+  margin-top: 20px;
+}
+
+.servicio-orden {
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.servicio-orden button {
+  width: 36px;
+  height: 28px;
+  border: 1px solid var(--borde);
+  border-radius: 8px;
+  background: var(--fondo-tarjeta);
+  color: var(--texto);
+  font-size: 0.75rem;
+  cursor: pointer;
+}
+
+.servicio-orden button:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.servicio-form {
+  margin-bottom: 14px;
+  gap: 0;
+}
+
+.servicio-form h2 {
+  font-size: 1.05rem;
+  margin: 0 0 16px;
+}
+
+.servicio-fila {
+  margin-top: 0;
+}
+
+.servicio-form-acciones {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.servicio-form-acciones .config-guardar {
+  align-self: auto;
+}
+
+.servicio-form .config-ayuda {
+  margin-top: 0;
+}
+
+.servicio-tarjeta {
+  flex-wrap: wrap;
+}
+
+.servicio-confirmacion {
+  flex-basis: 100%;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding-top: 12px;
+  border-top: 1px solid var(--borde);
+  font-size: 0.875rem;
+  color: var(--texto-suave);
+}
+
+.servicio-baja-confirmar {
+  color: var(--error);
+  border-color: var(--error);
+  font-weight: 600;
+}

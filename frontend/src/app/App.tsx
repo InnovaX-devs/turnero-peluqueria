@@ -11,6 +11,7 @@ import { CajaPage } from '../features/caja/CajaPage'
 import { ReportesPage } from '../features/reportes/ReportesPage'
 import { BarberoEditarPage, BarberoNuevoPage } from '../features/barberos/BarberoPage'
 import { BarberosPage } from '../features/barberos/BarberosPage'
+import { ServiciosPage } from '../features/servicios/ServiciosPage'
 
 export function App() {
   return (
@@ -32,6 +33,7 @@ export function App() {
             <Route path="barberos/:id" element={<BarberoEditarPage />} />
             <Route path="caja" element={<CajaPage />} />
             <Route path="reportes" element={<ReportesPage />} />
+            <Route path="servicios" element={<ServiciosPage />} />
           </Route>
         </Route>
       </Route>
