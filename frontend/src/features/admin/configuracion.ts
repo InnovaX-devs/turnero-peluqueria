@@ -3,6 +3,7 @@ import type { ActualizarBarberia } from '../../types/barberia'
 export const INTERVALOS = [15, 30]
 export const ANTICIPACIONES_MINIMAS = [0, 15, 30, 60, 120, 180, 360, 720, 1440, 2880]
 export const ANTICIPACIONES_CANCELACION = [0, 30, 60, 120, 180, 360, 720, 1440, 2880]
+export const HORAS_RECORDATORIO = [2, 3, 6, 12, 24, 48, 72]
 
 /** Estado del formulario: los campos de texto/número se guardan como string mientras se editan. */
 export interface Formulario {
@@ -14,6 +15,7 @@ export interface Formulario {
   anticipacionMaximaDias: string
   intervaloSlotsMin: number
   anticipacionCancelacionMin: number
+  recordatorioHorasAntes: number
 }
 
 const SLUG_VALIDO = /^[a-z0-9]+(-[a-z0-9]+)*$/
@@ -40,6 +42,7 @@ export function aDatos(f: Formulario): ActualizarBarberia {
     anticipacionMaximaDias: Number(f.anticipacionMaximaDias),
     intervaloSlotsMin: f.intervaloSlotsMin,
     anticipacionCancelacionMin: f.anticipacionCancelacionMin,
+    recordatorioHorasAntes: f.recordatorioHorasAntes,
   }
 }
 
@@ -52,7 +55,8 @@ export function sonIguales(a: ActualizarBarberia, b: ActualizarBarberia): boolea
     a.anticipacionMinimaMin === b.anticipacionMinimaMin &&
     a.anticipacionMaximaDias === b.anticipacionMaximaDias &&
     a.intervaloSlotsMin === b.intervaloSlotsMin &&
-    a.anticipacionCancelacionMin === b.anticipacionCancelacionMin
+    a.anticipacionCancelacionMin === b.anticipacionCancelacionMin &&
+    a.recordatorioHorasAntes === b.recordatorioHorasAntes
   )
 }
 
@@ -90,4 +94,3 @@ export function etiquetaMinutos(min: number): string {
   const resto = min % 60
   return resto === 0 ? `${horas} h` : `${horas} h ${resto} min`
 }
-

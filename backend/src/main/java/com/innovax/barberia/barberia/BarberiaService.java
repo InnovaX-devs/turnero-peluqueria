@@ -61,6 +61,9 @@ public class BarberiaService {
         if (request.anticipacionCancelacionMin() != null) {
             barberia.setAnticipacionCancelacionMin(request.anticipacionCancelacionMin());
         }
+        if (request.recordatorioHorasAntes() != null) {
+            barberia.setRecordatorioHorasAntes(request.recordatorioHorasAntes());
+        }
         barberia.setIntervaloSlotsMin(request.intervaloSlotsMin());
 
         try {
