@@ -14,6 +14,7 @@ import { BarberoEditarPage, BarberoNuevoPage } from '../features/barberos/Barber
 import { BarberosPage } from '../features/barberos/BarberosPage'
 import { ServiciosPage } from '../features/servicios/ServiciosPage'
 import { NotificacionesPage } from '../features/notificaciones/NotificacionesPage'
+import { RestablecerPage } from '../features/auth/RestablecerPage'
 
 export function App() {
   return (
@@ -21,6 +22,7 @@ export function App() {
       {/* Panel: públicas */}
       <Route path="/panel/login" element={<LoginPage />} />
       <Route path="/panel/recuperar" element={<RecuperarPage />} />
+      <Route path="/panel/restablecer" element={<RestablecerPage />} />
 
       {/* Panel: requieren sesión */}
       <Route element={<RutaProtegida />}>

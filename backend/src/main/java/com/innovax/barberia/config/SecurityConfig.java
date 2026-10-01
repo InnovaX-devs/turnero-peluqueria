@@ -41,7 +41,8 @@ public class SecurityConfig {
                 .cors(Customizer.withDefaults())
                 .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers(HttpMethod.POST, "/api/auth/login").permitAll()
+                                                .requestMatchers(HttpMethod.POST,
+                                "/api/auth/login", "/api/auth/recuperar", "/api/auth/restablecer").permitAll()
                         .requestMatchers("/api/public/**").permitAll()   // reserva online (épica 1)
                         .requestMatchers("/actuator/health").permitAll()
                         .anyRequest().authenticated())

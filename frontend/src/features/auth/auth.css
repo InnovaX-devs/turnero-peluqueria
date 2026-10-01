@@ -90,3 +90,17 @@
   -webkit-box-shadow: 0 0 0 1000px var(--fondo-tarjeta) inset;
   -webkit-text-fill-color: var(--texto);
 }
+
+
+.auth-nota {
+  color: var(--texto-suave);
+  font-size: 0.875rem;
+  margin: -12px 0 24px;
+}
+
+/* Un <Link> con la pinta de .boton-principal */
+.boton-link {
+  display: block;
+  text-align: center;
+  text-decoration: none;
+}

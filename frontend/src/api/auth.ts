@@ -10,3 +10,12 @@ export async function obtenerUsuarioActual(): Promise<Usuario> {
   const { data } = await api.get<Usuario>('/api/auth/yo')
   return data
 }
+
+export async function solicitarRecuperacion(email: string): Promise<string> {
+  const { data } = await api.post<{ mensaje: string }>('/api/auth/recuperar', { email })
+  return data.mensaje
+}
+
+export async function restablecerPassword(token: string, password: string): Promise<void> {
+  await api.post('/api/auth/restablecer', { token, password })
+}
