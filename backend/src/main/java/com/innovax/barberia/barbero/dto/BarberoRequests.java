@@ -88,7 +88,6 @@ public final class BarberoRequests {
             LocalTime horaFin) {
     }
 
-    /** Reemplaza TODO el horario semanal del barbero. Lista vacía = sin horarios. */
     public record GuardarHorarios(
             @NotNull(message = "Indicá los horarios")
             @Size(max = 100, message = "Demasiados tramos de horario")
