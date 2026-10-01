@@ -45,6 +45,10 @@ public class Barberia {
     @Column(nullable = false)
     private int anticipacionCancelacionMin = 120;
 
+    /** Con cuántas horas de anticipación se le manda el recordatorio al cliente. */
+    @Column(nullable = false)
+    private int recordatorioHorasAntes = 24;
+
     @Column(nullable = false)
     private int intervaloSlotsMin = 30;
 
