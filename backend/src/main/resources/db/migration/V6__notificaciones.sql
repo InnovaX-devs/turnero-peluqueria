@@ -1,5 +1,5 @@
 -- =====================================================================
--- V5: notificaciones al cliente (confirmación al reservar y recordatorio)
+-- V6: notificaciones al cliente (confirmación al reservar y recordatorio)
 --   * barberia.recordatorio_horas_antes: con cuánta anticipación se manda el
 --     recordatorio. Default 24 h; las barberías existentes quedan con 24.
 --   * notificacion: un registro por mensaje (pendiente, enviado, fallido u omitido).
