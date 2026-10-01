@@ -40,6 +40,14 @@ app:
     secret: ${JWT_SECRET}
     expiracion: ${JWT_EXPIRACION:8h}
 
+
+  frontend-url: ${FRONTEND_URL:http://localhost:5173}
+
+
+  mail:
+    resend-api-key: ${RESEND_API_KEY:}
+    remitente: ${MAIL_REMITENTE:}
+
   cors:
     origenes: ${CORS_ORIGENES:http://localhost:5173}
 
