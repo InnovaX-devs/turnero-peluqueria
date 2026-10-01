@@ -148,7 +148,8 @@ class NotificacionIntegrationTest {
         assertThat(registradas).hasSize(1);
         Notificacion confirmacion = registradas.get(0);
         assertThat(confirmacion.getTipo()).isEqualTo(TipoNotificacion.CONFIRMACION);
-        assertThat(confirmacion.getEstado()).isEqualTo(EstadoNotificacion.ENVIADA);
+        assertThat(confirmacion.getEstado()).isEqualTo(EstadoNotificacion.PENDIENTE);
+        assertThat(confirmacion.getEnviadaEn()).isNull();
         assertThat(confirmacion.getCanal()).isEqualTo(TipoCanal.WHATSAPP_LINK);
         assertThat(confirmacion.getDestinatario()).isEqualTo(TELEFONO_RESERVA);
         assertThat(confirmacion.getMensaje()).contains(
@@ -162,17 +163,18 @@ class NotificacionIntegrationTest {
     // ---------- Recordatorio ----------
 
     @Test
-    void elRecordatorioSeEnviaCuandoYaLeToca() {
+    void elRecordatorioSeCreaPendienteCuandoYaLeToca() {
         // Reservado hace 2 días, empieza en 23 h: el recordatorio (24 h antes) ya le toca.
         Atencion a = turno(JUAN, Instant.now().plus(23, ChronoUnit.HOURS), EstadoAtencion.RESERVADA, true);
 
         servicio.procesarPendientes();
 
-        List<Notificacion> enviados = recordatorios(a);
-        assertThat(enviados).hasSize(1);
-        Notificacion recordatorio = enviados.get(0);
-        assertThat(recordatorio.getEstado()).isEqualTo(EstadoNotificacion.ENVIADA);
-        assertThat(recordatorio.getEnviadaEn()).isNotNull();
+        List<Notificacion> creados = recordatorios(a);
+        assertThat(creados).hasSize(1);
+        Notificacion recordatorio = creados.get(0);
+        // Con el link wa.me nadie lo manda solo: queda esperando que una persona lo envíe desde el panel.
+        assertThat(recordatorio.getEstado()).isEqualTo(EstadoNotificacion.PENDIENTE);
+        assertThat(recordatorio.getEnviadaEn()).isNull();
         assertThat(recordatorio.getError()).isNull();
         assertThat(recordatorio.getMensaje()).contains("Te recordamos", "/turno/" + a.getTokenGestion());
     }
