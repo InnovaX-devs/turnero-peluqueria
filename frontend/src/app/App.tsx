@@ -13,6 +13,7 @@ import { ReportesPage } from '../features/reportes/ReportesPage'
 import { BarberoEditarPage, BarberoNuevoPage } from '../features/barberos/BarberoPage'
 import { BarberosPage } from '../features/barberos/BarberosPage'
 import { ServiciosPage } from '../features/servicios/ServiciosPage'
+import { NotificacionesPage } from '../features/notificaciones/NotificacionesPage'
 
 export function App() {
   return (
@@ -25,6 +26,7 @@ export function App() {
       <Route element={<RutaProtegida />}>
         <Route path="/panel" element={<PanelLayout />}>
           <Route index element={<PanelInicio />} />
+          <Route path="mensajes" element={<NotificacionesPage />} />
 
           {/* Solo admin */}
           <Route element={<RutaAdmin />}>
