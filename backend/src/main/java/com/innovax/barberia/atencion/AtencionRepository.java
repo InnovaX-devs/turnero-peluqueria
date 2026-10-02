@@ -43,4 +43,17 @@ public interface AtencionRepository extends JpaRepository<Atencion, UUID> {
             @Param("barberoId") UUID barberoId,
             @Param("inicioRango") Instant inicioRango,
             @Param("finRango") Instant finRango);
+
+    /** Historial de un cliente (cualquier estado), de la más reciente a la más antigua. */
+    @Query("""
+            select a from Atencion a
+            join fetch a.barbero
+            join fetch a.servicio
+            where a.barberia.id = :barberiaId
+              and a.cliente.id = :clienteId
+            order by a.inicio desc
+            """)
+    List<Atencion> findHistorialDeCliente(
+            @Param("barberiaId") UUID barberiaId,
+            @Param("clienteId") UUID clienteId);
 }

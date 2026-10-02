@@ -4,6 +4,8 @@ import { LoginPage } from '../features/auth/LoginPage'
 import { RecuperarPage } from '../features/auth/RecuperarPage'
 import { RutaAdmin } from '../features/auth/RutaAdmin'
 import { RutaProtegida } from '../features/auth/RutaProtegida'
+import { ClienteFichaPage } from '../features/clientes/ClienteFichaPage'
+import { ClientesPage } from '../features/clientes/ClientesPage'
 import { PanelInicio } from '../features/panel/PanelInicio'
 import { PanelLayout } from '../features/panel/PanelLayout'
 import { ReservaPage } from '../features/reserva/ReservaPage'
@@ -29,6 +31,8 @@ export function App() {
         <Route path="/panel" element={<PanelLayout />}>
           <Route index element={<PanelInicio />} />
           <Route path="mensajes" element={<NotificacionesPage />} />
+          <Route path="clientes" element={<ClientesPage />} />
+          <Route path="clientes/:id" element={<ClienteFichaPage />} />
 
           {/* Solo admin */}
           <Route element={<RutaAdmin />}>

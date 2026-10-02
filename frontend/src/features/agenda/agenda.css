@@ -308,6 +308,35 @@ button.agenda-item:active {
   background: #25d366;
 }
 
+.agenda-modal-nota-cliente {
+  margin: 12px 0;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: var(--acento-suave);
+}
+
+.agenda-modal-nota-cliente-etiqueta {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--texto-suave);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.agenda-modal-nota-cliente p {
+  margin: 2px 0 0;
+  font-weight: 600;
+  white-space: pre-wrap;
+}
+
+.agenda-modal-ficha {
+  display: block;
+  margin-bottom: 8px;
+  text-align: center;
+  text-decoration: none;
+  color: var(--texto);
+}
+
 .agenda-modal-sin-telefono {
   color: var(--texto-suave);
   font-size: 0.85rem;

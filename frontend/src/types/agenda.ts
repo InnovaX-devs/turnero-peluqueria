@@ -17,8 +17,12 @@ export interface Turno {
   servicioNombre: string
   precioFinal: number
   /** Null = corte anónimo (cargado a mano sin cliente asociado). */
+  clienteId: string | null
   clienteNombre: string | null
   clienteTelefono: string | null
+  /** Nota de la ficha del cliente (ej. "degradé en 2, arriba tijera"). */
+  clienteNotas: string | null
+  /** Nota de este turno en particular (la que dejó quien reservó). */
   notas: string | null
   /** Quién marcó el turno como completado/ausente/cancelado. Null = nunca se cambió. */
   estadoCambiadoPorEmail: string | null
