@@ -1,0 +1,105 @@
+.notificaciones-ayuda {
+  margin: 0 0 12px;
+  color: var(--texto-suave);
+}
+
+.notificaciones-filtros {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 16px;
+}
+
+.notificaciones-filtros button {
+  padding: 8px 14px;
+  border: 1px solid var(--borde);
+  border-radius: 999px;
+  background: var(--fondo-tarjeta);
+  color: var(--texto);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.notificaciones-filtros button[aria-pressed='true'] {
+  background: var(--acento-suave);
+  border-color: var(--acento);
+}
+
+.notificaciones-error {
+  color: #b42318;
+  margin: 8px 0;
+}
+
+.notificaciones-lista {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 12px;
+}
+
+.notificacion {
+  padding: 14px 16px;
+  border: 1px solid var(--borde);
+  border-radius: 12px;
+  background: var(--fondo-tarjeta);
+}
+
+.notificacion-cabecera {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.notificacion-tipo {
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: var(--acento-suave);
+}
+
+.notificacion-turno,
+.notificacion-telefono {
+  margin: 6px 0 0;
+  color: var(--texto-suave);
+  font-size: 0.9rem;
+  text-transform: capitalize;
+}
+
+.notificacion-telefono {
+  text-transform: none;
+}
+
+.notificacion details {
+  margin-top: 8px;
+}
+
+.notificacion summary {
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+
+.notificacion-mensaje {
+  white-space: pre-wrap;
+  font-family: inherit;
+  font-size: 0.9rem;
+  margin: 8px 0 0;
+  padding: 10px;
+  border-radius: 8px;
+  background: var(--acento-suave);
+}
+
+.notificacion-acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.notificacion-acciones a {
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+}

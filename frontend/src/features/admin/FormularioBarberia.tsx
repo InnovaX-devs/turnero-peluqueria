@@ -7,6 +7,7 @@ import type { Barberia } from '../../types/barberia'
 import {
   ANTICIPACIONES_CANCELACION,
   ANTICIPACIONES_MINIMAS,
+  HORAS_RECORDATORIO,
   INTERVALOS,
   aDatos,
   etiquetaMinutos,
@@ -26,6 +27,7 @@ function aFormulario(b: Barberia): Formulario {
     anticipacionMaximaDias: String(b.anticipacionMaximaDias),
     intervaloSlotsMin: b.intervaloSlotsMin,
     anticipacionCancelacionMin: b.anticipacionCancelacionMin,
+    recordatorioHorasAntes: b.recordatorioHorasAntes,
   }
 }
 
@@ -219,6 +221,32 @@ export function FormularioBarberia({ barberia }: { barberia: Barberia }) {
         )}
       </fieldset>
 
+      {/* ---------- Avisos al cliente ---------- */}
+      <fieldset className="config-grupo">
+        <legend>Avisos al cliente</legend>
+
+        <label className="config-campo">
+          <span className="config-etiqueta">Recordatorio del turno</span>
+          <select
+            value={form.recordatorioHorasAntes}
+            onChange={(e) => cambiar('recordatorioHorasAntes', Number(e.target.value))}
+            aria-invalid={!!errores.recordatorioHorasAntes}
+          >
+            {opcionesHoras(form.recordatorioHorasAntes).map((h) => (
+              <option key={h} value={h}>
+                {h === 24 ? '1 día antes' : h % 24 === 0 ? `${h / 24} días antes` : `${h} horas antes`}
+              </option>
+            ))}
+          </select>
+          <span className="config-ayuda">
+            Con cuánta anticipación aparece el recordatorio en Mensajes para enviarle al cliente.
+          </span>
+          {errores.recordatorioHorasAntes && (
+            <span className="config-campo-error" role="alert">{errores.recordatorioHorasAntes}</span>
+          )}
+        </label>
+      </fieldset>
+
       {/* ---------- Agenda ---------- */}
       <fieldset className="config-grupo">
         <legend>Agenda</legend>
@@ -264,4 +292,9 @@ export function FormularioBarberia({ barberia }: { barberia: Barberia }) {
 /** Las opciones fijas, más el valor actual si alguien lo guardó con otro número. */
 function opcionesAnticipacion(actual: number, opciones: number[] = ANTICIPACIONES_MINIMAS): number[] {
   return opciones.includes(actual) ? opciones : [...opciones, actual].sort((a, b) => a - b)
+}
+
+/** Las opciones fijas de recordatorio, más el valor actual si estuviera guardado con otro número. */
+function opcionesHoras(actual: number): number[] {
+  return HORAS_RECORDATORIO.includes(actual) ? HORAS_RECORDATORIO : [...HORAS_RECORDATORIO, actual].sort((a, b) => a - b)
 }

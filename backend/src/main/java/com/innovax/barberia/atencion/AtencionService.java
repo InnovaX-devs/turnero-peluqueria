@@ -20,6 +20,7 @@ import com.innovax.barberia.servicio.Servicio;
 import com.innovax.barberia.servicio.ServicioRepository;
 import com.innovax.barberia.sucursal.Sucursal;
 import com.innovax.barberia.sucursal.SucursalRepository;
+import com.innovax.barberia.notificacion.NotificacionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
@@ -60,6 +61,7 @@ public class AtencionService {
     private final DisponibilidadService disponibilidadService;
     private final UsuarioActual usuarioActual;
     private final UsuarioRepository usuarios;
+    private final NotificacionService notificaciones;
 
     @Transactional
     public AtencionResponse reservarOnline(CrearReservaRequest request) {
@@ -118,6 +120,8 @@ public class AtencionService {
             }
             throw e;
         }
+
+        notificaciones.crearConfirmacion(atencion);
 
         return AtencionResponse.de(atencion);
     }

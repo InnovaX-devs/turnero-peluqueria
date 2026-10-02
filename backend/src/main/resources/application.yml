@@ -41,9 +41,6 @@ app:
     expiracion: ${JWT_EXPIRACION:8h}
 
 
-  frontend-url: ${FRONTEND_URL:http://localhost:5173}
-
-
   mail:
     resend-api-key: ${RESEND_API_KEY:}
     remitente: ${MAIL_REMITENTE:}
@@ -51,6 +48,8 @@ app:
   cors:
     origenes: ${CORS_ORIGENES:http://localhost:5173}
 
+  frontend-url: ${FRONTEND_URL:http://localhost:5173}
+  
   storage:
     supabase-url: ${SUPABASE_URL:}
     service-key: ${SUPABASE_SERVICE_KEY:}

@@ -34,6 +34,7 @@ export function PanelLayout() {
         <NavLink to="/panel" end>
           Inicio
         </NavLink>
+        <NavLink to="/panel/mensajes">Mensajes</NavLink>
         {usuario?.rol === 'ADMIN' && <NavLink to="/panel/caja">Caja</NavLink>}
         {usuario?.rol === 'ADMIN' && <NavLink to="/panel/reportes">Reportes</NavLink>}
         {usuario?.rol === 'ADMIN' && <NavLink to="/panel/barberos">Barberos</NavLink>}

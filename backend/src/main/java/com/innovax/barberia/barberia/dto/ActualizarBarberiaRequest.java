@@ -49,6 +49,11 @@ public record ActualizarBarberiaRequest(
         /** Opcional: si no viene, se mantiene el valor actual. */
         @Min(value = 0, message = "La anticipación para cancelar no puede ser negativa")
         @Max(value = 10080, message = "La anticipación para cancelar puede ser de hasta 7 días")
-        Integer anticipacionCancelacionMin
+        Integer anticipacionCancelacionMin,
+
+        /** Opcional: horas antes del turno en que se genera el recordatorio. Si no viene, se mantiene. */
+        @Min(value = 1, message = "El recordatorio tiene que ser al menos 1 hora antes")
+        @Max(value = 168, message = "El recordatorio puede ser hasta 7 días (168 horas) antes")
+        Integer recordatorioHorasAntes
 ) {
 }
