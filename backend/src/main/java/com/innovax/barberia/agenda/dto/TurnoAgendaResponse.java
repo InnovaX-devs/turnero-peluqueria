@@ -28,8 +28,12 @@ public record TurnoAgendaResponse(
         String servicioNombre,
         long precioFinal,
         /** Null = corte anónimo (cargado a mano sin cliente asociado). */
+        UUID clienteId,
         String clienteNombre,
         String clienteTelefono,
+        /** Nota de la ficha del cliente (ej. "degradé en 2, arriba tijera"), para tenerla a mano al atenderlo. */
+        String clienteNotas,
+        /** Nota de este turno en particular (la que dejó quien reservó). */
         String notas,
         /** Quién marcó el turno como completado/ausente/cancelado. Null = nunca se cambió. */
         String estadoCambiadoPorEmail,
@@ -50,8 +54,10 @@ public record TurnoAgendaResponse(
                 a.getServicio().getId(),
                 a.getServicio().getNombre(),
                 a.getPrecioFinal(),
+                a.getCliente() != null ? a.getCliente().getId() : null,
                 a.getCliente() != null ? a.getCliente().getNombre() : null,
                 a.getCliente() != null ? a.getCliente().getTelefono() : null,
+                a.getCliente() != null ? a.getCliente().getNotas() : null,
                 a.getNotas(),
                 a.getEstadoCambiadoPor() != null ? a.getEstadoCambiadoPor().getEmail() : null,
                 a.getEstadoCambiadoEn());

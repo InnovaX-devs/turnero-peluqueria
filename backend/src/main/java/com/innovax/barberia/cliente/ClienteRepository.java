@@ -29,4 +29,24 @@ public interface ClienteRepository extends JpaRepository<Cliente, UUID> {
             @Param("texto") String texto,
             @Param("digitos") String digitos,
             Pageable pagina);
+
+    Optional<Cliente> findByIdAndBarberiaId(UUID id, UUID barberiaId);
+
+    /**
+     * Listado del panel: todos los clientes de la barbería, o los que coinciden con el texto en el
+     * nombre o (si {@code digitos} no está vacío) en el teléfono. Pasar "" en ambos trae todos.
+     */
+    @Query("""
+            select c from Cliente c
+            where c.barberia.id = :barberiaId
+              and (:texto = ''
+                   or lower(c.nombre) like lower(concat('%', :texto, '%'))
+                   or (:digitos <> '' and c.telefono like concat('%', :digitos, '%')))
+            order by lower(c.nombre), c.id
+            """)
+    List<Cliente> listar(
+            @Param("barberiaId") UUID barberiaId,
+            @Param("texto") String texto,
+            @Param("digitos") String digitos,
+            Pageable pagina);
 }

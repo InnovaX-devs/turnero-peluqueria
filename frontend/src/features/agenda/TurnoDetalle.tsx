@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { Link } from 'react-router-dom'
 import { cambiarEstadoTurno } from '../../api/agenda'
 import { mensajeDeError } from '../../lib/errores'
 import type { CambiarEstadoTurno, MetodoPago, Turno } from '../../types/agenda'
@@ -120,6 +121,13 @@ export function TurnoDetalle({ turno, onCerrar }: { turno: Turno; onCerrar: () =
           {formatearFechaLarga(fechaISO)} · {formatearHora(turnoActual.inicio)}–{formatearHora(turnoActual.fin)}
         </p>
 
+        {turnoActual.clienteNotas && (
+          <div className="agenda-modal-nota-cliente">
+            <span className="agenda-modal-nota-cliente-etiqueta">Nota del cliente</span>
+            <p>{turnoActual.clienteNotas}</p>
+          </div>
+        )}
+
         <dl className="agenda-modal-detalle">
           <div>
             <dt>Servicio</dt>
@@ -146,7 +154,7 @@ export function TurnoDetalle({ turno, onCerrar }: { turno: Turno; onCerrar: () =
           </div>
           {turnoActual.notas && (
             <div>
-              <dt>Notas</dt>
+              <dt>Notas del turno</dt>
               <dd>{turnoActual.notas}</dd>
             </div>
           )}
@@ -257,6 +265,12 @@ export function TurnoDetalle({ turno, onCerrar }: { turno: Turno; onCerrar: () =
               </div>
             )}
           </div>
+        )}
+
+        {turnoActual.clienteId && (
+          <Link className="boton-secundario agenda-modal-ficha" to={`/panel/clientes/${turnoActual.clienteId}`}>
+            Ver ficha del cliente
+          </Link>
         )}
 
         {turnoActual.clienteTelefono ? (
