@@ -18,7 +18,7 @@ import java.util.HexFormat;
 import java.util.Optional;
 
 /**
- * Recuperación de contraseña por email.
+ * Recuperación de contraseña por email e invitación al panel (mismo mecanismo, distinta vigencia).
  *
  * El token viaja solo en el link del email; en la base se guarda su SHA-256. Como el token
  * es aleatorio de 256 bits no hace falta un hash lento (BCrypt), y SHA-256 permite buscarlo.
@@ -27,6 +27,8 @@ import java.util.Optional;
 public class RecuperacionService {
 
     static final Duration VIGENCIA = Duration.ofHours(1);
+    /** La invitación vence más tarde que un reset: el barbero puede no mirar el mail enseguida. */
+    static final Duration VIGENCIA_INVITACION = Duration.ofHours(72);
     /** Si ya se pidió un link hace menos de esto, no se manda otro (evita llenar la casilla de alguien). */
     static final Duration ESPERA_ENTRE_PEDIDOS = Duration.ofMinutes(1);
 
@@ -77,6 +79,28 @@ public class RecuperacionService {
         // El email se manda después del commit y en otro hilo (ver EmailRecuperacionListener)
         String link = frontendUrl + "/panel/restablecer?token=" + token;
         eventos.publishEvent(new RecuperacionSolicitada(usuario.getEmail(), link));
+    }
+
+    /**
+     * Invita a un usuario ya creado a elegir su contraseña (la usa el ABM de barberos).
+     * Reutiliza el token y la pantalla de restablecer; invalida los links anteriores.
+     * A diferencia de {@link #solicitar}, acá sí se avisa si se pide demasiado seguido: lo dispara un admin.
+     */
+    @Transactional
+    public void invitar(Usuario usuario) {
+        Instant ahora = Instant.now();
+        if (tokens.existsByUsuarioIdAndCreatedAtAfter(usuario.getId(), ahora.minus(ESPERA_ENTRE_PEDIDOS))) {
+            throw new DatosInvalidosException("usuario",
+                    "Ya se mandó un link hace instantes. Esperá un minuto y probá de nuevo.");
+        }
+
+        tokens.invalidarPendientes(usuario.getId(), ahora);
+
+        String token = generarToken();
+        tokens.save(new TokenRecuperacion(usuario, hashear(token), ahora.plus(VIGENCIA_INVITACION)));
+
+        String link = frontendUrl + "/panel/restablecer?token=" + token;
+        eventos.publishEvent(new UsuarioInvitado(usuario.getEmail(), link));
     }
 
     @Transactional

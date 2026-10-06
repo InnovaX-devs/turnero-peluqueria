@@ -38,9 +38,15 @@ export async function cambiarActivoBarbero(id: string, activo: boolean): Promise
   return data
 }
 
+/** Crea el usuario del barbero y el backend le manda la invitación por email. */
 export async function crearUsuarioBarbero(id: string, datos: CrearUsuarioBarbero): Promise<Barbero> {
   const { data } = await api.post<Barbero>(`/api/barberos/${id}/usuario`, datos)
   return data
+}
+
+/** Manda un link nuevo al barbero (los anteriores dejan de valer). */
+export async function reenviarInvitacionBarbero(id: string): Promise<void> {
+  await api.post(`/api/barberos/${id}/invitacion`)
 }
 
 export async function subirFotoBarbero(id: string, archivo: File): Promise<Barbero> {
