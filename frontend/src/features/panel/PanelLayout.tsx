@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react'
-import { NavLink, Outlet } from 'react-router-dom'
+import { Link, NavLink, Outlet } from 'react-router-dom'
 import { useAuth } from '../auth/useAuth'
 import { RegistrarCorte } from '../atenciones/RegistrarCorte'
 import { useOpcionesRegistro } from '../atenciones/useOpcionesRegistro'
+import '../cuenta/cuenta.css'
 import './panel.css'
 
 export function PanelLayout() {
@@ -22,10 +23,10 @@ export function PanelLayout() {
   return (
     <div className="panel">
       <header className="panel-header">
-        <div>
+        <Link to="/panel/cuenta" className="panel-cuenta-link" title="Mi cuenta">
           <strong>{usuario?.email}</strong>
           <span className="panel-rol">{usuario?.rol === 'ADMIN' ? 'Admin' : 'Barbero'}</span>
-        </div>
+        </Link>
         <button type="button" className="boton-secundario" onClick={cerrarSesion}>
           Cerrar sesión
         </button>
@@ -41,6 +42,7 @@ export function PanelLayout() {
         {usuario?.rol === 'ADMIN' && <NavLink to="/panel/barberos">Barberos</NavLink>}
         {usuario?.rol === 'ADMIN' && <NavLink to="/panel/servicios">Servicios</NavLink>}
         {usuario?.rol === 'ADMIN' && <NavLink to="/panel/configuracion">Configuración</NavLink>}
+        <NavLink to="/panel/cuenta">Mi cuenta</NavLink>
       </nav>
       <main className="panel-contenido">
         <Outlet />

@@ -19,3 +19,7 @@ export async function solicitarRecuperacion(email: string): Promise<string> {
 export async function restablecerPassword(token: string, password: string): Promise<void> {
   await api.post('/api/auth/restablecer', { token, password })
 }
+/** "Mi cuenta": el usuario logueado cambia su contraseña. Pide la actual. */
+export async function cambiarPassword(actual: string, nueva: string): Promise<void> {
+  await api.put('/api/auth/password', { actual, nueva })
+}

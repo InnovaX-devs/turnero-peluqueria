@@ -4,6 +4,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -41,6 +42,13 @@ public class AuthController {
     public MensajeResponse recuperar(@Valid @RequestBody RecuperarRequest request) {
         recuperacionService.solicitar(request.email());
         return new MensajeResponse(RESPUESTA_RECUPERAR);
+    }
+
+    /** Con sesión. El usuario cambia su propia contraseña ("Mi cuenta"); pide la actual. */
+    @PutMapping("/password")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void cambiarPassword(@Valid @RequestBody CambiarPasswordRequest request) {
+        authService.cambiarPassword(request.actual(), request.nueva());
     }
 
     /** Público. Cambia la contraseña con el token del email y lo invalida. */

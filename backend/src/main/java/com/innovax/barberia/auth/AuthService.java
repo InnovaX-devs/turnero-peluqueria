@@ -2,11 +2,13 @@ package com.innovax.barberia.auth;
 
 import com.innovax.barberia.barbero.Barbero;
 import com.innovax.barberia.barbero.BarberoRepository;
+import com.innovax.barberia.common.DatosInvalidosException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.nio.charset.StandardCharsets;
 import java.util.UUID;
 
 @Service
@@ -39,6 +41,29 @@ public class AuthService {
         Usuario usuario = usuarios.findById(usuarioActual.id())
                 .orElseThrow(CredencialesInvalidasException::new);
         return aResponse(usuario, barberoIdDe(usuario));
+    }
+
+    /**
+     * El usuario logueado cambia su contraseña. Pide la actual: si alguien deja la sesión abierta
+     * en la compu de la barbería, otro no puede cambiársela. El token de la sesión sigue valiendo.
+     */
+    @Transactional
+    public void cambiarPassword(String actual, String nueva) {
+        Usuario usuario = usuarios.findById(usuarioActual.id())
+                .filter(Usuario::isActivo)
+                .orElseThrow(CredencialesInvalidasException::new);
+
+        if (!passwordEncoder.matches(actual, usuario.getPasswordHash())) {
+            throw new DatosInvalidosException("actual", "La contraseña actual no es correcta");
+        }
+        // BCrypt solo usa los primeros 72 bytes (y Spring tira error si hay más)
+        if (nueva.getBytes(StandardCharsets.UTF_8).length > 72) {
+            throw new DatosInvalidosException("nueva", "La contraseña es demasiado larga");
+        }
+        if (passwordEncoder.matches(nueva, usuario.getPasswordHash())) {
+            throw new DatosInvalidosException("nueva", "Tiene que ser distinta de la actual");
+        }
+        usuario.setPasswordHash(passwordEncoder.encode(nueva));
     }
 
     private UUID barberoIdDe(Usuario usuario) {
