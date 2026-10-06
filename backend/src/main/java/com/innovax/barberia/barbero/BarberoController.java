@@ -56,10 +56,18 @@ public class BarberoController {
         return barberoService.cambiarActivo(id, request.activo());
     }
 
+    /** Crea el usuario del barbero y le manda la invitación por email. */
     @PostMapping("/{id}/usuario")
     @ResponseStatus(HttpStatus.CREATED)
     public BarberoResponse crearUsuario(@PathVariable UUID id, @Valid @RequestBody BarberoRequests.CrearUsuario request) {
         return barberoService.crearUsuario(id, request);
+    }
+
+    /** Reenvía la invitación (link nuevo; los anteriores dejan de valer). */
+    @PostMapping("/{id}/invitacion")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void reenviarInvitacion(@PathVariable UUID id) {
+        barberoService.reenviarInvitacion(id);
     }
 
     @PostMapping(value = "/{id}/foto", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)

@@ -1,5 +1,6 @@
 package com.innovax.barberia.barbero;
 
+import com.innovax.barberia.auth.RecuperacionService;
 import com.innovax.barberia.auth.Rol;
 import com.innovax.barberia.auth.Usuario;
 import com.innovax.barberia.auth.UsuarioActual;
@@ -26,9 +27,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.security.SecureRandom;
 import java.time.DayOfWeek;
 import java.time.LocalTime;
 import java.time.format.TextStyle;
+import java.util.Base64;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
@@ -45,6 +48,7 @@ import java.util.stream.Collectors;
 public class BarberoService {
 
     private static final Locale ES = Locale.of("es", "AR");
+    private static final SecureRandom RANDOM = new SecureRandom();
 
     private final BarberoRepository barberos;
     private final BarberiaRepository barberias;
@@ -55,6 +59,7 @@ public class BarberoService {
     private final PasswordEncoder passwordEncoder;
     private final UsuarioActual usuarioActual;
     private final FotoStorageService fotos;
+    private final RecuperacionService recuperacion;
 
     // ------------------------------------------------------------------ lectura
 
@@ -93,10 +98,16 @@ public class BarberoService {
         Barbero barbero = new Barbero();
         barbero.setBarberia(barberia);
         aplicarDatos(barbero, request.nombre(), request.apellido(), request.sucursalIds(), request.servicioIds());
+
+        Usuario usuario = null;
         if (request.usuario() != null) {
-            barbero.setUsuario(nuevoUsuario(barberia, true, request.usuario()));
+            usuario = nuevoUsuario(barberia, true, request.usuario());
+            barbero.setUsuario(usuario);
         }
         barberos.save(barbero);
+        if (usuario != null) {
+            recuperacion.invitar(usuario);
+        }
         return BarberoResponse.de(barbero);
     }
 
@@ -134,14 +145,37 @@ public class BarberoService {
 
     // ------------------------------------------------------------------ usuario de acceso
 
+    /**
+     * Crea el usuario del barbero con una contraseña que nadie conoce y le manda un email para que elija la suya.
+     * Si el barbero está inactivo no se manda nada: al reactivarlo, el admin puede reenviar la invitación.
+     */
     @Transactional
     public BarberoResponse crearUsuario(UUID id, BarberoRequests.CrearUsuario request) {
         Barbero barbero = buscar(id);
         if (barbero.getUsuario() != null) {
             throw new ConflictoException("email", "Este barbero ya tiene un usuario");
         }
-        barbero.setUsuario(nuevoUsuario(barbero.getBarberia(), barbero.isActivo(), request));
+        Usuario usuario = nuevoUsuario(barbero.getBarberia(), barbero.isActivo(), request);
+        barbero.setUsuario(usuario);
+        if (barbero.isActivo()) {
+            recuperacion.invitar(usuario);
+        }
         return BarberoResponse.de(barbero);
+    }
+
+    /** Manda un link nuevo (invalida los anteriores). Sirve si la invitación venció o no llegó. */
+    @Transactional
+    public void reenviarInvitacion(UUID id) {
+        Barbero barbero = buscar(id);
+        Usuario usuario = barbero.getUsuario();
+        if (usuario == null || usuario.getRol() != Rol.BARBERO) {
+            throw new DatosInvalidosException("usuario", "Este barbero no tiene usuario para entrar al panel");
+        }
+        if (!usuario.isActivo()) {
+            throw new DatosInvalidosException("usuario",
+                    "El barbero está inactivo. Reactivalo para reenviar la invitación");
+        }
+        recuperacion.invitar(usuario);
     }
 
     // ------------------------------------------------------------------ foto
@@ -267,6 +301,7 @@ public class BarberoService {
         barbero.getServicios().addAll(nuevosServicios);
     }
 
+    /** El usuario nace con una contraseña aleatoria que nadie conoce: la define el barbero desde la invitación. */
     private Usuario nuevoUsuario(Barberia barberia, boolean activo, BarberoRequests.CrearUsuario request) {
         String email = request.email().trim().toLowerCase(Locale.ROOT);
         if (usuarios.findByEmailIgnoreCase(email).isPresent()) {
@@ -275,7 +310,7 @@ public class BarberoService {
         Usuario usuario = new Usuario();
         usuario.setBarberia(barberia);
         usuario.setEmail(email);
-        usuario.setPasswordHash(passwordEncoder.encode(request.password()));
+        usuario.setPasswordHash(passwordEncoder.encode(passwordInutilizable()));
         usuario.setRol(Rol.BARBERO);
         usuario.setActivo(activo);
         try {
@@ -283,6 +318,12 @@ public class BarberoService {
         } catch (DataIntegrityViolationException e) {
             throw emailEnUso();
         }
+    }
+
+    private static String passwordInutilizable() {
+        byte[] bytes = new byte[32];
+        RANDOM.nextBytes(bytes);
+        return Base64.getUrlEncoder().withoutPadding().encodeToString(bytes); // 43 chars, entra en los 72 de BCrypt
     }
 
     private ConflictoException emailEnUso() {

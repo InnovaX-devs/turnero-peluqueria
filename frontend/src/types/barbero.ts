@@ -34,9 +34,9 @@ export interface Horario {
   horaFin: string
 }
 
+/** Solo el email: la contraseña la elige el barbero desde el link que le llega por mail. */
 export interface CrearUsuarioBarbero {
   email: string
-  password: string
 }
 
 export interface DatosBarbero {

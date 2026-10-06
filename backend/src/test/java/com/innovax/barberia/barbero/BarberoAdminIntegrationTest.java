@@ -1,6 +1,7 @@
 package com.innovax.barberia.barbero;
 
 import com.innovax.barberia.auth.Rol;
+import com.innovax.barberia.auth.TokenRecuperacionRepository;
 import com.innovax.barberia.auth.Usuario;
 import com.innovax.barberia.auth.UsuarioRepository;
 import com.innovax.barberia.barberia.Barberia;
@@ -11,6 +12,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
@@ -20,12 +22,14 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.context.WebApplicationContext;
 
+import java.time.Instant;
 import java.util.Arrays;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.Matchers.startsWith;
@@ -66,6 +70,10 @@ class BarberoAdminIntegrationTest {
     private UsuarioRepository usuarios;
     @Autowired
     private PasswordEncoder passwordEncoder;
+    @Autowired
+    private TokenRecuperacionRepository tokens;
+    @Autowired
+    private JdbcTemplate jdbc;
 
     @MockitoBean
     private FotoStorageService fotos;
@@ -158,11 +166,23 @@ class BarberoAdminIntegrationTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {"nombre":"%s","apellido":"Test","sucursalIds":%s,"servicioIds":%s,
-                                 "usuario":{"email":"%s","password":"%s"}}
-                                """.formatted(nombre, lista(SUCURSAL), lista(CORTE), email, password)))
+                                 "usuario":{"email":"%s"}}
+                                """.formatted(nombre, lista(SUCURSAL), lista(CORTE), email)))
                 .andExpect(status().isCreated())
                 .andReturn().getResponse().getContentAsString();
+        fijarPassword(email, password);   // simula que el barbero ya eligió su contraseña desde la invitación
         return JsonPath.read(body, "$.id");
+    }
+
+    private void fijarPassword(String email, String password) {
+        Usuario u = usuarios.findByEmailIgnoreCase(email).orElseThrow();
+        u.setPasswordHash(passwordEncoder.encode(password));
+        usuarios.saveAndFlush(u);
+    }
+
+    private boolean tieneInvitacion(String email) {
+        UUID usuarioId = usuarios.findByEmailIgnoreCase(email).orElseThrow().getId();
+        return tokens.existsByUsuarioIdAndCreatedAtAfter(usuarioId, Instant.EPOCH);
     }
 
     private void guardarHorarios(String token, String id, String json) throws Exception {
@@ -247,7 +267,7 @@ class BarberoAdminIntegrationTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {"nombre":"Pedro","apellido":"Test","sucursalIds":%s,"servicioIds":%s,
-                                 "usuario":{"email":"LUCAS@jade.com","password":"clave12345"}}
+                                 "usuario":{"email":"LUCAS@jade.com"}}
                                 """.formatted(lista(SUCURSAL), lista(CORTE))))
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.errores.email").exists());
@@ -269,12 +289,12 @@ class BarberoAdminIntegrationTest {
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.errores.sucursalIds").exists())
                 .andExpect(jsonPath("$.errores.servicioIds").exists());
-        // contraseña corta
+        // email inválido
         mvc.perform(post("/api/barberos").header(AUTH, token)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {"nombre":"Pedro","apellido":"Test","sucursalIds":%s,"servicioIds":%s,
-                                 "usuario":{"email":"pedro@jade.com","password":"corta"}}
+                                 "usuario":{"email":"esto-no-es-un-email"}}
                                 """.formatted(lista(SUCURSAL), lista(CORTE))))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.errores").exists());
@@ -401,17 +421,15 @@ class BarberoAdminIntegrationTest {
     void creaElUsuarioDespuesYNoPermiteCrearloDosVeces() throws Exception {
         String token = admin();
         String id = crearBarbero(token, "Pedro");
-        String usuario = "{\"email\":\"pedro@jade.com\",\"password\":\"clave12345\"}";
 
         mvc.perform(post("/api/barberos/" + id + "/usuario").header(AUTH, token)
-                        .contentType(MediaType.APPLICATION_JSON).content(usuario))
+                        .contentType(MediaType.APPLICATION_JSON).content("{\"email\":\"pedro@jade.com\"}"))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.usuarioEmail").value("pedro@jade.com"));
-        intentarLogin("pedro@jade.com", "clave12345").andExpect(status().isOk());
+        assertThat(tieneInvitacion("pedro@jade.com")).isTrue();
 
         mvc.perform(post("/api/barberos/" + id + "/usuario").header(AUTH, token)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"email\":\"otro@jade.com\",\"password\":\"clave12345\"}"))
+                        .contentType(MediaType.APPLICATION_JSON).content("{\"email\":\"otro@jade.com\"}"))
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.errores.email").exists());
     }
@@ -422,9 +440,40 @@ class BarberoAdminIntegrationTest {
         String id = crearBarbero(token, "Pedro");
         mvc.perform(post("/api/barberos/" + id + "/usuario").header(AUTH, token)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"email\":\"admin@jade.com\",\"password\":\"clave12345\"}"))
+                        .content("{\"email\":\"admin@jade.com\"}"))
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.errores.email").exists());
+    }
+
+    @Test
+    void reenviarInvitacionEsperaUnMinutoYDespuesGeneraLinkNuevo() throws Exception {
+        String token = admin();
+        String id = crearBarberoConUsuario(token, "Pedro", "pedro@jade.com", "clave12345");
+
+        // Recién invitado: reenviar enseguida se rechaza
+        mvc.perform(post("/api/barberos/" + id + "/invitacion").header(AUTH, token))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errores.usuario").exists());
+
+        // Pasado el minuto, sí se puede
+        jdbc.update("update token_recuperacion set created_at = now() - interval '5 minutes'");
+        mvc.perform(post("/api/barberos/" + id + "/invitacion").header(AUTH, token))
+                .andExpect(status().isNoContent());
+    }
+
+    @Test
+    void noSePuedeReenviarSiNoHayUsuarioOSiEstaInactivo() throws Exception {
+        String token = admin();
+        String sinUsuario = crearBarbero(token, "Pedro");
+        mvc.perform(post("/api/barberos/" + sinUsuario + "/invitacion").header(AUTH, token))
+                .andExpect(status().isBadRequest());
+
+        String conUsuario = crearBarberoConUsuario(token, "Juan", "juan@jade.com", "clave12345");
+        mvc.perform(patch("/api/barberos/" + conUsuario + "/activo").header(AUTH, token)
+                        .contentType(MediaType.APPLICATION_JSON).content("{\"activo\":false}"))
+                .andExpect(status().isOk());
+        mvc.perform(post("/api/barberos/" + conUsuario + "/invitacion").header(AUTH, token))
+                .andExpect(status().isBadRequest());
     }
 
     // ---------- Foto ----------

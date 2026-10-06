@@ -12,7 +12,6 @@ interface Form {
   servicioIds: string[]
   conUsuario: boolean
   email: string
-  password: string
 }
 
 interface Props {
@@ -34,7 +33,6 @@ export function FormularioBarbero({ barbero, opciones, onGuardado }: Props) {
     servicioIds: barbero?.servicioIds ?? [],
     conUsuario: false,
     email: '',
-    password: '',
   })
   const [errores, setErrores] = useState<Record<string, string>>({})
   const [errorGeneral, setErrorGeneral] = useState<string | null>(null)
@@ -51,7 +49,7 @@ export function FormularioBarbero({ barbero, opciones, onGuardado }: Props) {
       if (barbero) return actualizarBarbero(barbero.id, datos)
       return crearBarbero({
         ...datos,
-        ...(form.conUsuario ? { usuario: { email: form.email.trim(), password: form.password } } : {}),
+        ...(form.conUsuario ? { usuario: { email: form.email.trim() } } : {}),
       })
     },
     onSuccess: (res) => {
@@ -85,9 +83,6 @@ export function FormularioBarbero({ barbero, opciones, onGuardado }: Props) {
     if (form.apellido.trim() === '') e.apellido = 'El apellido es obligatorio'
     if (!barbero && form.conUsuario) {
       if (!/^\S+@\S+\.\S+$/.test(form.email.trim())) e.email = 'Ingresá un email válido'
-      if (form.password.length < 8 || form.password.length > 72) {
-        e.password = 'La contraseña tiene que tener entre 8 y 72 caracteres'
-      }
     }
     return e
   }
@@ -113,7 +108,6 @@ export function FormularioBarbero({ barbero, opciones, onGuardado }: Props) {
     mismoConjunto(form.servicioIds, barbero.servicioIds)
 
   const errEmail = errores['usuario.email'] ?? errores.email
-  const errPassword = errores['usuario.password'] ?? errores.password
 
   return (
     <form className="config-form" onSubmit={handleSubmit} noValidate>
@@ -201,7 +195,9 @@ export function FormularioBarbero({ barbero, opciones, onGuardado }: Props) {
             <span className="interruptor-pista" aria-hidden="true" />
             <span>
               <strong>Crearle un usuario</strong>
-              <small>Con esto el barbero puede entrar a su panel. También se puede hacer después.</small>
+              <small>
+                Le llega un email para que elija su contraseña y entre a su panel. También se puede hacer después.
+              </small>
             </span>
           </label>
           {form.conUsuario && (
@@ -217,17 +213,6 @@ export function FormularioBarbero({ barbero, opciones, onGuardado }: Props) {
                   aria-invalid={!!errEmail}
                 />
                 {errEmail && <span className="config-campo-error" role="alert">{errEmail}</span>}
-              </label>
-              <label className="config-campo">
-                <span className="config-etiqueta">Contraseña (mínimo 8)</span>
-                <input
-                  type="text"
-                  autoComplete="off"
-                  value={form.password}
-                  onChange={(e) => cambiar('password', e.target.value)}
-                  aria-invalid={!!errPassword}
-                />
-                {errPassword && <span className="config-campo-error" role="alert">{errPassword}</span>}
               </label>
             </div>
           )}

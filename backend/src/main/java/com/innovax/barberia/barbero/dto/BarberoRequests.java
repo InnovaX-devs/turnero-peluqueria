@@ -19,18 +19,15 @@ public final class BarberoRequests {
     private BarberoRequests() {
     }
 
+    /** Solo el email: la contraseña la elige el barbero desde el link de invitación que recibe por mail. */
     public record CrearUsuario(
             @NotBlank(message = "El email es obligatorio")
             @Email(message = "El email no es válido")
             @Size(max = 255, message = "El email puede tener hasta 255 caracteres")
-            String email,
-
-            @NotBlank(message = "La contraseña es obligatoria")
-            @Size(min = 8, max = 72, message = "La contraseña tiene que tener entre 8 y 72 caracteres")
-            String password) {
+            String email) {
     }
 
-    /** {@code usuario} es opcional: si viene, se crea el login con rol BARBERO. */
+    /** {@code usuario} es opcional: si viene, se crea el login con rol BARBERO y se le manda la invitación. */
     public record Crear(
             @NotBlank(message = "El nombre es obligatorio")
             @Size(max = 80, message = "El nombre puede tener hasta 80 caracteres")
