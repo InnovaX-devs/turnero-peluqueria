@@ -32,7 +32,7 @@
 .ficha-encabezado { display: flex; flex-direction: column; gap: 4px; }
 .ficha-telefono { margin: 0; font-size: 1.05rem; }
 .ficha-dato { margin: 0; color: var(--texto-suave); font-size: 0.875rem; }
-.boton-principal.ficha-whatsapp { display: block; margin-top: 10px; text-align: center; text-decoration: none; background: #25d366; }
+.boton-principal.ficha-whatsapp { display: block; margin-top: 10px; text-align: center; text-decoration: none; background: #25d366; color: #fff; box-shadow: none; }
 
 .ficha-resumen { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
 .ficha-resumen > div {
