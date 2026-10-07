@@ -30,6 +30,9 @@
 
 .agenda-fecha {
   margin-left: 4px;
+  font-family: var(--fuente-titulo);
+  font-size: 1.05rem;
+  letter-spacing: -0.01em;
   text-transform: capitalize;
 }
 
@@ -42,30 +45,33 @@
 
 .agenda-vista-toggle {
   display: inline-flex;
+  padding: 3px;
   border: 1px solid var(--borde);
-  border-radius: 10px;
-  overflow: hidden;
+  border-radius: 999px;
+  background: var(--fondo-tarjeta);
 }
 
 .agenda-vista-toggle button {
   border: none;
-  background: var(--fondo-tarjeta);
-  padding: 8px 14px;
+  background: transparent;
+  padding: 6px 16px;
+  border-radius: 999px;
   font-weight: 600;
-  font-size: 0.9rem;
+  font-size: 0.875rem;
   cursor: pointer;
   color: var(--texto-suave);
+  transition: background 0.15s ease, color 0.15s ease;
 }
 
 .agenda-vista-toggle button.activo {
-  background: var(--acento);
-  color: var(--texto);
+  background: var(--barra);
+  color: var(--barra-texto);
 }
 
 .agenda-select-barbero {
-  padding: 8px 12px;
+  padding: 9px 14px;
   border: 1px solid var(--borde);
-  border-radius: 10px;
+  border-radius: 999px;
   background: var(--fondo-tarjeta);
   max-width: 100%;
 }
@@ -100,8 +106,12 @@
 }
 
 .agenda-dia-titulo {
-  font-size: 0.95rem;
-  text-transform: capitalize;
+  font-family: var(--fuente-mono);
+  font-size: 0.75rem;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  color: var(--texto-suave);
+  text-transform: uppercase;
   margin: 0 0 8px;
   padding: 6px 0;
   border-bottom: 1px solid var(--borde);
@@ -125,17 +135,26 @@
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 12px;
-  border-radius: 12px;
+  padding: 14px 16px;
+  border-radius: 16px;
   border: 1px solid var(--borde);
   background: var(--fondo-tarjeta);
   text-align: left;
   font: inherit;
   color: inherit;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
 }
 
 button.agenda-item {
   cursor: pointer;
+}
+
+@media (hover: hover) {
+  button.agenda-item-turno:hover {
+    border-color: var(--acento);
+    box-shadow: 0 10px 24px -14px rgb(22 24 29 / 0.35);
+    transform: translateY(-1px);
+  }
 }
 
 button.agenda-item:active {
@@ -143,14 +162,15 @@ button.agenda-item:active {
 }
 
 .agenda-item-bloqueo {
-  background: repeating-linear-gradient(135deg, #f3f4f6, #f3f4f6 10px, #e9eaed 10px, #e9eaed 20px);
+  background: repeating-linear-gradient(135deg, var(--fondo), var(--fondo) 10px, var(--borde) 10px, var(--borde) 20px);
   border-style: dashed;
   color: var(--texto-suave);
 }
 
 .agenda-item-hora {
   flex: 0 0 auto;
-  font-weight: 700;
+  font-family: var(--fuente-mono);
+  font-weight: 500;
   font-variant-numeric: tabular-nums;
   font-size: 0.85rem;
   white-space: nowrap;
@@ -197,9 +217,12 @@ button.agenda-item:active {
 }
 
 .agenda-badge {
-  font-size: 0.7rem;
-  font-weight: 700;
-  padding: 2px 8px;
+  font-family: var(--fuente-mono);
+  font-size: 0.62rem;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 3px 9px;
   border-radius: 999px;
   background: var(--fondo);
   color: var(--texto-suave);
@@ -306,6 +329,8 @@ button.agenda-item:active {
   text-align: center;
   text-decoration: none;
   background: #25d366;
+  color: #fff;
+  box-shadow: none;
 }
 
 .agenda-modal-nota-cliente {

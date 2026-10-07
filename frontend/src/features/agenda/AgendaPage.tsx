@@ -5,6 +5,7 @@ import { mensajeDeError } from '../../lib/errores'
 import type { Bloqueo, Turno } from '../../types/agenda'
 import { useAuth } from '../auth/useAuth'
 import { BloqueoForm } from './BloqueoForm'
+import { ResumenDia } from './ResumenDia'
 import { TurnoDetalle } from './TurnoDetalle'
 import {
   ETIQUETAS_ESTADO,
@@ -54,6 +55,8 @@ export function AgendaPage() {
   return (
     <section className="agenda">
       <h1 className="agenda-titulo">Agenda</h1>
+
+      {vista === 'dia' && data && <ResumenDia turnos={data.turnos} fecha={fecha} esAdmin={esAdmin} />}
 
       <header className="agenda-controles">
         <div className="agenda-navegacion">
@@ -145,7 +148,7 @@ export function AgendaPage() {
                               onClick={() => setFormBloqueo({ bloqueo })}
                             >
                               <TarjetaBloqueo bloqueo={bloqueo} mostrarBarbero={mostrarBarbero} />
-+                            </button>
+                            </button>
                           ) : null}
                         </li>
                       )

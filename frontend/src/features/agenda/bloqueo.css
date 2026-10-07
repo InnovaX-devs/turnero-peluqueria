@@ -86,4 +86,6 @@
 
 .bloqueo-boton-peligro {
   background: var(--error);
+  color: #fff;
+  box-shadow: none;
 }

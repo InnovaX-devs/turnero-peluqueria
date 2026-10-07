@@ -4,16 +4,28 @@
   padding: 24px 16px calc(32px + env(safe-area-inset-bottom));
 }
 
-.reserva-encabezado { display: flex; align-items: center; gap: 14px; margin-bottom: 24px; }
+/* En el flujo público el acento es el azul petróleo de la marca (no el negro del panel). */
+.reserva {
+  --acento: var(--barra);
+  --acento-fuerte: #17697e;
+  --acento-suave: #dcecf0;
+  --grad-marca: linear-gradient(100deg, #17697e, #0a3640);
+  --sombra-marca: 0 6px 20px rgb(15 76 92 / 0.3);
+}
+
+.reserva-encabezado {
+  display: flex; align-items: center; gap: 14px; margin-bottom: 24px;
+  padding: 16px; border-radius: 20px; background: var(--barra); color: var(--barra-texto);
+}
 .reserva-logo {
   width: 56px; height: 56px; flex-shrink: 0; border-radius: 16px; object-fit: cover;
   background: var(--fondo-tarjeta); border: 1px solid var(--borde);
 }
 .reserva-logo-iniciales {
-  display: grid; place-items: center; background: var(--acento); border-color: var(--acento);
+  display: grid; place-items: center; background: var(--sobre-acento); border-color: var(--sobre-acento); color: var(--barra);
   font-weight: 800; font-size: 1.25rem;
 }
-.reserva-nombre { margin: 0; font-size: 1.5rem; line-height: 1.2; overflow-wrap: anywhere; }
+.reserva-nombre { margin: 0; color: var(--barra-texto); font-size: 1.5rem; line-height: 1.2; overflow-wrap: anywhere; }
 
 .reserva-progreso { display: flex; justify-content: space-between; align-items: center; min-height: 44px; }
 .reserva-atras {
@@ -172,7 +184,7 @@
 .reserva-confirmada { text-align: center; padding-top: 8px; }
 .reserva-confirmada-icono {
   width: 64px; height: 64px; margin: 0 auto 16px; border-radius: 50%; display: grid; place-items: center;
-  background: var(--acento); color: var(--texto); font-size: 2rem; font-weight: 700;
+  background: var(--acento); color: var(--sobre-acento); font-size: 2rem; font-weight: 700;
 }
 .reserva-confirmada h2 { font-size: 1.4rem; margin: 0 0 8px; }
 .reserva-confirmada-sub { color: var(--texto-suave); margin: 0 0 24px; }

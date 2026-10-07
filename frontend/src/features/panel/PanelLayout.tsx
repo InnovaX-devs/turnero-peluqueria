@@ -1,9 +1,11 @@
 import { useEffect, useState } from 'react'
-import { Link, NavLink, Outlet } from 'react-router-dom'
+import { Outlet } from 'react-router-dom'
 import { useAuth } from '../auth/useAuth'
 import { RegistrarCorte } from '../atenciones/RegistrarCorte'
 import { useOpcionesRegistro } from '../atenciones/useOpcionesRegistro'
 import '../cuenta/cuenta.css'
+import { BottomBar } from './BottomBar'
+import { TopBar } from './TopBar'
 import './panel.css'
 
 export function PanelLayout() {
@@ -22,36 +24,12 @@ export function PanelLayout() {
 
   return (
     <div className="panel">
-      <header className="panel-header">
-        <Link to="/panel/cuenta" className="panel-cuenta-link" title="Mi cuenta">
-          <strong>{usuario?.email}</strong>
-          <span className="panel-rol">{usuario?.rol === 'ADMIN' ? 'Admin' : 'Barbero'}</span>
-        </Link>
-        <button type="button" className="boton-secundario" onClick={cerrarSesion}>
-          Cerrar sesión
-        </button>
-      </header>
-      <nav className="panel-nav" aria-label="Secciones del panel">
-        <NavLink to="/panel" end>
-          Inicio
-        </NavLink>
-        <NavLink to="/panel/clientes">Clientes</NavLink>
-        <NavLink to="/panel/mensajes">Mensajes</NavLink>
-        {usuario?.rol === 'ADMIN' && <NavLink to="/panel/caja">Caja</NavLink>}
-        {usuario?.rol === 'ADMIN' && <NavLink to="/panel/reportes">Reportes</NavLink>}
-        {usuario?.rol === 'ADMIN' && <NavLink to="/panel/barberos">Barberos</NavLink>}
-        {usuario?.rol === 'ADMIN' && <NavLink to="/panel/servicios">Servicios</NavLink>}
-        {usuario?.rol === 'ADMIN' && <NavLink to="/panel/configuracion">Configuración</NavLink>}
-        <NavLink to="/panel/cuenta">Mi cuenta</NavLink>
-      </nav>
+      <TopBar usuario={usuario} onRegistrar={() => setRegistrando(true)} onCerrarSesion={cerrarSesion} />
       <main className="panel-contenido">
         <Outlet />
       </main>
 
-      {/* Siempre visible, en cualquier pantalla del panel */}
-      <button type="button" className="boton-registrar" onClick={() => setRegistrando(true)}>
-        + Registrar corte
-      </button>
+      <BottomBar usuario={usuario} onRegistrar={() => setRegistrando(true)} onCerrarSesion={cerrarSesion} />
 
       {registrando && (
         <RegistrarCorte

@@ -1,20 +1,133 @@
+/* Tailwind: solo tema + utilidades. Sin "preflight" a propósito, para no alterar
+   el CSS plano de cada feature mientras se migra de a poco. */
+@layer theme, base, components, utilities;
+@import 'tailwindcss/theme.css' layer(theme);
+@import 'tailwindcss/utilities.css' layer(utilities);
+
+@import '@fontsource/inter/400.css';
+@import '@fontsource/inter/500.css';
+@import '@fontsource/inter/600.css';
+@import '@fontsource/inter/700.css';
+@import '@fontsource/space-grotesk/500.css';
+@import '@fontsource/space-grotesk/600.css';
+@import '@fontsource/space-grotesk/700.css';
+@import '@fontsource/jetbrains-mono/400.css';
+@import '@fontsource/jetbrains-mono/500.css';
+
+/* Reset acotado a la navegación nueva (sin preflight global). */
+@layer base {
+  .nav-reset button {
+    background: transparent;
+    border: 0;
+    padding: 0;
+    color: inherit;
+  }
+  .nav-reset a {
+    color: inherit;
+    text-decoration: none;
+  }
+}
+
+/* Tokens: fuente de verdad de la paleta "Azul petróleo + negro". */
 :root {
-  --acento: #f2c230;
-  --acento-suave: #fdf3d3;
-  --texto: #1f2328;
-  --texto-suave: #6b7280;
-  --borde: #e5e7eb;
-  --fondo: #f8f8f6;
+  --tinta: #0b2230;
+  --tinta-2: #123247;
+  --acento: #101418;
+  --acento-fuerte: #2a323a;
+  --acento-suave: #e1f1fa;
+  --texto: #0b1f2a;
+  --texto-suave: #4f6b7c;
+  --borde: #d3e5f0;
+  --fondo: #ffffff;
   --fondo-tarjeta: #ffffff;
-  --boton: #1f242b;
-  --boton-deshabilitado: #e3e6ea;
+
+  /* Superficie de marca (barras, tarjeta "Hoy") y el texto que va encima */
+  --barra: #0f4c5c;
+  --barra-texto: #ffffff;
+  /* El acento es negro: lo que va encima (botones, pills activas) es blanco */
+  --sobre-acento: #ffffff;
+  --halo: #3f9bb0;
+  --boton: #101418;
+  --boton-deshabilitado: #d3e5f0;
   --error: #b42318;
   --error-fondo: #fef3f2;
 
-  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  /* Gradiente de marca (negro) y su sombra, para botones y logo */
+  --grad-marca: linear-gradient(100deg, #2b333b, #0c1014);
+  --sombra-marca: 0 6px 20px rgb(16 20 24 / 0.28);
+
+  /* Estados de la agenda */
+  --estado-confirmado: #3b6fd4;
+  --estado-atendido: #1f7a4d;
+  --estado-cancelado: #b42318;
+
+  --fuente-titulo: 'Space Grotesk', system-ui, sans-serif;
+  --fuente-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+  --fuente-texto: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+
+  font-family: var(--fuente-texto);
   color: var(--texto);
   background: var(--fondo);
   -webkit-font-smoothing: antialiased;
+}
+
+/* Expone los tokens como utilidades de Tailwind (bg-tinta, text-acento, font-titulo…) */
+@theme inline {
+  --color-barra: var(--barra);
+  --color-barra-texto: var(--barra-texto);
+  --color-sobre-acento: var(--sobre-acento);
+  --color-tinta: var(--tinta);
+  --color-tinta-2: var(--tinta-2);
+  --color-acento: var(--acento);
+  --color-acento-fuerte: var(--acento-fuerte);
+  --color-acento-suave: var(--acento-suave);
+  --color-texto: var(--texto);
+  --color-texto-suave: var(--texto-suave);
+  --color-borde: var(--borde);
+  --color-fondo: var(--fondo);
+  --color-tarjeta: var(--fondo-tarjeta);
+  --font-titulo: var(--fuente-titulo);
+  --font-mono: var(--fuente-mono);
+}
+
+h1,
+h2,
+h3 {
+  font-family: var(--fuente-titulo);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+:focus-visible {
+  outline: 2px solid var(--acento-fuerte);
+  outline-offset: 2px;
+}
+
+@layer utilities {
+  .bg-grad {
+    background: var(--grad-marca);
+  }
+  .shadow-marca {
+    box-shadow: var(--sombra-marca);
+  }
+}
+
+/* Etiqueta chica en mayúsculas con tipografía mono (labels de tarjetas y badges) */
+.etiqueta-mono {
+  font-family: var(--fuente-mono);
+  font-size: 0.68rem;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+  }
 }
 
 *,
@@ -27,35 +140,58 @@ body {
   margin: 0;
 }
 
-button,
-input {
-  font: inherit;
+@layer base {
+  button,
+  input,
+  select,
+  textarea {
+    font: inherit;
+  }
 }
 
 .boton-principal {
   width: 100%;
-  padding: 16px;
+  padding: 14px 22px;
   border: none;
-  border-radius: 12px;
-  background: var(--boton);
-  color: #fff;
+  border-radius: 999px;
+  background: var(--grad-marca);
+  color: var(--sobre-acento);
   font-weight: 700;
   font-size: 1rem;
+  box-shadow: var(--sombra-marca);
   cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+@media (hover: hover) {
+  .boton-principal:not(:disabled):hover {
+    transform: translateY(-1px);
+  }
 }
 
 .boton-principal:disabled {
   background: var(--boton-deshabilitado);
   color: var(--texto-suave);
+  box-shadow: none;
   cursor: not-allowed;
 }
 
 .boton-secundario {
-  padding: 8px 14px;
+  padding: 8px 16px;
   border: 1px solid var(--borde);
-  border-radius: 10px;
+  border-radius: 999px;
   background: var(--fondo-tarjeta);
+  color: var(--texto);
+  font-weight: 500;
   cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+@media (hover: hover) {
+  .boton-secundario:hover {
+    border-color: var(--acento);
+    background: var(--acento-suave);
+  }
 }
 
 .boton-texto {
@@ -73,4 +209,23 @@ input {
   display: grid;
   place-items: center;
   color: var(--texto-suave);
+}
+
+/* Halo difuso de luz detrás del contenido de una tarjeta oscura */
+.halo-acento {
+  position: relative;
+  overflow: hidden;
+}
+.halo-acento::before {
+  content: '';
+  position: absolute;
+  left: 40px;
+  top: 20px;
+  width: 280px;
+  height: 160px;
+  border-radius: 9999px;
+  background: var(--halo);
+  opacity: 0.55;
+  filter: blur(90px);
+  pointer-events: none;
 }
