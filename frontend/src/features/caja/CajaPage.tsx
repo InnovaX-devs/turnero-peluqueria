@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { keepPreviousData, useQuery } from '@tanstack/react-query'
 import { descargarCaja, obtenerCaja } from '../../api/caja'
 import { mensajeDeError } from '../../lib/errores'
+import { Selector } from '../../components/Selector'
 import { aFechaLocal, hoyISO } from '../../lib/fechas'
 import { formatearPrecio } from '../../lib/formato'
 import type { Caja, DiaCaja } from '../../types/caja'
@@ -79,16 +80,17 @@ export function CajaPage() {
         </div>
 
         {sucursales.length > 1 && (
-          <select
-            aria-label="Sucursal"
-            value={sucursalId ?? ''}
-            onChange={(e) => setSucursalId(e.target.value || null)}
-          >
-            <option value="">Todas las sucursales</option>
-            {sucursales.map((s) => (
-              <option key={s.id} value={s.id}>{s.nombre}</option>
-            ))}
-          </select>
+          <Selector
+            variante="pill"
+            alinear="derecha"
+            etiqueta="Sucursal"
+            valor={sucursalId ?? ''}
+            onChange={(v) => setSucursalId(v || null)}
+            opciones={[
+              { valor: '', etiqueta: 'Todas las sucursales' },
+              ...sucursales.map((s) => ({ valor: s.id, etiqueta: s.nombre })),
+            ]}
+          />
         )}
       </div>
 

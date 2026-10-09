@@ -3,6 +3,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
 import { cambiarEstadoTurno } from '../../api/agenda'
 import { mensajeDeError } from '../../lib/errores'
+import { Selector } from '../../components/Selector'
 import type { CambiarEstadoTurno, MetodoPago, Turno } from '../../types/agenda'
 import {
   ETIQUETAS_ESTADO,
@@ -203,16 +204,12 @@ export function TurnoDetalle({ turno, onCerrar }: { turno: Turno; onCerrar: () =
                 </label>
                 <label className="agenda-modal-campo">
                   <span className="agenda-modal-campo-etiqueta">Método de pago</span>
-                  <select value={metodoPago} onChange={(e) => setMetodoPago(e.target.value as MetodoPago)}>
-                    <option value="" disabled>
-                      Elegí una opción
-                    </option>
-                    {METODOS_PAGO.map((m) => (
-                      <option key={m} value={m}>
-                        {ETIQUETAS_METODO_PAGO[m]}
-                      </option>
-                    ))}
-                  </select>
+                  <Selector
+                    etiqueta="Método de pago"
+                    valor={metodoPago}
+                    onChange={(v) => setMetodoPago(v as MetodoPago)}
+                    opciones={METODOS_PAGO.map((m) => ({ valor: m, etiqueta: ETIQUETAS_METODO_PAGO[m] }))}
+                  />
                 </label>
 
                 {(errorValidacion || cambiar.isError) && (
