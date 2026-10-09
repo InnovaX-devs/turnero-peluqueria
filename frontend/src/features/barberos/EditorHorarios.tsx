@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { guardarHorarios, obtenerHorarios } from '../../api/barberos'
 import { erroresDeCampos, mensajeDeError } from '../../lib/errores'
+import { Selector } from '../../components/Selector'
 import type { Barbero, Horario, SucursalOpcion } from '../../types/barbero'
 import { DIAS, normalizarHorarios, ordenarHorarios, validarHorarios } from './barberos'
 
@@ -132,17 +133,13 @@ function Editor({
               {delDia.map(({ t, i }) => (
                 <div key={i} className="tramo">
                   {sucursales.length > 1 && (
-                    <select
-                      aria-label={`Sucursal, ${dia.nombre}`}
-                      value={t.sucursalId}
-                      onChange={(e) => modificar(i, { sucursalId: e.target.value })}
-                    >
-                      {sucursales.map((s) => (
-                        <option key={s.id} value={s.id}>
-                          {s.nombre}
-                        </option>
-                      ))}
-                    </select>
+                    <Selector
+                      variante="compacto"
+                      etiqueta={`Sucursal, ${dia.nombre}`}
+                      valor={t.sucursalId}
+                      onChange={(v) => modificar(i, { sucursalId: v })}
+                      opciones={sucursales.map((s) => ({ valor: s.id, etiqueta: s.nombre }))}
+                    />
                   )}
                   <input
                     type="time"

@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { keepPreviousData, useQuery } from '@tanstack/react-query'
 import { obtenerClientesInactivos, obtenerReportes } from '../../api/reportes'
 import { mensajeDeError } from '../../lib/errores'
+import { Selector } from '../../components/Selector'
 import { hoyISO } from '../../lib/fechas'
 import { formatearPrecio } from '../../lib/formato'
 import type { Ausentismo, BarberoReporte, ClienteFrecuente, Demanda } from '../../types/reportes'
@@ -52,12 +53,17 @@ export function ReportesPage() {
           ))}
         </div>
         {sucursales.length > 1 && (
-          <select aria-label="Sucursal" value={sucursalId ?? ''} onChange={(e) => setSucursalId(e.target.value || null)}>
-            <option value="">Todas las sucursales</option>
-            {sucursales.map((s) => (
-              <option key={s.id} value={s.id}>{s.nombre}</option>
-            ))}
-          </select>
+          <Selector
+            variante="pill"
+            alinear="derecha"
+            etiqueta="Sucursal"
+            valor={sucursalId ?? ''}
+            onChange={(v) => setSucursalId(v || null)}
+            opciones={[
+              { valor: '', etiqueta: 'Todas las sucursales' },
+              ...sucursales.map((s) => ({ valor: s.id, etiqueta: s.nombre })),
+            ]}
+          />
         )}
       </div>
 
@@ -276,11 +282,14 @@ function ClientesQueNoVuelven() {
         <h2>Clientes que no vuelven</h2>
         <label>
           Sin venir hace más de
-          <select value={dias} onChange={(e) => setDias(Number(e.target.value))}>
-            {OPCIONES_DIAS.map((d) => (
-              <option key={d} value={d}>{d} días</option>
-            ))}
-          </select>
+          <Selector
+            variante="compacto"
+            alinear="derecha"
+            etiqueta="Días sin venir"
+            valor={String(dias)}
+            onChange={(v) => setDias(Number(v))}
+            opciones={OPCIONES_DIAS.map((d) => ({ valor: String(d), etiqueta: `${d} días` }))}
+          />
         </label>
       </div>
       <p className="reporte-detalle">

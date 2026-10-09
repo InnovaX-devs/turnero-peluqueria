@@ -170,7 +170,7 @@
 .reserva-campo small { font-size: 0.8rem; color: var(--texto-suave); }
 .reserva-campo-error, .reserva-campo small.reserva-campo-error { color: var(--error); font-size: 0.85rem; }
 .reserva-telefono { display: flex; gap: 8px; }
-.reserva-telefono select { width: auto; flex: none; padding-right: 8px; }
+.reserva-telefono .selector { flex: none; }
 
 .reserva-pago { margin: 0 0 16px; color: var(--texto-suave); font-size: 0.9rem; }
 .reserva-legal { margin: 14px 0 0; color: var(--texto-suave); font-size: 0.8rem; text-align: center; }

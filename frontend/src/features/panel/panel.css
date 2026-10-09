@@ -34,3 +34,55 @@
     bottom: 32px;
   }
 }
+
+/* ---------- Pulido común de las pantallas del panel ---------- */
+
+/* Mismo tamaño de título en todas las pantallas */
+.panel .panel-contenido h1 {
+  font-size: 1.625rem;
+  line-height: 1.2;
+}
+
+/* Fechas: solo la primera letra en mayúscula ("Miércoles, 7 de octubre", no "7 De Octubre") */
+.panel .agenda-fecha,
+.panel .agenda-modal-fecha,
+.panel .notificacion-turno {
+  text-transform: none;
+}
+.panel .agenda-fecha::first-letter,
+.panel .agenda-modal-fecha::first-letter,
+.panel .notificacion-turno::first-letter {
+  text-transform: uppercase;
+}
+
+/* El mapa de calor de Reportes va en el azul de la marca */
+.reporte-mapa {
+  --acento: var(--barra);
+}
+
+/* Configuración: aire entre un campo y el que le sigue a una fila de dos */
+.config-fila + .config-campo {
+  margin-top: 20px;
+}
+
+/* Celu: en Barberos y Servicios los botones pasan abajo y el nombre no se parte */
+@media (max-width: 520px) {
+  .barbero-tarjeta {
+    flex-wrap: wrap;
+    row-gap: 10px;
+  }
+  .barbero-acciones {
+    flex-basis: 100%;
+    justify-content: flex-end;
+  }
+}
+
+/* Botón "← Servicios" / "← Barberos": mismo aspecto que el link de volver de las fichas */
+button.barbero-volver {
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  font-size: 0.875rem;
+  cursor: pointer;
+}
