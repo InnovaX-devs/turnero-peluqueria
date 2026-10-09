@@ -1,5 +1,6 @@
 import { useState, type FormEvent } from 'react'
 import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom'
+import { PieDesarrollo } from '../../components/PieDesarrollo'
 import { mensajeDeError } from '../../lib/errores'
 import { useAuth } from './useAuth'
 import './auth.css'
@@ -47,61 +48,64 @@ export function LoginPage() {
 
   return (
     <main className="auth-pagina">
-      <section className="auth-tarjeta">
-        <h1 className="auth-titulo">Ingresá al panel</h1>
-        <p className="auth-subtitulo">Accedé con el email y la contraseña de tu barbería.</p>
+      <div className="auth-contenido">
+        <section className="auth-tarjeta">
+          <h1 className="auth-titulo">Ingresá al panel</h1>
+          <p className="auth-subtitulo">Accedé con el email y la contraseña de tu barbería.</p>
 
-        <form onSubmit={handleSubmit} noValidate>
-          <label className="campo">
-            <span className="campo-etiqueta">Email</span>
-            <input
-              type="email"
-              name="email"
-              autoComplete="email"
-              inputMode="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="tu@email.com"
-              autoFocus
-            />
-          </label>
-
-          <label className="campo">
-            <span className="campo-etiqueta">Contraseña</span>
-            <div className="campo-password">
+          <form onSubmit={handleSubmit} noValidate>
+            <label className="campo">
+              <span className="campo-etiqueta">Email</span>
               <input
-                type={verPassword ? 'text' : 'password'}
-                name="password"
-                autoComplete="current-password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                type="email"
+                name="email"
+                autoComplete="email"
+                inputMode="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="tu@email.com"
+                autoFocus
               />
-              <button
-                type="button"
-                className="boton-texto"
-                onClick={() => setVerPassword((v) => !v)}
-                aria-label={verPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
-              >
-                {verPassword ? 'Ocultar' : 'Ver'}
-              </button>
-            </div>
-          </label>
+            </label>
 
-          {error && (
-            <p className="auth-error" role="alert">
-              {error}
-            </p>
-          )}
+            <label className="campo">
+              <span className="campo-etiqueta">Contraseña</span>
+              <div className="campo-password">
+                <input
+                  type={verPassword ? 'text' : 'password'}
+                  name="password"
+                  autoComplete="current-password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                />
+                <button
+                  type="button"
+                  className="boton-texto"
+                  onClick={() => setVerPassword((v) => !v)}
+                  aria-label={verPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+                >
+                  {verPassword ? 'Ocultar' : 'Ver'}
+                </button>
+              </div>
+            </label>
 
-          <button type="submit" className="boton-principal" disabled={enviando}>
-            {enviando ? 'Ingresando…' : 'Ingresar'}
-          </button>
-        </form>
+            {error && (
+              <p className="auth-error" role="alert">
+                {error}
+              </p>
+            )}
 
-        <Link to="/panel/recuperar" className="auth-link">
-          Olvidé mi contraseña
-        </Link>
-      </section>
+            <button type="submit" className="boton-principal" disabled={enviando}>
+              {enviando ? 'Ingresando…' : 'Ingresar'}
+            </button>
+          </form>
+
+          <Link to="/panel/recuperar" className="auth-link">
+            Olvidé mi contraseña
+          </Link>
+        </section>
+        <PieDesarrollo />
+      </div>
     </main>
   )
 }

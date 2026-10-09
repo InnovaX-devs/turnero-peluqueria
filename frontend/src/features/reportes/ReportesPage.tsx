@@ -6,6 +6,7 @@ import { Selector } from '../../components/Selector'
 import { hoyISO } from '../../lib/fechas'
 import { formatearPrecio } from '../../lib/formato'
 import type { Ausentismo, BarberoReporte, ClienteFrecuente, Demanda } from '../../types/reportes'
+import { useAuth } from '../auth/useAuth'
 import { useOpcionesRegistro } from '../atenciones/useOpcionesRegistro'
 import { periodoDe, type Periodo, type Preset } from '../caja/periodos'
 import { DIAS_CORTOS, DIAS_SEMANA, fechaCorta, linkWhatsApp, tasaAusentismo } from './formatos'
@@ -21,6 +22,9 @@ const PRESETS: { valor: Exclude<Preset, 'hoy'>; etiqueta: string }[] = [
 const OPCIONES_DIAS = [30, 45, 60, 90]
 
 export function ReportesPage() {
+  // El barbero ve solo sus números (el backend los filtra con su token); acá solo cambian los títulos.
+  const { usuario } = useAuth()
+  const propio = usuario?.rol === 'BARBERO'
   const [preset, setPreset] = useState<Exclude<Preset, 'hoy'>>('mes')
   const [personalizado, setPersonalizado] = useState<Periodo>(() => periodoDe('mes'))
   const [sucursalId, setSucursalId] = useState<string | null>(null)
@@ -41,7 +45,7 @@ export function ReportesPage() {
   return (
     <section className="caja">
       <div className="caja-cabecera">
-        <h1>Reportes</h1>
+        <h1>{propio ? 'Mis reportes' : 'Reportes'}</h1>
       </div>
 
       <div className="caja-filtros">
@@ -100,18 +104,41 @@ export function ReportesPage() {
 
       {data && (
         <div className={isFetching ? 'reportes caja-actualizando' : 'reportes'}>
+          <TarjetaCobrado barberos={data.porBarbero} propio={propio} />
           <div className="reportes-fila">
             <TarjetaAusentismo ausentismo={data.ausentismo} />
-            <TarjetaBarberos barberos={data.porBarbero} />
+            <TarjetaBarberos barberos={data.porBarbero} propio={propio} />
           </div>
           <TarjetaDemanda demanda={data.demanda} />
-          <TarjetaFrecuentes clientes={data.clientesFrecuentes} />
+          <TarjetaFrecuentes clientes={data.clientesFrecuentes} propio={propio} />
         </div>
       )}
 
       {/* No depende del período: mira la última visita de cada cliente */}
-      <ClientesQueNoVuelven />
+      <ClientesQueNoVuelven propio={propio} />
     </section>
+  )
+}
+
+/** Plata cobrada en el período. Para el barbero llega solo lo suyo; para el admin, todos los barberos sumados. */
+function TarjetaCobrado({ barberos, propio }: { barberos: BarberoReporte[]; propio: boolean }) {
+  const cobrado = barberos.reduce((suma, b) => suma + b.facturado, 0)
+  const cortes = barberos.reduce((suma, b) => suma + b.atendidos, 0)
+  const ticketPromedio = cortes === 0 ? 0 : Math.round(cobrado / cortes)
+  return (
+    <div className="reporte-tarjeta reporte-cobrado">
+      <h2>{propio ? 'Lo que cobraste' : 'Total facturado'}</h2>
+      {cortes === 0 ? (
+        <p className="reporte-cobrado-vacio">Todavía no hay cortes cobrados en este período.</p>
+      ) : (
+        <>
+          <p className="reporte-numero">{formatearPrecio(cobrado)}</p>
+          <p className="reporte-cobrado-detalle">
+            {cortes} {cortes === 1 ? 'corte' : 'cortes'} · ticket promedio {formatearPrecio(ticketPromedio)}
+          </p>
+        </>
+      )}
+    </div>
   )
 }
 
@@ -143,10 +170,10 @@ function TarjetaAusentismo({ ausentismo }: { ausentismo: Ausentismo }) {
   )
 }
 
-function TarjetaBarberos({ barberos }: { barberos: BarberoReporte[] }) {
+function TarjetaBarberos({ barberos, propio }: { barberos: BarberoReporte[]; propio: boolean }) {
   return (
     <div className="reporte-tarjeta">
-      <h2>Cortes por barbero</h2>
+      <h2>{propio ? 'Mis cortes' : 'Cortes por barbero'}</h2>
       {barberos.length === 0 ? (
         <p className="caja-estado">Sin turnos en este período.</p>
       ) : (
@@ -154,8 +181,9 @@ function TarjetaBarberos({ barberos }: { barberos: BarberoReporte[] }) {
           <table className="reporte-tabla">
             <thead>
               <tr>
-                <th>Barbero</th>
+                {!propio && <th>Barbero</th>}
                 <th>Atendidos</th>
+                {!propio && <th>Cobrado</th>}
                 <th>Ausentes</th>
                 <th>Cancelados</th>
               </tr>
@@ -163,8 +191,9 @@ function TarjetaBarberos({ barberos }: { barberos: BarberoReporte[] }) {
             <tbody>
               {barberos.map((b) => (
                 <tr key={b.id}>
-                  <td>{b.nombre}</td>
+                  {!propio && <td>{b.nombre}</td>}
                   <td><strong>{b.atendidos}</strong></td>
+                  {!propio && <td>{formatearPrecio(b.facturado)}</td>}
                   <td>{b.ausentes}</td>
                   <td>{b.cancelados}</td>
                 </tr>
@@ -242,10 +271,10 @@ function TarjetaDemanda({ demanda }: { demanda: Demanda[] }) {
   )
 }
 
-function TarjetaFrecuentes({ clientes }: { clientes: ClienteFrecuente[] }) {
+function TarjetaFrecuentes({ clientes, propio }: { clientes: ClienteFrecuente[]; propio: boolean }) {
   return (
     <div className="reporte-tarjeta">
-      <h2>Clientes más frecuentes</h2>
+      <h2>{propio ? 'Mis clientes más frecuentes' : 'Clientes más frecuentes'}</h2>
       {clientes.length === 0 ? (
         <p className="caja-estado">Todavía no hay clientes con visitas registradas en este período.</p>
       ) : (
@@ -268,7 +297,7 @@ function TarjetaFrecuentes({ clientes }: { clientes: ClienteFrecuente[] }) {
   )
 }
 
-function ClientesQueNoVuelven() {
+function ClientesQueNoVuelven({ propio }: { propio: boolean }) {
   const [dias, setDias] = useState(45)
   const { data, isPending, error } = useQuery({
     queryKey: ['reportes', 'clientes-inactivos', dias],
@@ -279,7 +308,7 @@ function ClientesQueNoVuelven() {
   return (
     <div className="reporte-tarjeta reporte-inactivos">
       <div className="reporte-cabecera">
-        <h2>Clientes que no vuelven</h2>
+        <h2>{propio ? 'Mis clientes que no vuelven' : 'Clientes que no vuelven'}</h2>
         <label>
           Sin venir hace más de
           <Selector

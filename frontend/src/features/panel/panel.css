@@ -1,13 +1,28 @@
 .panel {
   min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
 }
 
 .panel-contenido {
+  flex: 1;
+  width: 100%;
   padding: 24px 16px;
   max-width: 960px;
   margin: 0 auto;
-  /* Celu: deja lugar para la barra inferior (56px + el botón que sobresale) */
-  padding-bottom: calc(96px + env(safe-area-inset-bottom));
+}
+
+/* Pie "Desarrollado por InnovaX". En el celu deja lugar para la barra inferior
+   (56px + el botón que sobresale). */
+.panel-pie {
+  border-top: 1px solid var(--borde);
+  padding-bottom: calc(88px + env(safe-area-inset-bottom));
+}
+
+@media (min-width: 768px) {
+  .panel-pie {
+    padding-bottom: 20px;
+  }
 }
 
 @media (min-width: 768px) {

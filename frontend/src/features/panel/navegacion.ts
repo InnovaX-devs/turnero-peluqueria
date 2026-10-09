@@ -28,10 +28,10 @@ export const ITEMS_PRINCIPALES: ItemNav[] = [
   { to: '/panel/mensajes', etiqueta: 'Mensajes', icono: MessageSquare },
 ]
 
-/** Solo admin. En desktop van en la top bar; en el celu, dentro de "Más". */
+/** Caja es solo admin; Reportes lo ven todos (el barbero ve únicamente los suyos). En desktop van en la top bar; en el celu, dentro de "Más". */
 export const ITEMS_NEGOCIO: ItemNav[] = [
   { to: '/panel/caja', etiqueta: 'Caja', icono: Wallet, soloAdmin: true },
-  { to: '/panel/reportes', etiqueta: 'Reportes', icono: ChartColumn, soloAdmin: true },
+  { to: '/panel/reportes', etiqueta: 'Reportes', icono: ChartColumn },
 ]
 
 /** Configuración del negocio: desplegable "Gestión" en desktop. */
