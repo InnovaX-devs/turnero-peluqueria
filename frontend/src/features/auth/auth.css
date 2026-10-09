@@ -6,6 +6,23 @@
   padding: 24px 16px;
 }
 
+.auth-contenido {
+  width: 100%;
+  max-width: 420px;
+}
+
+/* El pie "Desarrollado por InnovaX" va en blanco porque queda sobre el fondo azul */
+.auth-contenido .pie-desarrollo {
+  color: rgb(255 255 255 / 0.75);
+}
+.auth-contenido .pie-desarrollo a {
+  color: #fff;
+  border-bottom-color: rgb(255 255 255 / 0.45);
+}
+@media (hover: hover) {
+  .auth-contenido .pie-desarrollo a:hover { border-bottom-color: #fff; }
+}
+
 .auth-tarjeta {
   width: 100%;
   max-width: 420px;

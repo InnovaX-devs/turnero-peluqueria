@@ -12,7 +12,10 @@ import java.util.UUID;
 
 public interface ReporteRepository extends Repository<Atencion, UUID> {
 
-    /** Todas las atenciones (cualquier estado) de una barbería en [desde, hasta). */
+    /**
+     * Todas las atenciones (cualquier estado) de una barbería en [desde, hasta).
+     * Con :barberoId, solo las de ese barbero (null = todos, solo lo usa el admin).
+     */
     @Query("""
             select new com.innovax.barberia.reporte.FilaReporte(
                 a.inicio, a.estado, a.origen, a.precioFinal,
@@ -25,12 +28,14 @@ public interface ReporteRepository extends Repository<Atencion, UUID> {
               and a.inicio >= :desde
               and a.inicio < :hasta
               and (:sucursalId is null or a.sucursal.id = :sucursalId)
+              and (:barberoId is null or b.id = :barberoId)
             """)
     List<FilaReporte> buscar(
             @Param("barberiaId") UUID barberiaId,
             @Param("desde") Instant desde,
             @Param("hasta") Instant hasta,
-            @Param("sucursalId") UUID sucursalId);
+            @Param("sucursalId") UUID sucursalId,
+            @Param("barberoId") UUID barberoId);
 
     /** Clientes cuya última atención completada fue antes de :limite. Los que más vinieron, primero. */
     @Query("""
@@ -40,6 +45,7 @@ public interface ReporteRepository extends Repository<Atencion, UUID> {
             join a.cliente c
             where a.barberia.id = :barberiaId
               and a.estado = :completada
+              and (:barberoId is null or a.barbero.id = :barberoId)
             group by c.id, c.nombre, c.telefono
             having max(a.inicio) < :limite
             order by count(a) desc, max(a.inicio) desc
@@ -47,7 +53,8 @@ public interface ReporteRepository extends Repository<Atencion, UUID> {
     List<UltimaVisita> ultimasVisitasAntesDe(
             @Param("barberiaId") UUID barberiaId,
             @Param("completada") EstadoAtencion completada,
-            @Param("limite") Instant limite);
+            @Param("limite") Instant limite,
+            @Param("barberoId") UUID barberoId);
 
     /** Clientes que ya tienen un turno reservado a futuro (esos van a volver). */
     @Query("""
@@ -57,9 +64,11 @@ public interface ReporteRepository extends Repository<Atencion, UUID> {
               and a.estado = :reservada
               and a.inicio > :ahora
               and a.cliente is not null
+              and (:barberoId is null or a.barbero.id = :barberoId)
             """)
     List<UUID> clientesConTurnoFuturo(
             @Param("barberiaId") UUID barberiaId,
             @Param("reservada") EstadoAtencion reservada,
-            @Param("ahora") Instant ahora);
+            @Param("ahora") Instant ahora,
+            @Param("barberoId") UUID barberoId);
 }

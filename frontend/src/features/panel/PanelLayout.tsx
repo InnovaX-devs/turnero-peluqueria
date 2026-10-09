@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Outlet } from 'react-router-dom'
+import { PieDesarrollo } from '../../components/PieDesarrollo'
 import { useAuth } from '../auth/useAuth'
 import { RegistrarCorte } from '../atenciones/RegistrarCorte'
 import { useOpcionesRegistro } from '../atenciones/useOpcionesRegistro'
@@ -28,6 +29,7 @@ export function PanelLayout() {
       <main className="panel-contenido">
         <Outlet />
       </main>
+      <PieDesarrollo className="panel-pie" />
 
       <BottomBar usuario={usuario} onRegistrar={() => setRegistrando(true)} onCerrarSesion={cerrarSesion} />
 

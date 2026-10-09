@@ -43,3 +43,9 @@
 .reporte-cabecera label { display: flex; align-items: center; gap: 8px; font-size: 0.875rem; color: var(--texto-suave); }
 .reporte-cabecera select { padding: 6px 10px; border: 1px solid var(--borde); border-radius: 10px; font: inherit; background: var(--fondo-tarjeta); color: var(--texto); }
 .reporte-whatsapp { white-space: nowrap; text-decoration: none; color: var(--texto); }
+
+/* Plata cobrada: tarjeta destacada en el azul de la marca */
+.reporte-cobrado { background: var(--barra); border-color: var(--barra); color: var(--barra-texto); }
+.reporte-cobrado h2 { color: var(--barra-texto); opacity: 0.85; font-weight: 600; }
+.reporte-cobrado .reporte-numero { color: var(--barra-texto); margin-bottom: 6px; }
+.reporte-cobrado-detalle, .reporte-cobrado-vacio { margin: 0; color: var(--barra-texto); opacity: 0.85; font-size: 0.9rem; }

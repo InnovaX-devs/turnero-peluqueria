@@ -5,6 +5,8 @@ export interface BarberoReporte {
   atendidos: number
   ausentes: number
   cancelados: number
+  /** Lo cobrado en los cortes atendidos del período, en centavos */
+  facturado: number
 }
 
 export interface ClienteFrecuente {

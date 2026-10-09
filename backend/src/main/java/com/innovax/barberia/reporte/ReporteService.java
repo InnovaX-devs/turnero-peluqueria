@@ -2,6 +2,7 @@ package com.innovax.barberia.reporte;
 
 import com.innovax.barberia.atencion.EstadoAtencion;
 import com.innovax.barberia.atencion.OrigenAtencion;
+import com.innovax.barberia.auth.Rol;
 import com.innovax.barberia.auth.UsuarioActual;
 import com.innovax.barberia.barberia.Barberia;
 import com.innovax.barberia.barberia.BarberiaRepository;
@@ -11,6 +12,7 @@ import com.innovax.barberia.reporte.dto.ClientesInactivosResponse;
 import com.innovax.barberia.reporte.dto.ReportesResponse;
 import com.innovax.barberia.sucursal.SucursalRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -62,7 +64,8 @@ public class ReporteService {
         List<FilaReporte> filas = reportes.buscar(barberia.getId(),
                 desde.atStartOfDay(zona).toInstant(),
                 hasta.plusDays(1).atStartOfDay(zona).toInstant(),
-                sucursalId);
+                sucursalId,
+                barberoAcotado());
 
         return new ReportesResponse(desde, hasta,
                 porBarbero(filas),
@@ -81,11 +84,12 @@ public class ReporteService {
         Instant ahora = Instant.now();
         LocalDate hoy = LocalDate.now(Clock.system(zona));
 
+        UUID barberoId = barberoAcotado();
         Set<UUID> vuelven = new HashSet<>(
-                reportes.clientesConTurnoFuturo(barberia.getId(), EstadoAtencion.RESERVADA, ahora));
+                reportes.clientesConTurnoFuturo(barberia.getId(), EstadoAtencion.RESERVADA, ahora, barberoId));
 
         List<ClientesInactivosResponse.Cliente> clientes = reportes
-                .ultimasVisitasAntesDe(barberia.getId(), EstadoAtencion.COMPLETADA, ahora.minus(Duration.ofDays(dias)))
+                .ultimasVisitasAntesDe(barberia.getId(), EstadoAtencion.COMPLETADA, ahora.minus(Duration.ofDays(dias)), barberoId)
                 .stream()
                 .filter(v -> !vuelven.contains(v.clienteId()))
                 .limit(MAX_INACTIVOS)
@@ -99,6 +103,18 @@ public class ReporteService {
         return new ClientesInactivosResponse(barberia.getNombre(), dias, clientes);
     }
 
+    /**
+     * Un barbero ve solo sus propios números: el id sale siempre del token, nunca del request.
+     * El admin ve toda la barbería (null = sin filtro).
+     */
+    private UUID barberoAcotado() {
+        if (usuarioActual.rol() != Rol.BARBERO) {
+            return null;
+        }
+        return usuarioActual.barberoId()
+                .orElseThrow(() -> new AccessDeniedException("Tu usuario no está vinculado a un barbero"));
+    }
+
     private Barberia barberiaActual() {
         // Aislamiento: la barbería sale siempre del token
         return barberias.findById(usuarioActual.barberiaId())
@@ -107,12 +123,16 @@ public class ReporteService {
 
     private static List<ReportesResponse.Barbero> porBarbero(List<FilaReporte> filas) {
         Map<UUID, int[]> cuentas = new LinkedHashMap<>();
+        Map<UUID, Long> facturado = new LinkedHashMap<>();
         Map<UUID, String> nombres = new LinkedHashMap<>();
         for (FilaReporte f : filas) {
             nombres.putIfAbsent(f.barberoId(), f.barberoNombre() + " " + f.barberoApellido());
             int[] c = cuentas.computeIfAbsent(f.barberoId(), k -> new int[3]);
             switch (f.estado()) {
-                case COMPLETADA -> c[0]++;
+                case COMPLETADA -> {
+                    c[0]++;
+                    facturado.merge(f.barberoId(), f.precioFinal(), Long::sum);
+                }
                 case AUSENTE -> c[1]++;
                 case CANCELADA -> c[2]++;
                 default -> { } // RESERVADA: todavía no pasó nada
@@ -120,7 +140,8 @@ public class ReporteService {
         }
         return cuentas.entrySet().stream()
                 .map(e -> new ReportesResponse.Barbero(e.getKey(), nombres.get(e.getKey()),
-                        e.getValue()[0], e.getValue()[1], e.getValue()[2]))
+                        e.getValue()[0], e.getValue()[1], e.getValue()[2],
+                        facturado.getOrDefault(e.getKey(), 0L)))
                 .sorted(Comparator.comparingInt(ReportesResponse.Barbero::atendidos).reversed())
                 .toList();
     }
