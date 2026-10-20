@@ -1,10 +1,12 @@
 import { useState, type FormEvent } from 'react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { actualizarBarberia } from '../../api/barberia'
+import { actualizarBarberia, quitarLogoBarberia, subirLogoBarberia } from '../../api/barberia'
 import { LogoBarberia } from './LogoBarberia'
 import { Selector } from '../../components/Selector'
 import { erroresDeCampos, mensajeDeError } from '../../lib/errores'
-import type { Barberia } from '../../types/barberia'
+import type { CambioImagen } from '../../components/imagenPendiente'
+import type { ActualizarBarberia, Barberia } from '../../types/barberia'
+import { useAuth } from '../auth/useAuth'
 import {
   ANTICIPACIONES_CANCELACION,
   ANTICIPACIONES_MINIMAS,
@@ -39,13 +41,28 @@ export function FormularioBarberia({ barberia }: { barberia: Barberia }) {
   const [errores, setErrores] = useState<Record<string, string>>({})
   const [errorGeneral, setErrorGeneral] = useState<string | null>(null)
   const [guardado, setGuardado] = useState(false)
+  const [logoCambio, setLogoCambio] = useState<CambioImagen>(null)
+  const { refrescarUsuario } = useAuth()
 
   const guardar = useMutation({
-    mutationFn: actualizarBarberia,
+    // Primero el logo (si cambió) y después el resto. El PUT lleva el logo que quedó guardado, así
+    // no lo pisa con el valor viejo.
+    mutationFn: async ({ datos, logo }: { datos: ActualizarBarberia; logo: CambioImagen }) => {
+      let actual = barberia
+      if (logo !== null) {
+        actual = logo.tipo === 'subir' ? await subirLogoBarberia(logo.archivo) : await quitarLogoBarberia()
+        // Si después falla el resto, el logo ya quedó guardado: que la pantalla lo refleje
+        queryClient.setQueryData(['barberia'], actual)
+        setLogoCambio(null)
+      }
+      const completos = { ...datos, logoUrl: actual.logoUrl }
+      return sonIguales(completos, actual) ? actual : actualizarBarberia(completos)
+    },
     onSuccess: (actualizada) => {
       queryClient.setQueryData(['barberia'], actualizada)
       setForm(aFormulario(actualizada)) // refleja lo que quedó guardado (ej. nombre sin espacios sobrantes)
       setGuardado(true)
+      refrescarUsuario() // el nombre y el logo de la barra de arriba
     },
     onError: (err) => {
       const deCampos = erroresDeCampos(err)
@@ -67,15 +84,14 @@ export function FormularioBarberia({ barberia }: { barberia: Barberia }) {
   }
 
   const datos = aDatos(form)
-  const hayCambios = !sonIguales(datos, barberia)
+  const hayCambios = !sonIguales(datos, barberia) || logoCambio !== null
   const slugCambio = datos.slug !== barberia.slug
   const urlPublica = `${window.location.origin}/b/${datos.slug || 'tu-barberia'}`
 
-  // El logo se sube/quita al instante (como la foto del barbero). Se sincroniza el form para que
-  // "Guardar cambios" no pise el logo nuevo con el valor viejo.
-  function alCambiarLogo(actualizada: Barberia) {
-    queryClient.setQueryData(['barberia'], actualizada)
-    setForm((f) => ({ ...f, logoUrl: actualizada.logoUrl ?? '' }))
+  function cambiarLogo(cambio: CambioImagen) {
+    setLogoCambio(cambio)
+    setGuardado(false)
+    setErrorGeneral(null)
   }
 
   function handleSubmit(e: FormEvent<HTMLFormElement>) {
@@ -88,7 +104,7 @@ export function FormularioBarberia({ barberia }: { barberia: Barberia }) {
     setErrores({})
     setErrorGeneral(null)
     setGuardado(false)
-    guardar.mutate(datos)
+    guardar.mutate({ datos, logo: logoCambio })
   }
 
   return (
@@ -132,7 +148,12 @@ export function FormularioBarberia({ barberia }: { barberia: Barberia }) {
 
         <div className="config-campo">
           <span className="config-etiqueta">Logo</span>
-          <LogoBarberia logoUrl={barberia.logoUrl} onCambio={alCambiarLogo} />
+          <LogoBarberia
+            logoUrl={barberia.logoUrl}
+            cambio={logoCambio}
+            onCambio={cambiarLogo}
+            deshabilitado={guardar.isPending}
+          />
         </div>
       </fieldset>
 

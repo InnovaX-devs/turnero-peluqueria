@@ -38,9 +38,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUsuario(respuesta.usuario)
   }, [])
 
+  const refrescarUsuario = useCallback(() => {
+    obtenerUsuarioActual()
+      .then(setUsuario)
+      .catch(() => {
+        // Si falla no pasa nada: la barra se actualiza la próxima vez que se cargue la página
+      })
+  }, [])
+
   const value = useMemo<AuthContextValue>(
-    () => ({ usuario, cargando, iniciarSesion, cerrarSesion }),
-    [usuario, cargando, iniciarSesion, cerrarSesion],
+    () => ({ usuario, cargando, iniciarSesion, cerrarSesion, refrescarUsuario }),
+    [usuario, cargando, iniciarSesion, cerrarSesion, refrescarUsuario],
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

@@ -231,6 +231,7 @@
 }
 
 .config-logo-acciones .config-ayuda,
+.config-logo-acciones .config-aviso,
 .config-logo-acciones .config-campo-error {
   flex-basis: 100%;
   margin-top: 0;
