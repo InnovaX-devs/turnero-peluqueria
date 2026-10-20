@@ -71,6 +71,8 @@ public class AuthService {
     }
 
     private UsuarioResponse aResponse(Usuario u, UUID barberoId) {
-        return new UsuarioResponse(u.getId(), u.getEmail(), u.getRol(), u.getBarberia().getId(), barberoId);
+        var barberia = u.getBarberia();
+        return new UsuarioResponse(u.getId(), u.getEmail(), u.getRol(), barberia.getId(), barberoId,
+                barberia.getNombre(), barberia.getLogoUrl());
     }
 }

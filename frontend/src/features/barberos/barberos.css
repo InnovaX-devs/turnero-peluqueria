@@ -146,10 +146,26 @@
   gap: 8px;
 }
 
+.foto-barbero {
+  flex-wrap: wrap;
+}
+
 .foto-acciones .config-ayuda,
+.foto-acciones .config-aviso,
 .foto-acciones .config-campo-error {
   flex-basis: 100%;
   margin-top: 0;
+}
+
+.foto-acciones .foto-guardar {
+  width: auto;
+  padding: 10px 18px;
+  font-size: 0.95rem;
+}
+
+.foto-estado {
+  flex-basis: 100%;
+  margin: 0;
 }
 
 /* Checkboxes de sucursales y servicios */

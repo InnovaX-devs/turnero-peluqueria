@@ -7,6 +7,9 @@ export interface Usuario {
   barberiaId: string
   /** null si el usuario no está vinculado a un barbero (ej. un admin que no corta) */
   barberoId: string | null
+  barberiaNombre: string
+  /** null si la barbería no cargó logo */
+  barberiaLogoUrl: string | null
 }
 
 export interface LoginResponse {

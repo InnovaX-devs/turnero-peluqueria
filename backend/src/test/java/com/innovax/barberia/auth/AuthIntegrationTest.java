@@ -59,7 +59,10 @@ class AuthIntegrationTest {
                 .andExpect(jsonPath("$.token").isNotEmpty())
                 .andExpect(jsonPath("$.usuario.rol").value("BARBERO"))
                 .andExpect(jsonPath("$.usuario.barberiaId").value(BARBERIA_JADE))
-                .andExpect(jsonPath("$.usuario.barberoId").value(LUCAS));
+                .andExpect(jsonPath("$.usuario.barberoId").value(LUCAS))
+                // Para la barra del panel: el barbero ve el nombre y el logo de su barbería
+                .andExpect(jsonPath("$.usuario.barberiaNombre").value("Jade"))
+                .andExpect(jsonPath("$.usuario.barberiaLogoUrl").hasJsonPath());
     }
 
     @Test
@@ -109,7 +112,8 @@ class AuthIntegrationTest {
         mvc.perform(get("/api/auth/yo").header("Authorization", bearer(token)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.email").value("admin@jade.com"))
-                .andExpect(jsonPath("$.rol").value("ADMIN"));
+                .andExpect(jsonPath("$.rol").value("ADMIN"))
+                .andExpect(jsonPath("$.barberiaNombre").value("Jade"));
     }
 
     // ---------- Roles ----------
