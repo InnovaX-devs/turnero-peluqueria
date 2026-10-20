@@ -5,6 +5,19 @@ export interface ClienteListado {
   nombre: string
   telefono: string
   tieneNotas: boolean
+  /** Último turno completado (ISO). null si nunca vino. */
+  ultimaVisita: string | null
+}
+
+export type OrdenClientes = 'nombre' | 'ultimaVisita'
+
+export interface PaginaClientes {
+  clientes: ClienteListado[]
+  /** Cuántos clientes coinciden con la búsqueda, en total */
+  total: number
+  pagina: number
+  tamano: number
+  hayMas: boolean
 }
 
 export interface AtencionHistorial {

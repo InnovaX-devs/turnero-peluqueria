@@ -1,6 +1,7 @@
 package com.innovax.barberia.cliente;
 
 import com.innovax.barberia.atencion.AtencionRepository;
+import com.innovax.barberia.atencion.EstadoAtencion;
 import com.innovax.barberia.auth.UsuarioActual;
 import com.innovax.barberia.barberia.BarberiaRepository;
 import com.innovax.barberia.cliente.dto.ActualizarNotasRequest;
@@ -8,7 +9,9 @@ import com.innovax.barberia.cliente.dto.ClienteListadoResponse;
 import com.innovax.barberia.cliente.dto.ClienteResponse;
 import com.innovax.barberia.cliente.dto.CrearClienteRequest;
 import com.innovax.barberia.cliente.dto.FichaClienteResponse;
+import com.innovax.barberia.cliente.dto.PaginaClientesResponse;
 import com.innovax.barberia.common.ConflictoException;
+import com.innovax.barberia.common.DatosInvalidosException;
 import com.innovax.barberia.common.RecursoNoEncontradoException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -16,7 +19,10 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Instant;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @Service
@@ -24,7 +30,9 @@ import java.util.UUID;
 public class ClienteService {
 
     private static final int MAXIMO_RESULTADOS = 10;
-    private static final int MAXIMO_LISTADO = 200;
+    private static final int MAXIMO_POR_PAGINA = 100;
+    static final String ORDEN_NOMBRE = "nombre";
+    static final String ORDEN_ULTIMA_VISITA = "ultimaVisita";
 
     private final ClienteRepository clientes;
     private final BarberiaRepository barberias;
@@ -65,17 +73,41 @@ public class ClienteService {
         return ClienteResponse.de(cliente);
     }
 
-    /** Listado del panel: sin texto trae todos (hasta un máximo), con texto filtra por nombre o teléfono. */
+    /**
+     * Listado del panel, paginado. Sin texto trae todos; con texto filtra por nombre o teléfono.
+     * {@code orden}: "nombre" (A-Z) o "ultimaVisita" (los que vinieron más recientemente primero).
+     */
     @Transactional(readOnly = true)
-    public List<ClienteListadoResponse> listar(String consulta) {
+    public PaginaClientesResponse listar(String consulta, int pagina, int tamano, String orden) {
+        if (!ORDEN_NOMBRE.equals(orden) && !ORDEN_ULTIMA_VISITA.equals(orden)) {
+            throw new DatosInvalidosException("orden", "El orden tiene que ser nombre o ultimaVisita");
+        }
+        int paginaPedida = Math.max(pagina, 0);
+        int porPagina = Math.clamp(tamano, 1, MAXIMO_POR_PAGINA);
+
         String texto = consulta == null ? "" : consulta.trim();
         String digitos = texto.replaceAll("\\D", "");
         // Con 1 o 2 dígitos buscar por teléfono trae casi todo: ahí se busca solo por nombre
         String digitosParaTelefono = digitos.length() >= 3 ? digitos : "";
-        return clientes.listar(usuarioActual.barberiaId(), texto, digitosParaTelefono, PageRequest.of(0, MAXIMO_LISTADO))
-                .stream()
-                .map(ClienteListadoResponse::de)
+        UUID barberiaId = usuarioActual.barberiaId();
+
+        long total = clientes.contarListado(barberiaId, texto, digitosParaTelefono);
+        long desde = (long) paginaPedida * porPagina;
+        List<Cliente> encontrados = ORDEN_ULTIMA_VISITA.equals(orden)
+                ? clientes.listarPorUltimaVisita(barberiaId, texto, digitosParaTelefono, porPagina, desde)
+                : clientes.listarPorNombre(barberiaId, texto, digitosParaTelefono, porPagina, desde);
+
+        Map<UUID, Instant> ultimas = new HashMap<>();
+        if (!encontrados.isEmpty()) {
+            List<UUID> ids = encontrados.stream().map(Cliente::getId).toList();
+            for (Object[] fila : clientes.ultimasVisitas(ids, EstadoAtencion.COMPLETADA)) {
+                ultimas.put((UUID) fila[0], (Instant) fila[1]);
+            }
+        }
+        List<ClienteListadoResponse> filas = encontrados.stream()
+                .map(c -> ClienteListadoResponse.de(c, ultimas.get(c.getId())))
                 .toList();
+        return new PaginaClientesResponse(filas, total, paginaPedida, porPagina, desde + filas.size() < total);
     }
 
     @Transactional(readOnly = true)
