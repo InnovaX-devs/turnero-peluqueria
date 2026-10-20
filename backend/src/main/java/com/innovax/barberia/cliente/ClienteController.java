@@ -1,10 +1,10 @@
 package com.innovax.barberia.cliente;
 
 import com.innovax.barberia.cliente.dto.ActualizarNotasRequest;
-import com.innovax.barberia.cliente.dto.ClienteListadoResponse;
 import com.innovax.barberia.cliente.dto.ClienteResponse;
 import com.innovax.barberia.cliente.dto.CrearClienteRequest;
 import com.innovax.barberia.cliente.dto.FichaClienteResponse;
+import com.innovax.barberia.cliente.dto.PaginaClientesResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -40,10 +40,17 @@ public class ClienteController {
         return clienteService.crear(request);
     }
 
-    /** Listado del panel (pantalla Clientes). {@code q} es opcional: nombre o parte del teléfono. */
+    /**
+     * Listado del panel (pantalla Clientes), paginado. {@code q} es opcional: nombre o parte del
+     * teléfono. {@code pagina} arranca en 0; {@code tamano} es de hasta 100; {@code orden} es
+     * "nombre" o "ultimaVisita".
+     */
     @GetMapping("/listado")
-    public List<ClienteListadoResponse> listar(@RequestParam(defaultValue = "") String q) {
-        return clienteService.listar(q);
+    public PaginaClientesResponse listar(@RequestParam(defaultValue = "") String q,
+                                         @RequestParam(defaultValue = "0") int pagina,
+                                         @RequestParam(defaultValue = "50") int tamano,
+                                         @RequestParam(defaultValue = "nombre") String orden) {
+        return clienteService.listar(q, pagina, tamano, orden);
     }
 
     @GetMapping("/{id}")

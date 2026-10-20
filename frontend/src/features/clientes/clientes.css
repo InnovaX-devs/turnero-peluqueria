@@ -1,6 +1,22 @@
 .clientes { display: flex; flex-direction: column; gap: 14px; }
 .clientes-titulo { margin: 0; font-size: 1.4rem; }
 
+.clientes-filtros { display: flex; flex-wrap: wrap; gap: 10px; align-items: stretch; }
+.clientes-filtros .clientes-buscador { flex: 1 1 240px; }
+.clientes-orden {
+  display: flex; align-items: center; gap: 8px; flex: 0 0 auto;
+  color: var(--texto-suave); font-size: 0.875rem;
+}
+.clientes-orden select {
+  padding: 10px 12px; border: 1px solid var(--borde); border-radius: 12px;
+  background: var(--fondo-tarjeta); color: var(--texto); font: inherit; font-size: 0.95rem;
+}
+.clientes-orden select:focus { outline: 2px solid var(--acento); outline-offset: 1px; }
+
+.clientes-total { margin: 0; color: var(--texto-suave); font-size: 0.875rem; }
+.clientes-fila-visita { font-size: 0.8rem; }
+.clientes-ver-mas { align-self: center; width: 100%; max-width: 320px; }
+
 .clientes-buscador {
   width: 100%; padding: 12px 14px; border: 1px solid var(--borde); border-radius: 12px;
   background: var(--fondo-tarjeta); color: var(--texto); font-size: 1rem;

@@ -29,8 +29,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
+import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.hasItem;
 import static org.hamcrest.Matchers.hasSize;
+import static org.hamcrest.Matchers.nullValue;
 import static org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
@@ -139,12 +141,12 @@ class ClienteFichaIntegrationTest {
         clienteJade("Zzz Listado Ultimo", "+5493584900002", null);
         clienteJade("Aaa Listado Primero", "+5493584900003", "con nota");
 
-        mvc.perform(get("/api/clientes/listado").header("Authorization", admin()))
+        mvc.perform(get("/api/clientes/listado").param("tamano", "100").header("Authorization", admin()))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[*].nombre", hasItem("Aaa Listado Primero")))
-                .andExpect(jsonPath("$[*].nombre", hasItem("Zzz Listado Ultimo")))
-                .andExpect(jsonPath("$[?(@.nombre=='Aaa Listado Primero')].tieneNotas").value(true))
-                .andExpect(jsonPath("$[?(@.nombre=='Zzz Listado Ultimo')].tieneNotas").value(false));
+                .andExpect(jsonPath("$.clientes[*].nombre", hasItem("Aaa Listado Primero")))
+                .andExpect(jsonPath("$.clientes[*].nombre", hasItem("Zzz Listado Ultimo")))
+                .andExpect(jsonPath("$.clientes[?(@.nombre=='Aaa Listado Primero')].tieneNotas").value(true))
+                .andExpect(jsonPath("$.clientes[?(@.nombre=='Zzz Listado Ultimo')].tieneNotas").value(false));
     }
 
     @Test
@@ -153,9 +155,10 @@ class ClienteFichaIntegrationTest {
 
         mvc.perform(get("/api/clientes/listado").param("q", "buscABLE").header("Authorization", admin()))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$", hasSize(1)))
-                .andExpect(jsonPath("$[0].nombre").value("Fulano Buscable"))
-                .andExpect(jsonPath("$[0].telefono").value("+5493584900004"));
+                .andExpect(jsonPath("$.clientes", hasSize(1)))
+                .andExpect(jsonPath("$.total").value(1))
+                .andExpect(jsonPath("$.clientes[0].nombre").value("Fulano Buscable"))
+                .andExpect(jsonPath("$.clientes[0].telefono").value("+5493584900004"));
     }
 
     @Test
@@ -165,8 +168,8 @@ class ClienteFichaIntegrationTest {
         // Como la gente lo escribe: con espacios y guiones
         mvc.perform(get("/api/clientes/listado").param("q", "4977-123").header("Authorization", admin()))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$", hasSize(1)))
-                .andExpect(jsonPath("$[0].nombre").value("Telefonista"));
+                .andExpect(jsonPath("$.clientes", hasSize(1)))
+                .andExpect(jsonPath("$.clientes[0].nombre").value("Telefonista"));
     }
 
     @Test
@@ -180,7 +183,69 @@ class ClienteFichaIntegrationTest {
 
         mvc.perform(get("/api/clientes/listado").param("q", "Ajeno Listado").header("Authorization", admin()))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$", hasSize(0)));
+                .andExpect(jsonPath("$.clientes", hasSize(0)))
+                .andExpect(jsonPath("$.total").value(0));
+    }
+
+    // ---------- Paginado y orden del listado ----------
+
+    @Test
+    void listadoPaginaYDevuelveElTotal() throws Exception {
+        clienteJade("Paginado Test A", "+5493584900101", null);
+        clienteJade("Paginado Test B", "+5493584900102", null);
+        clienteJade("Paginado Test C", "+5493584900103", null);
+        String token = admin();
+
+        mvc.perform(get("/api/clientes/listado").param("q", "Paginado Test").param("tamano", "2")
+                        .header("Authorization", token))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.total").value(3))
+                .andExpect(jsonPath("$.pagina").value(0))
+                .andExpect(jsonPath("$.tamano").value(2))
+                .andExpect(jsonPath("$.hayMas").value(true))
+                .andExpect(jsonPath("$.clientes[*].nombre", contains("Paginado Test A", "Paginado Test B")));
+
+        mvc.perform(get("/api/clientes/listado").param("q", "Paginado Test").param("tamano", "2")
+                        .param("pagina", "1").header("Authorization", token))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.total").value(3))
+                .andExpect(jsonPath("$.hayMas").value(false))
+                .andExpect(jsonPath("$.clientes[*].nombre", contains("Paginado Test C")));
+    }
+
+    @Test
+    void listadoOrdenadoPorUltimaVisitaIgnoraAusenciasYDejaAlFinalALosQueNuncaVinieron() throws Exception {
+        Cliente viejo = clienteJade("Orden Visita Viejo", "+5493584900111", null);
+        Cliente reciente = clienteJade("Orden Visita Reciente", "+5493584900112", null);
+        clienteJade("Orden Visita Nunca", "+5493584900113", null);
+        Instant base = LocalDate.of(2020, 1, 10).atTime(15, 0).toInstant(ZoneOffset.UTC);
+        atencion(viejo, BARBERO_LUCAS, SERVICIO_CORTE, base, EstadoAtencion.COMPLETADA, 1_500_000);
+        // Faltó después: no cuenta como visita
+        atencion(viejo, BARBERO_LUCAS, SERVICIO_CORTE, base.plus(700, ChronoUnit.DAYS), EstadoAtencion.AUSENTE, 1_500_000);
+        atencion(reciente, BARBERO_LUCAS, SERVICIO_CORTE, base.plus(365, ChronoUnit.DAYS), EstadoAtencion.COMPLETADA, 1_500_000);
+
+        mvc.perform(get("/api/clientes/listado").param("q", "Orden Visita").param("orden", "ultimaVisita")
+                        .header("Authorization", admin()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.clientes[*].nombre",
+                        contains("Orden Visita Reciente", "Orden Visita Viejo", "Orden Visita Nunca")))
+                .andExpect(jsonPath("$.clientes[0].ultimaVisita").exists())
+                .andExpect(jsonPath("$.clientes[1].ultimaVisita").exists())
+                .andExpect(jsonPath("$.clientes[2].ultimaVisita").value(nullValue()));
+    }
+
+    @Test
+    void listadoConOrdenInvalidoDevuelve400() throws Exception {
+        mvc.perform(get("/api/clientes/listado").param("orden", "telefono").header("Authorization", admin()))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errores.orden").exists());
+    }
+
+    @Test
+    void listadoNoDevuelveMasDe100PorPagina() throws Exception {
+        mvc.perform(get("/api/clientes/listado").param("tamano", "5000").header("Authorization", admin()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.tamano").value(100));
     }
 
     @Test
@@ -288,7 +353,7 @@ class ClienteFichaIntegrationTest {
 
         mvc.perform(get("/api/clientes/listado").param("q", "Cliente Barbero").header("Authorization", token))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$", hasSize(1)));
+                .andExpect(jsonPath("$.clientes", hasSize(1)));
         mvc.perform(patch("/api/clientes/{id}/notas", c.getId())
                         .contentType(MediaType.APPLICATION_JSON)
                         .header("Authorization", token)
