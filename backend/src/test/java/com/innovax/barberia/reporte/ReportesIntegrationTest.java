@@ -41,6 +41,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 /**
  * Reportes: GET /api/reportes y /api/reportes/clientes-inactivos.
+ * El admin ve toda la barbería; un barbero, solo lo suyo.
  * Crea atenciones en marzo de 2020 para no cruzarse con otros tests. @Transactional: todo se revierte.
  */
 @SpringBootTest
@@ -140,6 +141,11 @@ class ReportesIntegrationTest {
                 .andExpect(jsonPath("$.porBarbero", hasSize(3)))
                 .andExpect(jsonPath("$.porBarbero[0].nombre").value("Lucas Sanchez"))
                 .andExpect(jsonPath("$.porBarbero[0].atendidos").value(2))
+                .andExpect(jsonPath("$.porBarbero[0].facturado").value(3000000))
+                // Solo suma lo cobrado en cortes atendidos: el cancelado de Chapa no cuenta
+                .andExpect(jsonPath("$.porBarbero[?(@.nombre == 'Chapa Perez')].facturado").value(hasItem(1500000)))
+                // Andrés no atendió a nadie: su turno ausente y el sin marcar no suman plata
+                .andExpect(jsonPath("$.porBarbero[?(@.nombre == 'Andres Biassi')].facturado").value(hasItem(0)))
                 .andExpect(jsonPath("$.porBarbero[?(@.nombre == 'Chapa Perez')].atendidos").value(hasItem(1)))
                 .andExpect(jsonPath("$.porBarbero[?(@.nombre == 'Chapa Perez')].cancelados").value(hasItem(1)))
                 .andExpect(jsonPath("$.porBarbero[?(@.nombre == 'Andres Biassi')].ausentes").value(hasItem(1)));
@@ -219,11 +225,55 @@ class ReportesIntegrationTest {
     }
 
     @Test
-    void barberoNoPuedeVerLosReportes() throws Exception {
-        reportes(login("lucas@jade.com", "barbero123")).andExpect(status().isForbidden());
-        mvc.perform(get("/api/reportes/clientes-inactivos")
+    void elBarberoVeSoloSusPropiosReportes() throws Exception {
+        reportes(login("lucas@jade.com", "barbero123"))
+                .andExpect(status().isOk())
+                // Solo Lucas: nada de Andrés ni Chapa
+                .andExpect(jsonPath("$.porBarbero", hasSize(1)))
+                .andExpect(jsonPath("$.porBarbero[0].nombre").value("Lucas Sanchez"))
+                .andExpect(jsonPath("$.porBarbero[0].atendidos").value(2))
+                // Lo que juntó Lucas: dos cortes de $15.000
+                .andExpect(jsonPath("$.porBarbero[0].facturado").value(3000000))
+                .andExpect(jsonPath("$.clientesFrecuentes", hasSize(1)))
+                .andExpect(jsonPath("$.clientesFrecuentes[0].nombre").value("Juan Gomez"))
+                // El ausente, el cancelado y el turno sin marcar son de otros barberos
+                .andExpect(jsonPath("$.ausentismo.atendidos").value(2))
+                .andExpect(jsonPath("$.ausentismo.ausentes").value(0))
+                .andExpect(jsonPath("$.ausentismo.cancelados").value(0))
+                .andExpect(jsonPath("$.ausentismo.sinMarcar").value(0))
+                // Solo los dos martes a las 10 de Juan
+                .andExpect(jsonPath("$.demanda", hasSize(1)))
+                .andExpect(jsonPath("$.demanda[0].cantidad").value(2));
+    }
+
+    @Test
+    void elBarberoNoPuedeElegirOtroBarberoDesdeElRequest() throws Exception {
+        // No existe un parámetro para elegir barbero: aunque lo manden, se ignora.
+        mvc.perform(get("/api/reportes")
+                        .param("desde", DESDE.toString())
+                        .param("hasta", HASTA.toString())
+                        .param("barberoId", ANDRES.toString())
                         .header("Authorization", login("lucas@jade.com", "barbero123")))
-                .andExpect(status().isForbidden());
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.porBarbero", hasSize(1)))
+                .andExpect(jsonPath("$.porBarbero[0].nombre").value("Lucas Sanchez"));
+    }
+
+    @Test
+    void losClientesQueNoVuelvenDelBarberoSonSoloLosSuyos() throws Exception {
+        // Martín se hizo un corte con Andrés: es cliente de Andrés, no de Lucas
+        crear(ANDRES, en(MARTES_17, 11), EstadoAtencion.COMPLETADA, OrigenAtencion.ONLINE, MARTIN, 1500000);
+        atenciones.flush();
+
+        mvc.perform(get("/api/reportes/clientes-inactivos").param("dias", "30")
+                        .header("Authorization", login("lucas@jade.com", "barbero123")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.clientes[*].nombre").value(hasItem("Juan Gomez")))
+                .andExpect(jsonPath("$.clientes[*].nombre").value(not(hasItem("Martin Lopez"))));
+
+        mvc.perform(get("/api/reportes/clientes-inactivos").param("dias", "30").header("Authorization", admin()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.clientes[*].nombre").value(hasItem("Martin Lopez")));
     }
 
     @Test

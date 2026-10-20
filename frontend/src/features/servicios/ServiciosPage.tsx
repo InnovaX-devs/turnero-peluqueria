@@ -108,6 +108,11 @@ export function ServiciosPage() {
 
   return (
     <section className="barberos servicios">
+      {formulario === 'nuevo' && (
+        <button type="button" className="barbero-volver" onClick={() => setFormulario(null)}>
+          ← Servicios
+        </button>
+      )}
       <div className="barberos-cabecera">
         <h1>Servicios</h1>
         {formulario !== 'nuevo' && (

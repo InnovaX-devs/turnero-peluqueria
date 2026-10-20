@@ -1,6 +1,9 @@
-.turno-encabezado { margin-bottom: 20px; }
+.turno-encabezado {
+  margin-bottom: 20px; padding: 18px 20px; border-radius: 20px;
+  background: var(--barra); color: var(--barra-texto);
+}
 .turno-encabezado h1 { margin: 4px 0 0; font-size: 1.5rem; line-height: 1.25; }
-.turno-barberia { margin: 0; font-weight: 700; color: var(--texto-suave); }
+.turno-barberia { margin: 0; font-weight: 700; color: color-mix(in srgb, var(--barra-texto) 75%, transparent); }
 
 .turno-aviso {
   margin: 0 0 16px; padding: 12px 14px; border-radius: 12px;

@@ -1,17 +1,50 @@
 .auth-pagina {
   min-height: 100dvh;
+  background: var(--barra);
   display: grid;
   place-items: center;
   padding: 24px 16px;
+}
+
+.auth-contenido {
+  width: 100%;
+  max-width: 420px;
+}
+
+/* El pie "Desarrollado por InnovaX" va en blanco porque queda sobre el fondo azul */
+.auth-contenido .pie-desarrollo {
+  color: rgb(255 255 255 / 0.75);
+}
+.auth-contenido .pie-desarrollo a {
+  color: #fff;
+  border-bottom-color: rgb(255 255 255 / 0.45);
+}
+@media (hover: hover) {
+  .auth-contenido .pie-desarrollo a:hover { border-bottom-color: #fff; }
 }
 
 .auth-tarjeta {
   width: 100%;
   max-width: 420px;
   background: var(--fondo-tarjeta);
-  border: 1.5px solid var(--acento);
+  border: none;
   border-radius: 28px;
-  padding: 40px 28px;
+  padding: 36px 28px 40px;
+  box-shadow: 0 28px 70px -28px rgb(0 0 0 / 0.55);
+}
+
+/* Logo de la marca arriba de cada tarjeta de acceso */
+.auth-tarjeta::before {
+  content: '';
+  display: block;
+  width: 46px;
+  height: 46px;
+  margin-bottom: 22px;
+  border-radius: 13px;
+  background:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='6' cy='6' r='3'/%3E%3Cpath d='M8.12 8.12 12 12'/%3E%3Cpath d='M20 4 8.12 15.88'/%3E%3Ccircle cx='6' cy='18' r='3'/%3E%3Cpath d='M14.8 14.8 20 20'/%3E%3C/svg%3E")
+      center / 24px no-repeat,
+    var(--grad-marca);
 }
 
 .auth-titulo {

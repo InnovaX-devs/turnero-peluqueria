@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import axios from 'axios'
 import { crearReserva, obtenerBarberosPublicos, obtenerServiciosPublicos } from '../../api/reservaPublica'
 import { erroresDeCampos, mensajeDeError } from '../../lib/errores'
+import { Selector } from '../../components/Selector'
 import { fechaLarga } from '../../lib/fechas'
 import { formatearDuracion, formatearPrecio } from '../../lib/formato'
 import { armarTelefono, PAISES } from '../../lib/telefono'
@@ -155,17 +156,13 @@ export function PasoDatos({ slug, sucursal, servicioId, barberoId, fecha, hora, 
           <div className="reserva-campo">
             <label htmlFor="reserva-telefono">Teléfono (WhatsApp)</label>
             <div className="reserva-telefono">
-              <select
-                aria-label="País"
-                value={codigoPais}
-                onChange={(e) => setCodigoPais(e.target.value)}
-              >
-                {PAISES.map((p) => (
-                  <option key={p.codigo} value={p.codigo}>
-                    {p.codigo} +{p.prefijo}
-                  </option>
-                ))}
-              </select>
+              <Selector
+                variante="compacto"
+                etiqueta="País"
+                valor={codigoPais}
+                onChange={setCodigoPais}
+                opciones={PAISES.map((p) => ({ valor: p.codigo, etiqueta: `${p.codigo} +${p.prefijo}` }))}
+              />
               <input
                 id="reserva-telefono"
                 type="tel"

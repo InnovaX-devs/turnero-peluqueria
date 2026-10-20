@@ -2,9 +2,11 @@ import { useMemo, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { obtenerAgenda } from '../../api/agenda'
 import { mensajeDeError } from '../../lib/errores'
+import { Selector } from '../../components/Selector'
 import type { Bloqueo, Turno } from '../../types/agenda'
 import { useAuth } from '../auth/useAuth'
 import { BloqueoForm } from './BloqueoForm'
+import { ResumenDia } from './ResumenDia'
 import { TurnoDetalle } from './TurnoDetalle'
 import {
   ETIQUETAS_ESTADO,
@@ -55,6 +57,8 @@ export function AgendaPage() {
     <section className="agenda">
       <h1 className="agenda-titulo">Agenda</h1>
 
+      {vista === 'dia' && data && <ResumenDia turnos={data.turnos} fecha={fecha} esAdmin={esAdmin} />}
+
       <header className="agenda-controles">
         <div className="agenda-navegacion">
           <button type="button" className="boton-secundario" onClick={() => moverFecha(-1)} aria-label="Anterior">
@@ -86,19 +90,17 @@ export function AgendaPage() {
           </button>
 
           {esAdmin && data && data.barberos.length > 0 && (
-            <select
-              className="agenda-select-barbero"
-              value={barberoId ?? ''}
-              onChange={(e) => setBarberoId(e.target.value === '' ? null : e.target.value)}
-              aria-label="Filtrar por barbero"
-            >
-              <option value="">Todos los barberos</option>
-              {data.barberos.map((b) => (
-                <option key={b.id} value={b.id}>
-                  {b.nombre}
-                </option>
-              ))}
-            </select>
+            <Selector
+              variante="pill"
+              alinear="derecha"
+              etiqueta="Filtrar por barbero"
+              valor={barberoId ?? ''}
+              onChange={(v) => setBarberoId(v === '' ? null : v)}
+              opciones={[
+                { valor: '', etiqueta: 'Todos los barberos' },
+                ...data.barberos.map((b) => ({ valor: b.id, etiqueta: b.nombre })),
+              ]}
+            />
           )}
         </div>
       </header>
@@ -145,7 +147,7 @@ export function AgendaPage() {
                               onClick={() => setFormBloqueo({ bloqueo })}
                             >
                               <TarjetaBloqueo bloqueo={bloqueo} mostrarBarbero={mostrarBarbero} />
-+                            </button>
+                            </button>
                           ) : null}
                         </li>
                       )

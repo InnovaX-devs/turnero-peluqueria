@@ -28,7 +28,8 @@
 }
 .caja-totales span { font-size: 0.875rem; color: var(--texto-suave); }
 .caja-totales strong { font-size: 1.4rem; }
-.caja-totales .caja-total-principal { border-color: var(--acento); }
+.caja-totales .caja-total-principal { background: var(--barra); border-color: var(--barra); color: var(--barra-texto); }
+.caja-totales .caja-total-principal span { color: color-mix(in srgb, var(--barra-texto) 75%, transparent); }
 .caja-totales .caja-total-principal strong { font-size: 2rem; }
 
 .caja-grafico, .caja-desglose {
@@ -39,7 +40,7 @@
 .caja-grafico-barras { display: flex; align-items: flex-end; gap: 4px; height: 140px; overflow-x: auto; }
 .caja-grafico-dia { flex: 1 0 14px; display: flex; flex-direction: column; align-items: center; gap: 4px; height: 100%; }
 .caja-grafico-columna { flex: 1; width: 100%; display: flex; align-items: flex-end; }
-.caja-grafico-columna > div { width: 100%; min-height: 2px; border-radius: 4px 4px 0 0; background: var(--acento); }
+.caja-grafico-columna > div { width: 100%; min-height: 2px; border-radius: 4px 4px 0 0; background: var(--barra); }
 .caja-grafico-dia span { font-size: 0.7rem; color: var(--texto-suave); }
 
 .caja-desgloses { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 12px; }
@@ -47,7 +48,7 @@
 .caja-fila { display: flex; justify-content: space-between; gap: 12px; margin-bottom: 6px; }
 .caja-fila small { color: var(--texto-suave); }
 .caja-barra { height: 6px; border-radius: 999px; background: var(--borde); overflow: hidden; }
-.caja-barra > div { height: 100%; background: var(--acento); }
+.caja-barra > div { height: 100%; background: var(--barra); }
 
 @media (max-width: 600px) {
   .caja-totales { grid-template-columns: 1fr 1fr; }

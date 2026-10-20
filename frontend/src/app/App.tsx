@@ -35,6 +35,8 @@ export function App() {
           <Route path="clientes" element={<ClientesPage />} />
           <Route path="clientes/:id" element={<ClienteFichaPage />} />
           <Route path="cuenta" element={<CuentaPage />} />
+          {/* Admin: toda la barbería. Barbero: solo lo suyo (lo filtra el backend). */}
+          <Route path="reportes" element={<ReportesPage />} />
 
           {/* Solo admin */}
           <Route element={<RutaAdmin />}>
@@ -43,7 +45,6 @@ export function App() {
             <Route path="barberos/nuevo" element={<BarberoNuevoPage />} />
             <Route path="barberos/:id" element={<BarberoEditarPage />} />
             <Route path="caja" element={<CajaPage />} />
-            <Route path="reportes" element={<ReportesPage />} />
             <Route path="servicios" element={<ServiciosPage />} />
           </Route>
         </Route>

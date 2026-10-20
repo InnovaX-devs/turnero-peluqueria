@@ -13,10 +13,13 @@ import org.springframework.web.bind.annotation.RestController;
 import java.time.LocalDate;
 import java.util.UUID;
 
-/** Reportes (issue #25). Solo admin. */
+/**
+ * Reportes (issue #25). El admin ve los de toda la barbería; un barbero ve solo los suyos
+ * (el filtro lo aplica {@link ReporteService} con el barbero del token, nunca con un parámetro).
+ */
 @RestController
 @RequestMapping("/api/reportes")
-@PreAuthorize("hasRole('ADMIN')")
+@PreAuthorize("hasAnyRole('ADMIN', 'BARBERO')")
 @RequiredArgsConstructor
 public class ReporteController {
 

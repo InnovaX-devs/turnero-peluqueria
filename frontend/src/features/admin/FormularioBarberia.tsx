@@ -2,6 +2,7 @@ import { useState, type FormEvent } from 'react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { actualizarBarberia } from '../../api/barberia'
 import { LogoBarberia } from './LogoBarberia'
+import { Selector } from '../../components/Selector'
 import { erroresDeCampos, mensajeDeError } from '../../lib/errores'
 import type { Barberia } from '../../types/barberia'
 import {
@@ -160,17 +161,16 @@ export function FormularioBarberia({ barberia }: { barberia: Barberia }) {
           <div className="config-fila">
             <label className="config-campo">
               <span className="config-etiqueta">Anticipación mínima</span>
-              <select
-                value={form.anticipacionMinimaMin}
-                onChange={(e) => cambiar('anticipacionMinimaMin', Number(e.target.value))}
-                aria-invalid={!!errores.anticipacionMinimaMin}
-              >
-                {opcionesAnticipacion(form.anticipacionMinimaMin).map((min) => (
-                  <option key={min} value={min}>
-                    {min === 0 ? 'Sin anticipación' : etiquetaMinutos(min)}
-                  </option>
-                ))}
-              </select>
+              <Selector
+                etiqueta="Anticipación mínima"
+                valor={String(form.anticipacionMinimaMin)}
+                onChange={(v) => cambiar('anticipacionMinimaMin', Number(v))}
+                invalido={!!errores.anticipacionMinimaMin}
+                opciones={opcionesAnticipacion(form.anticipacionMinimaMin).map((min) => ({
+                  valor: String(min),
+                  etiqueta: min === 0 ? 'Sin anticipación' : etiquetaMinutos(min),
+                }))}
+              />
               <span className="config-ayuda">Con menos tiempo que este no se puede reservar.</span>
               {errores.anticipacionMinimaMin && (
                 <span className="config-campo-error" role="alert">{errores.anticipacionMinimaMin}</span>
@@ -199,17 +199,16 @@ export function FormularioBarberia({ barberia }: { barberia: Barberia }) {
         {form.reservasOnline && (
           <label className="config-campo">
             <span className="config-etiqueta">Cancelar o cambiar el turno</span>
-            <select
-              value={form.anticipacionCancelacionMin}
-              onChange={(e) => cambiar('anticipacionCancelacionMin', Number(e.target.value))}
-              aria-invalid={!!errores.anticipacionCancelacionMin}
-            >
-              {opcionesAnticipacion(form.anticipacionCancelacionMin, ANTICIPACIONES_CANCELACION).map((min) => (
-                <option key={min} value={min}>
-                  {min === 0 ? 'Hasta el horario del turno' : `Hasta ${etiquetaMinutos(min)} antes`}
-                </option>
-              ))}
-            </select>
+            <Selector
+              etiqueta="Cancelar o cambiar el turno"
+              valor={String(form.anticipacionCancelacionMin)}
+              onChange={(v) => cambiar('anticipacionCancelacionMin', Number(v))}
+              invalido={!!errores.anticipacionCancelacionMin}
+              opciones={opcionesAnticipacion(form.anticipacionCancelacionMin, ANTICIPACIONES_CANCELACION).map((min) => ({
+                valor: String(min),
+                etiqueta: min === 0 ? 'Hasta el horario del turno' : `Hasta ${etiquetaMinutos(min)} antes`,
+              }))}
+            />
             <span className="config-ayuda">
               Hasta cuándo el cliente puede cancelar o cambiar su turno desde el link que recibe. Después
               tiene que comunicarse con vos.
@@ -227,17 +226,16 @@ export function FormularioBarberia({ barberia }: { barberia: Barberia }) {
 
         <label className="config-campo">
           <span className="config-etiqueta">Recordatorio del turno</span>
-          <select
-            value={form.recordatorioHorasAntes}
-            onChange={(e) => cambiar('recordatorioHorasAntes', Number(e.target.value))}
-            aria-invalid={!!errores.recordatorioHorasAntes}
-          >
-            {opcionesHoras(form.recordatorioHorasAntes).map((h) => (
-              <option key={h} value={h}>
-                {h === 24 ? '1 día antes' : h % 24 === 0 ? `${h / 24} días antes` : `${h} horas antes`}
-              </option>
-            ))}
-          </select>
+          <Selector
+            etiqueta="Recordatorio del turno"
+            valor={String(form.recordatorioHorasAntes)}
+            onChange={(v) => cambiar('recordatorioHorasAntes', Number(v))}
+            invalido={!!errores.recordatorioHorasAntes}
+            opciones={opcionesHoras(form.recordatorioHorasAntes).map((h) => ({
+              valor: String(h),
+              etiqueta: h === 24 ? '1 día antes' : h % 24 === 0 ? `${h / 24} días antes` : `${h} horas antes`,
+            }))}
+          />
           <span className="config-ayuda">
             Con cuánta anticipación aparece el recordatorio en Mensajes para enviarle al cliente.
           </span>
@@ -253,17 +251,13 @@ export function FormularioBarberia({ barberia }: { barberia: Barberia }) {
 
         <label className="config-campo">
           <span className="config-etiqueta">Intervalo de horarios</span>
-          <select
-            value={form.intervaloSlotsMin}
-            onChange={(e) => cambiar('intervaloSlotsMin', Number(e.target.value))}
-            aria-invalid={!!errores.intervaloSlotsMin}
-          >
-            {INTERVALOS.map((min) => (
-              <option key={min} value={min}>
-                Cada {min} minutos
-              </option>
-            ))}
-          </select>
+          <Selector
+            etiqueta="Intervalo de horarios"
+            valor={String(form.intervaloSlotsMin)}
+            onChange={(v) => cambiar('intervaloSlotsMin', Number(v))}
+            invalido={!!errores.intervaloSlotsMin}
+            opciones={INTERVALOS.map((min) => ({ valor: String(min), etiqueta: `Cada ${min} minutos` }))}
+          />
           <span className="config-ayuda">Cada cuánto arranca un horario disponible en la agenda.</span>
           {errores.intervaloSlotsMin && (
             <span className="config-campo-error" role="alert">{errores.intervaloSlotsMin}</span>
