@@ -4,8 +4,8 @@ import com.innovax.barberia.atencion.Atencion;
 import com.innovax.barberia.atencion.AtencionRepository;
 import com.innovax.barberia.atencion.EstadoAtencion;
 import com.innovax.barberia.atencion.OrigenAtencion;
-import com.innovax.barberia.barberia.BarberiaRepository;
-import com.innovax.barberia.barbero.BarberoRepository;
+import com.innovax.barberia.negocio.NegocioRepository;
+import com.innovax.barberia.profesional.ProfesionalRepository;
 import com.innovax.barberia.cliente.Cliente;
 import com.innovax.barberia.cliente.ClienteRepository;
 import com.innovax.barberia.servicio.ServicioRepository;
@@ -61,9 +61,9 @@ class NotificacionIntegrationTest {
 
     @Autowired private WebApplicationContext context;
     @Autowired private AtencionRepository atenciones;
-    @Autowired private BarberiaRepository barberias;
+    @Autowired private NegocioRepository negocios;
     @Autowired private SucursalRepository sucursales;
-    @Autowired private BarberoRepository barberos;
+    @Autowired private ProfesionalRepository profesionales;
     @Autowired private ServicioRepository servicios;
     @Autowired private ClienteRepository clientes;
     @Autowired private NotificacionRepository notificaciones;
@@ -85,7 +85,7 @@ class NotificacionIntegrationTest {
     }
 
     private void limpiarCliente(String telefono) {
-        clientes.findByBarberiaIdAndTelefono(JADE, telefono).ifPresent(cliente -> {
+        clientes.findByNegocioIdAndTelefono(JADE, telefono).ifPresent(cliente -> {
             atenciones.findAll().stream()
                     .filter(a -> a.getCliente() != null && a.getCliente().getId().equals(cliente.getId()))
                     .forEach(atenciones::delete);
@@ -100,9 +100,9 @@ class NotificacionIntegrationTest {
      */
     private Atencion turno(UUID clienteId, Instant inicio, EstadoAtencion estado, boolean reservadoHaceDias) {
         Atencion a = new Atencion();
-        a.setBarberia(barberias.findById(JADE).orElseThrow());
+        a.setNegocio(negocios.findById(JADE).orElseThrow());
         a.setSucursal(sucursales.findById(SUCURSAL).orElseThrow());
-        a.setBarbero(barberos.findById(LUCAS).orElseThrow());
+        a.setProfesional(profesionales.findById(LUCAS).orElseThrow());
         a.setServicio(servicios.findById(CORTE).orElseThrow());
         a.setCliente(clientes.findById(clienteId).orElseThrow());
         a.setInicio(inicio);
@@ -132,14 +132,14 @@ class NotificacionIntegrationTest {
     void alReservarOnlineSeGuardaLaConfirmacionConLosDatosDelTurno() throws Exception {
         LocalDate lunes = LocalDate.now(ZONA).with(TemporalAdjusters.next(DayOfWeek.MONDAY));
         String body = """
-                {"sucursalId":"%s","servicioId":"%s","barberoId":"%s",
+                {"sucursalId":"%s","servicioId":"%s","profesionalId":"%s",
                  "fecha":"%s","hora":"11:30","clienteNombre":"Cliente Test","clienteTelefono":"%s"}
                 """.formatted(SUCURSAL, CORTE, LUCAS, lunes, TELEFONO_RESERVA);
 
         mvc.perform(post("/api/public/reservas").contentType(MediaType.APPLICATION_JSON).content(body))
                 .andExpect(status().isCreated());
 
-        Cliente cliente = clientes.findByBarberiaIdAndTelefono(JADE, TELEFONO_RESERVA).orElseThrow();
+        Cliente cliente = clientes.findByNegocioIdAndTelefono(JADE, TELEFONO_RESERVA).orElseThrow();
         Atencion reservada = atenciones.findAll().stream()
                 .filter(a -> a.getCliente() != null && a.getCliente().getId().equals(cliente.getId()))
                 .findFirst().orElseThrow();
@@ -204,7 +204,7 @@ class NotificacionIntegrationTest {
 
         // Un recordatorio pendiente cuya hora ya llegó...
         Notificacion pendiente = new Notificacion();
-        pendiente.setBarberia(barberias.findById(JADE).orElseThrow());
+        pendiente.setNegocio(negocios.findById(JADE).orElseThrow());
         pendiente.setAtencion(a);
         pendiente.setTipo(TipoNotificacion.RECORDATORIO);
         pendiente.setCanal(TipoCanal.WHATSAPP_LINK);
@@ -260,7 +260,7 @@ class NotificacionIntegrationTest {
         // La base no deja guardar un cliente con teléfono inválido (chk_cliente_telefono), así que
         // se arma la notificación a mano con un destinatario sin código de país.
         Notificacion conTelefonoRaro = new Notificacion();
-        conTelefonoRaro.setBarberia(barberias.findById(JADE).orElseThrow());
+        conTelefonoRaro.setNegocio(negocios.findById(JADE).orElseThrow());
         conTelefonoRaro.setAtencion(a);
         conTelefonoRaro.setTipo(TipoNotificacion.CONFIRMACION);
         conTelefonoRaro.setCanal(TipoCanal.WHATSAPP_LINK);

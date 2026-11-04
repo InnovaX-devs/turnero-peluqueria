@@ -10,9 +10,9 @@ public record FilaCaja(
         Instant inicio,
         long precioFinal,
         MetodoPago metodoPago,
-        UUID barberoId,
-        String barberoNombre,
-        String barberoApellido,
+        UUID profesionalId,
+        String profesionalNombre,
+        String profesionalApellido,
         UUID servicioId,
         String servicioNombre,
         String clienteNombre) {

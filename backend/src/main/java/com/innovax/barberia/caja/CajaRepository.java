@@ -20,10 +20,10 @@ public interface CajaRepository extends Repository<Atencion, UUID> {
                 s.id, s.nombre,
                 c.nombre)
             from Atencion a
-            join a.barbero b
+            join a.profesional b
             join a.servicio s
             left join a.cliente c
-            where a.barberia.id = :barberiaId
+            where a.negocio.id = :negocioId
               and a.estado = :estado
               and a.inicio >= :desde
               and a.inicio < :hasta
@@ -31,7 +31,7 @@ public interface CajaRepository extends Repository<Atencion, UUID> {
             order by a.inicio
             """)
     List<FilaCaja> buscar(
-            @Param("barberiaId") UUID barberiaId,
+            @Param("negocioId") UUID negocioId,
             @Param("estado") EstadoAtencion estado,
             @Param("desde") Instant desde,
             @Param("hasta") Instant hasta,

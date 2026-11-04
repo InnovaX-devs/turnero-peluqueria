@@ -24,7 +24,7 @@ export interface AtencionHistorial {
   id: string
   inicio: string
   estado: EstadoAtencion
-  barberoNombre: string
+  profesionalNombre: string
   servicioNombre: string
   /** En centavos */
   precioFinal: number

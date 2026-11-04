@@ -1,5 +1,5 @@
 /** Montos en centavos. Fechas "YYYY-MM-DD". */
-export interface BarberoReporte {
+export interface ProfesionalReporte {
   id: string
   nombre: string
   atendidos: number
@@ -36,7 +36,7 @@ export interface Demanda {
 export interface Reportes {
   desde: string
   hasta: string
-  porBarbero: BarberoReporte[]
+  porProfesional: ProfesionalReporte[]
   clientesFrecuentes: ClienteFrecuente[]
   ausentismo: Ausentismo
   /** Ordenada de mayor a menor demanda */
@@ -53,7 +53,7 @@ export interface ClienteInactivo {
 }
 
 export interface ClientesInactivos {
-  barberiaNombre: string
+  negocioNombre: string
   dias: number
   clientes: ClienteInactivo[]
 }

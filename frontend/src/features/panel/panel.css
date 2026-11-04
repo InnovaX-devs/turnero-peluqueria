@@ -82,18 +82,18 @@
 
 /* Celu: en Barberos y Servicios los botones pasan abajo y el nombre no se parte */
 @media (max-width: 520px) {
-  .barbero-tarjeta {
+  .profesional-tarjeta {
     flex-wrap: wrap;
     row-gap: 10px;
   }
-  .barbero-acciones {
+  .profesional-acciones {
     flex-basis: 100%;
     justify-content: flex-end;
   }
 }
 
 /* Botón "← Servicios" / "← Barberos": mismo aspecto que el link de volver de las fichas */
-button.barbero-volver {
+button.profesional-volver {
   padding: 0;
   border: 0;
   background: none;

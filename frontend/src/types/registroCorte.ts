@@ -8,7 +8,7 @@ export interface ServicioOpcion {
   precio: number
 }
 
-export interface BarberoOpcion {
+export interface ProfesionalOpcion {
   id: string
   nombre: string
   sucursalIds: string[]
@@ -21,9 +21,9 @@ export interface SucursalOpcion {
 
 export interface OpcionesRegistro {
   zonaHoraria: string
-  barberoPropioId: string | null
+  profesionalPropioId: string | null
   servicios: ServicioOpcion[]
-  barberos: BarberoOpcion[]
+  profesionales: ProfesionalOpcion[]
   sucursales: SucursalOpcion[]
 }
 
@@ -36,7 +36,7 @@ export interface ClienteResumen {
 export interface RegistrarCorteDatos {
   clienteId: string | null
   servicioId: string
-  barberoId: string | null
+  profesionalId: string | null
   sucursalId: string | null
   /** En centavos */
   precioFinal: number

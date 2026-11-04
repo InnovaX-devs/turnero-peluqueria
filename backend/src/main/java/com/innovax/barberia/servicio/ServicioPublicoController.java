@@ -13,7 +13,8 @@ import java.util.UUID;
 
 /** Servicios para el paso "Elegí el servicio" de la reserva pública. Sin login. */
 @RestController
-@RequestMapping("/api/public/barberias/{slug}/servicios")
+// /api/public/barberias/{slug}/servicios: ruta anterior al issue #64, queda como alias
+@RequestMapping({"/api/public/negocios/{slug}/servicios", "/api/public/barberias/{slug}/servicios"})
 @RequiredArgsConstructor
 public class ServicioPublicoController {
 

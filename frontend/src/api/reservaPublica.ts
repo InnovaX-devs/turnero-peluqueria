@@ -1,33 +1,33 @@
 import { api } from './client'
 import type {
-  BarberiaPublica,
-  BarberoPublico,
+  NegocioPublico,
+  ProfesionalPublico,
   CrearReservaRequest,
   DisponibilidadDia,
   ReservaCreada,
   ServicioPublico,
 } from '../types/reserva'
 
-export async function obtenerBarberiaPublica(slug: string): Promise<BarberiaPublica> {
-  const { data } = await api.get<BarberiaPublica>(`/api/public/barberias/${encodeURIComponent(slug)}`)
+export async function obtenerNegocioPublico(slug: string): Promise<NegocioPublico> {
+  const { data } = await api.get<NegocioPublico>(`/api/public/negocios/${encodeURIComponent(slug)}`)
   return data
 }
 
 /** Solo los servicios que se pueden reservar en esa sucursal. */
 export async function obtenerServiciosPublicos(slug: string, sucursalId: string): Promise<ServicioPublico[]> {
-  const { data } = await api.get<ServicioPublico[]>(`/api/public/barberias/${encodeURIComponent(slug)}/servicios`, {
+  const { data } = await api.get<ServicioPublico[]>(`/api/public/negocios/${encodeURIComponent(slug)}/servicios`, {
     params: { sucursal: sucursalId },
   })
   return data
 }
 
 /** Barberos que hacen ese servicio en esa sucursal, con su próximo día libre. */
-export async function obtenerBarberosPublicos(
+export async function obtenerProfesionalesPublicos(
   slug: string,
   sucursalId: string,
   servicioId: string,
-): Promise<BarberoPublico[]> {
-  const { data } = await api.get<BarberoPublico[]>(`/api/public/barberias/${encodeURIComponent(slug)}/barberos`, {
+): Promise<ProfesionalPublico[]> {
+  const { data } = await api.get<ProfesionalPublico[]>(`/api/public/negocios/${encodeURIComponent(slug)}/profesionales`, {
     params: { sucursal: sucursalId, servicio: servicioId },
   })
   return data
@@ -37,11 +37,11 @@ interface ConsultaDisponibilidad {
   sucursalId: string
   servicioId: string
   /** null = cualquier barbero */
-  barberoId: string | null
+  profesionalId: string | null
 }
 
-function paramsDe({ sucursalId, servicioId, barberoId }: ConsultaDisponibilidad) {
-  return { sucursal: sucursalId, servicio: servicioId, ...(barberoId ? { barbero: barberoId } : {}) }
+function paramsDe({ sucursalId, servicioId, profesionalId }: ConsultaDisponibilidad) {
+  return { sucursal: sucursalId, servicio: servicioId, ...(profesionalId ? { profesional: profesionalId } : {}) }
 }
 
 /** Días (yyyy-mm-dd) del rango que tienen al menos un horario libre. */

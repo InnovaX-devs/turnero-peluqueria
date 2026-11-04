@@ -11,8 +11,8 @@ export interface Turno {
   origen: OrigenAtencion
   estadoPago: EstadoPago
   metodoPago: MetodoPago | null
-  barberoId: string
-  barberoNombre: string
+  profesionalId: string
+  profesionalNombre: string
   servicioId: string
   servicioNombre: string
   precioFinal: number
@@ -41,11 +41,11 @@ export interface Bloqueo {
   inicio: string
   fin: string
   motivo: string | null
-  barberoId: string
-  barberoNombre: string
+  profesionalId: string
+  profesionalNombre: string
 }
 
-export interface BarberoResumen {
+export interface ProfesionalResumen {
   id: string
   nombre: string
 }
@@ -53,13 +53,13 @@ export interface BarberoResumen {
 export interface Agenda {
   desde: string
   hasta: string
-  barberos: BarberoResumen[]
+  profesionales: ProfesionalResumen[]
   turnos: Turno[]
   bloqueos: Bloqueo[]
 }
 
 export interface BloqueoDatos {
-  barberoIds: string[]
+  profesionalIds: string[]
   fecha: string
   horaDesde: string | null
   horaHasta: string | null

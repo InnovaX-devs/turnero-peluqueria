@@ -1,5 +1,6 @@
 package com.innovax.barberia.atencion.dto;
 
+import com.fasterxml.jackson.annotation.JsonAlias;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
@@ -22,8 +23,10 @@ public record CrearReservaRequest(
         @NotNull(message = "El servicio es obligatorio")
         UUID servicioId,
 
+        // "barberoId": nombre del campo antes del issue #64 (páginas de reserva viejas abiertas)
         @NotNull(message = "El barbero es obligatorio")
-        UUID barberoId,
+        @JsonAlias("barberoId")
+        UUID profesionalId,
 
         @NotNull(message = "La fecha es obligatoria")
         LocalDate fecha,

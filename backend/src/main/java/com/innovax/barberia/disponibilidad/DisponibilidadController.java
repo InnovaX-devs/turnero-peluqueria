@@ -23,18 +23,26 @@ public class DisponibilidadController {
     public DisponibilidadResponse disponibilidad(
             @RequestParam UUID sucursal,
             @RequestParam UUID servicio,
-            @RequestParam(required = false) UUID barbero,
+            @RequestParam(required = false) UUID profesional,
+            @RequestParam(name = "barbero", required = false) UUID profesionalAnterior,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fecha) {
-        return disponibilidadService.consultar(sucursal, servicio, barbero, fecha);
+        return disponibilidadService.consultar(sucursal, servicio, elegido(profesional, profesionalAnterior), fecha);
     }
 
     @GetMapping("/dias")
     public DiasDisponiblesResponse dias(
             @RequestParam UUID sucursal,
             @RequestParam UUID servicio,
-            @RequestParam(required = false) UUID barbero,
+            @RequestParam(required = false) UUID profesional,
+            @RequestParam(name = "barbero", required = false) UUID profesionalAnterior,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate desde,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate hasta) {
-        return disponibilidadService.consultarDias(sucursal, servicio, barbero, desde, hasta);
+        return disponibilidadService.consultarDias(
+                sucursal, servicio, elegido(profesional, profesionalAnterior), desde, hasta);
+    }
+
+    /** ?barbero= es el nombre del parámetro antes del issue #64: se sigue aceptando como alias. */
+    private static UUID elegido(UUID profesional, UUID profesionalAnterior) {
+        return profesional != null ? profesional : profesionalAnterior;
     }
 }

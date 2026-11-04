@@ -26,7 +26,7 @@ public class AgendaController {
     public AgendaResponse agenda(
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate desde,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate hasta,
-            @RequestParam(required = false) UUID barberoId) {
-        return agendaService.consultar(desde, hasta, barberoId);
+            @RequestParam(required = false) UUID profesionalId) {
+        return agendaService.consultar(desde, hasta, profesionalId);
     }
 }

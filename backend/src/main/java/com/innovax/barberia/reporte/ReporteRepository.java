@@ -14,7 +14,7 @@ public interface ReporteRepository extends Repository<Atencion, UUID> {
 
     /**
      * Todas las atenciones (cualquier estado) de una barbería en [desde, hasta).
-     * Con :barberoId, solo las de ese barbero (null = todos, solo lo usa el admin).
+     * Con :profesionalId, solo las de ese barbero (null = todos, solo lo usa el admin).
      */
     @Query("""
             select new com.innovax.barberia.reporte.FilaReporte(
@@ -22,20 +22,20 @@ public interface ReporteRepository extends Repository<Atencion, UUID> {
                 b.id, b.nombre, b.apellido,
                 c.id, c.nombre, c.telefono)
             from Atencion a
-            join a.barbero b
+            join a.profesional b
             left join a.cliente c
-            where a.barberia.id = :barberiaId
+            where a.negocio.id = :negocioId
               and a.inicio >= :desde
               and a.inicio < :hasta
               and (:sucursalId is null or a.sucursal.id = :sucursalId)
-              and (:barberoId is null or b.id = :barberoId)
+              and (:profesionalId is null or b.id = :profesionalId)
             """)
     List<FilaReporte> buscar(
-            @Param("barberiaId") UUID barberiaId,
+            @Param("negocioId") UUID negocioId,
             @Param("desde") Instant desde,
             @Param("hasta") Instant hasta,
             @Param("sucursalId") UUID sucursalId,
-            @Param("barberoId") UUID barberoId);
+            @Param("profesionalId") UUID profesionalId);
 
     /** Clientes cuya última atención completada fue antes de :limite. Los que más vinieron, primero. */
     @Query("""
@@ -43,32 +43,32 @@ public interface ReporteRepository extends Repository<Atencion, UUID> {
                 c.id, c.nombre, c.telefono, max(a.inicio), count(a))
             from Atencion a
             join a.cliente c
-            where a.barberia.id = :barberiaId
+            where a.negocio.id = :negocioId
               and a.estado = :completada
-              and (:barberoId is null or a.barbero.id = :barberoId)
+              and (:profesionalId is null or a.profesional.id = :profesionalId)
             group by c.id, c.nombre, c.telefono
             having max(a.inicio) < :limite
             order by count(a) desc, max(a.inicio) desc
             """)
     List<UltimaVisita> ultimasVisitasAntesDe(
-            @Param("barberiaId") UUID barberiaId,
+            @Param("negocioId") UUID negocioId,
             @Param("completada") EstadoAtencion completada,
             @Param("limite") Instant limite,
-            @Param("barberoId") UUID barberoId);
+            @Param("profesionalId") UUID profesionalId);
 
     /** Clientes que ya tienen un turno reservado a futuro (esos van a volver). */
     @Query("""
             select distinct a.cliente.id
             from Atencion a
-            where a.barberia.id = :barberiaId
+            where a.negocio.id = :negocioId
               and a.estado = :reservada
               and a.inicio > :ahora
               and a.cliente is not null
-              and (:barberoId is null or a.barbero.id = :barberoId)
+              and (:profesionalId is null or a.profesional.id = :profesionalId)
             """)
     List<UUID> clientesConTurnoFuturo(
-            @Param("barberiaId") UUID barberiaId,
+            @Param("negocioId") UUID negocioId,
             @Param("reservada") EstadoAtencion reservada,
             @Param("ahora") Instant ahora,
-            @Param("barberoId") UUID barberoId);
+            @Param("profesionalId") UUID profesionalId);
 }

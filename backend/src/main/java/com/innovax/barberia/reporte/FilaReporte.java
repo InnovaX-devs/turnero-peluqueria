@@ -12,9 +12,9 @@ public record FilaReporte(
         EstadoAtencion estado,
         OrigenAtencion origen,
         long precioFinal,
-        UUID barberoId,
-        String barberoNombre,
-        String barberoApellido,
+        UUID profesionalId,
+        String profesionalNombre,
+        String profesionalApellido,
         UUID clienteId,
         String clienteNombre,
         String clienteTelefono) {

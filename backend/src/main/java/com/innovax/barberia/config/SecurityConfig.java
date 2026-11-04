@@ -1,5 +1,7 @@
 package com.innovax.barberia.config;
 
+import com.innovax.barberia.auth.JwtService;
+import com.innovax.barberia.auth.Rol;
 import com.nimbusds.jose.jwk.source.ImmutableSecret;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
@@ -10,6 +12,7 @@ import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.jose.jws.MacAlgorithm;
@@ -18,7 +21,6 @@ import org.springframework.security.oauth2.jwt.JwtEncoder;
 import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
 import org.springframework.security.oauth2.jwt.NimbusJwtEncoder;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
-import org.springframework.security.oauth2.server.resource.authentication.JwtGrantedAuthoritiesConverter;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
@@ -51,14 +53,23 @@ public class SecurityConfig {
         return http.build();
     }
 
-    /** El claim "rol" del token se convierte en ROLE_ADMIN o ROLE_BARBERO. */
+    /**
+     * El claim "rol" del token se convierte en ROLE_ADMIN o ROLE_PROFESIONAL. Un token emitido
+     * antes de la migración V7 con rol BARBERO también queda como ROLE_PROFESIONAL.
+     */
     private JwtAuthenticationConverter jwtAuthenticationConverter() {
-        JwtGrantedAuthoritiesConverter roles = new JwtGrantedAuthoritiesConverter();
-        roles.setAuthoritiesClaimName("rol");
-        roles.setAuthorityPrefix("ROLE_");
-
         JwtAuthenticationConverter converter = new JwtAuthenticationConverter();
-        converter.setJwtGrantedAuthoritiesConverter(roles);
+        converter.setJwtGrantedAuthoritiesConverter(jwt -> {
+            String rol = jwt.getClaimAsString(JwtService.CLAIM_ROL);
+            if (rol == null) {
+                return List.of();
+            }
+            try {
+                return List.of(new SimpleGrantedAuthority("ROLE_" + Rol.desdeToken(rol).name()));
+            } catch (IllegalArgumentException e) {
+                return List.of(); // rol desconocido: sin permisos
+            }
+        });
         return converter;
     }
 

@@ -159,7 +159,7 @@ function ResumenCaja({ caja, actualizando }: { caja: Caja; actualizando: boolean
         <Desglose
           titulo="Por barbero"
           total={caja.total}
-          filas={caja.porBarbero.map((g) => ({ clave: g.id, nombre: g.nombre, cantidad: g.cantidad, total: g.total }))}
+          filas={caja.porProfesional.map((g) => ({ clave: g.id, nombre: g.nombre, cantidad: g.cantidad, total: g.total }))}
         />
         <Desglose
           titulo="Por método de pago"

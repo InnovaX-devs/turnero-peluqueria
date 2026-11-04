@@ -27,7 +27,7 @@ public record FichaClienteResponse(
             UUID id,
             Instant inicio,
             EstadoAtencion estado,
-            String barberoNombre,
+            String profesionalNombre,
             String servicioNombre,
             long precioFinal
     ) {
@@ -36,7 +36,7 @@ public record FichaClienteResponse(
                     a.getId(),
                     a.getInicio(),
                     a.getEstado(),
-                    a.getBarbero().getNombre() + " " + a.getBarbero().getApellido(),
+                    a.getProfesional().getNombre() + " " + a.getProfesional().getApellido(),
                     a.getServicio().getNombre(),
                     a.getPrecioFinal());
         }

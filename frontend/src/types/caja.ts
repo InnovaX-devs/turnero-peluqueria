@@ -25,7 +25,7 @@ export interface Caja {
   total: number
   cantidad: number
   ticketPromedio: number
-  porBarbero: GrupoCaja[]
+  porProfesional: GrupoCaja[]
   porServicio: GrupoCaja[]
   porMetodoPago: GrupoMetodoPago[]
   porDia: DiaCaja[]

@@ -9,7 +9,7 @@ export interface Notificacion {
   estado: EstadoNotificacion
   clienteNombre: string | null
   destinatario: string
-  barberoNombre: string | null
+  profesionalNombre: string | null
   turnoInicio: string
   mensaje: string
   linkWhatsApp: string | null

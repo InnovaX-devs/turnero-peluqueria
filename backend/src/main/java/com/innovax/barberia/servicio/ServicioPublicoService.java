@@ -1,7 +1,7 @@
 package com.innovax.barberia.servicio;
 
-import com.innovax.barberia.barberia.Barberia;
-import com.innovax.barberia.barberia.BarberiaRepository;
+import com.innovax.barberia.negocio.Negocio;
+import com.innovax.barberia.negocio.NegocioRepository;
 import com.innovax.barberia.common.RecursoNoEncontradoException;
 import com.innovax.barberia.servicio.dto.ServicioPublicoResponse;
 import com.innovax.barberia.sucursal.Sucursal;
@@ -18,7 +18,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class ServicioPublicoService {
 
-    private final BarberiaRepository barberias;
+    private final NegocioRepository negocios;
     private final SucursalRepository sucursales;
     private final ServicioRepository servicios;
 
@@ -28,18 +28,18 @@ public class ServicioPublicoService {
      */
     @Transactional(readOnly = true)
     public List<ServicioPublicoResponse> listar(String slug, UUID sucursalId) {
-        Barberia barberia = barberias.findBySlug(slug.trim().toLowerCase(Locale.ROOT))
+        Negocio negocio = negocios.findBySlug(slug.trim().toLowerCase(Locale.ROOT))
                 .orElseThrow(() -> new RecursoNoEncontradoException("Barbería no encontrada"));
 
         List<Servicio> lista;
         if (sucursalId == null) {
-            lista = servicios.findByBarberiaIdAndActivoTrueOrderByOrdenAscNombreAsc(barberia.getId());
+            lista = servicios.findByNegocioIdAndActivoTrueOrderByOrdenAscNombreAsc(negocio.getId());
         } else {
             Sucursal sucursal = sucursales.findById(sucursalId)
                     .filter(Sucursal::isActiva)
-                    .filter(s -> s.getBarberia().getId().equals(barberia.getId()))
+                    .filter(s -> s.getNegocio().getId().equals(negocio.getId()))
                     .orElseThrow(() -> new RecursoNoEncontradoException("Sucursal no encontrada"));
-            lista = servicios.findOfrecidosEnSucursal(barberia.getId(), sucursal.getId());
+            lista = servicios.findOfrecidosEnSucursal(negocio.getId(), sucursal.getId());
         }
 
         return lista.stream().map(ServicioPublicoResponse::de).toList();

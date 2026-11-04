@@ -43,13 +43,13 @@ public interface NotificacionRepository extends JpaRepository<Notificacion, UUID
     /** Mensajes de una barbería para el panel, opcionalmente acotados a un barbero (null = todos). */
     @Query("""
             select n from Notificacion n
-            where n.barberia.id = :barberiaId
+            where n.negocio.id = :negocioId
               and n.estado = :estado
-              and (:barberoId is null or n.atencion.barbero.id = :barberoId)
+              and (:profesionalId is null or n.atencion.profesional.id = :profesionalId)
             order by n.programadaPara asc
             """)
     List<Notificacion> findParaPanel(
-            @Param("barberiaId") UUID barberiaId,
+            @Param("negocioId") UUID negocioId,
             @Param("estado") EstadoNotificacion estado,
-            @Param("barberoId") UUID barberoId);
+            @Param("profesionalId") UUID profesionalId);
 }

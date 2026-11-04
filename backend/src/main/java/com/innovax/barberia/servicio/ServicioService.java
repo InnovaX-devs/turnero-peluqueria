@@ -1,7 +1,7 @@
 package com.innovax.barberia.servicio;
 
 import com.innovax.barberia.auth.UsuarioActual;
-import com.innovax.barberia.barberia.BarberiaRepository;
+import com.innovax.barberia.negocio.NegocioRepository;
 import com.innovax.barberia.common.ConflictoException;
 import com.innovax.barberia.common.DatosInvalidosException;
 import com.innovax.barberia.common.RecursoNoEncontradoException;
@@ -31,12 +31,12 @@ public class ServicioService {
     private static final String NOMBRE_EN_USO = "Ya tenés un servicio activo con ese nombre";
 
     private final ServicioRepository servicios;
-    private final BarberiaRepository barberias;
+    private final NegocioRepository negocios;
     private final UsuarioActual usuarioActual;
 
     @Transactional(readOnly = true)
     public List<ServicioResponse> listar(boolean incluirInactivos) {
-        return servicios.findByBarberiaIdOrderByOrdenAscNombreAsc(usuarioActual.barberiaId()).stream()
+        return servicios.findByNegocioIdOrderByOrdenAscNombreAsc(usuarioActual.negocioId()).stream()
                 .filter(s -> incluirInactivos || s.isActivo())
                 .map(ServicioResponse::de)
                 .toList();
@@ -49,19 +49,19 @@ public class ServicioService {
 
     @Transactional
     public ServicioResponse crear(ServicioRequests.Crear request) {
-        UUID barberiaId = usuarioActual.barberiaId();
+        UUID negocioId = usuarioActual.negocioId();
         String nombre = request.nombre().trim();
-        if (servicios.existsByBarberiaIdAndActivoTrueAndNombreIgnoreCase(barberiaId, nombre)) {
+        if (servicios.existsByNegocioIdAndActivoTrueAndNombreIgnoreCase(negocioId, nombre)) {
             throw new ConflictoException("nombre", NOMBRE_EN_USO);
         }
 
         Servicio servicio = new Servicio();
-        servicio.setBarberia(barberias.getReferenceById(barberiaId));
+        servicio.setNegocio(negocios.getReferenceById(negocioId));
         servicio.setNombre(nombre);
         servicio.setDuracionMin(request.duracionMin());
         servicio.setPrecio(request.precio());
         servicio.setActivo(true);
-        servicio.setOrden(servicios.maxOrden(barberiaId) + 1);
+        servicio.setOrden(servicios.maxOrden(negocioId) + 1);
         return guardar(servicio);
     }
 
@@ -69,8 +69,8 @@ public class ServicioService {
     public ServicioResponse actualizar(UUID id, ServicioRequests.Actualizar request) {
         Servicio servicio = buscar(id);
         String nombre = request.nombre().trim();
-        if (servicio.isActivo() && servicios.existsByBarberiaIdAndActivoTrueAndNombreIgnoreCaseAndIdNot(
-                servicio.getBarberia().getId(), nombre, id)) {
+        if (servicio.isActivo() && servicios.existsByNegocioIdAndActivoTrueAndNombreIgnoreCaseAndIdNot(
+                servicio.getNegocio().getId(), nombre, id)) {
             throw new ConflictoException("nombre", NOMBRE_EN_USO);
         }
         servicio.setNombre(nombre);
@@ -87,11 +87,11 @@ public class ServicioService {
             return ServicioResponse.de(servicio);
         }
         if (activo) {
-            UUID barberiaId = servicio.getBarberia().getId();
-            if (servicios.existsByBarberiaIdAndActivoTrueAndNombreIgnoreCase(barberiaId, servicio.getNombre())) {
+            UUID negocioId = servicio.getNegocio().getId();
+            if (servicios.existsByNegocioIdAndActivoTrueAndNombreIgnoreCase(negocioId, servicio.getNombre())) {
                 throw new ConflictoException("nombre", NOMBRE_EN_USO);
             }
-            servicio.setOrden(servicios.maxOrden(barberiaId) + 1);
+            servicio.setOrden(servicios.maxOrden(negocioId) + 1);
         }
         servicio.setActivo(activo);
         return guardar(servicio);
@@ -100,8 +100,8 @@ public class ServicioService {
     /** La lista tiene que traer cada servicio activo una sola vez. Guarda orden = posición (desde 1). */
     @Transactional
     public List<ServicioResponse> reordenar(ServicioRequests.Reordenar request) {
-        UUID barberiaId = usuarioActual.barberiaId();
-        Map<UUID, Servicio> activos = servicios.findByBarberiaIdAndActivoTrueOrderByOrdenAscNombreAsc(barberiaId)
+        UUID negocioId = usuarioActual.negocioId();
+        Map<UUID, Servicio> activos = servicios.findByNegocioIdAndActivoTrueOrderByOrdenAscNombreAsc(negocioId)
                 .stream().collect(Collectors.toMap(Servicio::getId, Function.identity()));
 
         List<UUID> ids = request.ids();
@@ -120,7 +120,7 @@ public class ServicioService {
     // ------------------------------------------------------------------ helpers
 
     private Servicio buscar(UUID id) {
-        return servicios.findByIdAndBarberiaId(id, usuarioActual.barberiaId())
+        return servicios.findByIdAndNegocioId(id, usuarioActual.negocioId())
                 .orElseThrow(() -> new RecursoNoEncontradoException("Servicio no encontrado"));
     }
 

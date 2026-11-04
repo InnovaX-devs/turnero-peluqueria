@@ -48,7 +48,7 @@ class ReservaOnlineIntegrationTest {
     private static final ZoneId ZONA = ZoneId.of("America/Argentina/Cordoba");
     private static final String SUCURSAL = "bbbbbbbb-0000-0000-0000-000000000001";
     private static final String SERVICIO_CORTE = "dddddddd-0000-0000-0000-000000000001"; // 30 min
-    private static final String BARBERO_LUCAS = "cccccccc-0000-0000-0000-000000000001";
+    private static final String PROFESIONAL_LUCAS = "cccccccc-0000-0000-0000-000000000001";
 
     @Autowired
     private WebApplicationContext context;
@@ -71,7 +71,7 @@ class ReservaOnlineIntegrationTest {
     @AfterEach
     void tearDown() {
         atenciones.findAll().stream()
-                .filter(a -> a.getBarbero().getId().equals(UUID.fromString(BARBERO_LUCAS)))
+                .filter(a -> a.getProfesional().getId().equals(UUID.fromString(PROFESIONAL_LUCAS)))
                 .filter(a -> a.getInicio().equals(inicioEsperado(LocalTime.of(10, 0))))
                 .forEach(atenciones::delete);
         clientes.findAll().stream()
@@ -85,9 +85,9 @@ class ReservaOnlineIntegrationTest {
 
     private String body(LocalTime hora, String telefono) {
         return """
-                {"sucursalId":"%s","servicioId":"%s","barberoId":"%s",
+                {"sucursalId":"%s","servicioId":"%s","profesionalId":"%s",
                  "fecha":"%s","hora":"%s","clienteNombre":"Cliente Test","clienteTelefono":"%s"}
-                """.formatted(SUCURSAL, SERVICIO_CORTE, BARBERO_LUCAS, fecha, hora, telefono);
+                """.formatted(SUCURSAL, SERVICIO_CORTE, PROFESIONAL_LUCAS, fecha, hora, telefono);
     }
 
     // ---------- Camino feliz ----------
@@ -101,7 +101,7 @@ class ReservaOnlineIntegrationTest {
                 .andExpect(jsonPath("$.estado").value("RESERVADA"))
                 .andExpect(jsonPath("$.tokenGestion").exists());
 
-        Cliente creado = clientes.findByBarberiaIdAndTelefono(
+        Cliente creado = clientes.findByNegocioIdAndTelefono(
                         UUID.fromString("aaaaaaaa-0000-0000-0000-000000000001"), "+5493584990001")
                 .orElseThrow();
         assertThat(creado.getNombre()).isEqualTo("Cliente Test");
@@ -157,7 +157,7 @@ class ReservaOnlineIntegrationTest {
         assertThat(statuses).filteredOn(s -> s == 409).hasSize(intentos - 1);
 
         long reservasGuardadas = atenciones.findAll().stream()
-                .filter(a -> a.getBarbero().getId().equals(UUID.fromString(BARBERO_LUCAS)))
+                .filter(a -> a.getProfesional().getId().equals(UUID.fromString(PROFESIONAL_LUCAS)))
                 .filter(a -> a.getInicio().equals(inicioEsperado(hora)))
                 .filter(a -> a.getEstado() == EstadoAtencion.RESERVADA)
                 .count();

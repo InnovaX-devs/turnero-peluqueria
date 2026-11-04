@@ -2,9 +2,9 @@ import { useEffect } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import axios from 'axios'
 import { useParams } from 'react-router-dom'
-import { obtenerBarberiaPublica } from '../../api/reservaPublica'
+import { obtenerNegocioPublico } from '../../api/reservaPublica'
 import { mensajeDeError } from '../../lib/errores'
-import { EncabezadoBarberia } from './EncabezadoBarberia'
+import { EncabezadoNegocio } from './EncabezadoNegocio'
 import { FlujoReserva } from './FlujoReserva'
 import { SinReservasOnline } from './SinReservasOnline'
 import './reserva.css'
@@ -17,8 +17,8 @@ export function ReservaPage() {
   const slugValido = SLUG_VALIDO.test(slug)
 
   const { data, isPending, error, refetch } = useQuery({
-    queryKey: ['barberia-publica', slug],
-    queryFn: () => obtenerBarberiaPublica(slug),
+    queryKey: ['negocio-publica', slug],
+    queryFn: () => obtenerNegocioPublico(slug),
     enabled: slugValido, // un slug con caracteres inválidos no puede existir: 404 sin ir al backend
     retry: (intentos, err) => !esNoEncontrado(err) && intentos < 1,
     staleTime: 5 * 60 * 1000,
@@ -58,9 +58,9 @@ export function ReservaPage() {
 
   return (
     <main className="reserva">
-      <EncabezadoBarberia key={data.logoUrl} nombre={data.nombre} logoUrl={data.logoUrl} />
+      <EncabezadoNegocio key={data.logoUrl} nombre={data.nombre} logoUrl={data.logoUrl} />
       {data.reservasOnline ? (
-        <FlujoReserva key={data.slug} barberia={data} />
+        <FlujoReserva key={data.slug} negocio={data} />
       ) : (
         <SinReservasOnline sucursales={data.sucursales} />
       )}

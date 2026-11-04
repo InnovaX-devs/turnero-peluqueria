@@ -68,9 +68,9 @@ public class GestionTurnoService {
         Instant ahora = Instant.now();
         validarModificable(atencion, ahora);
 
-        var barberia = atencion.getBarberia();
-        if (!barberia.isReservasOnline()) {
-            throw new DatosInvalidosException("barberia",
+        var negocio = atencion.getNegocio();
+        if (!negocio.isReservasOnline()) {
+            throw new DatosInvalidosException("negocio",
                     "La barbería no está tomando turnos online. Comunicate con ellos para cambiarlo.");
         }
 
@@ -83,11 +83,11 @@ public class GestionTurnoService {
         atenciones.saveAndFlush(atencion);
 
         if (!disponibilidadService.estaDisponible(atencion.getSucursal().getId(), atencion.getServicio().getId(),
-                atencion.getBarbero().getId(), request.fecha(), request.hora())) {
+                atencion.getProfesional().getId(), request.fecha(), request.hora())) {
             throw new ConflictoException("horario", MENSAJE_HORARIO_OCUPADO);
         }
 
-        ZoneId zona = ZoneId.of(barberia.getZonaHoraria());
+        ZoneId zona = ZoneId.of(negocio.getZonaHoraria());
         Instant inicio = ZonedDateTime.of(request.fecha(), request.hora(), zona).toInstant();
         atencion.setInicio(inicio);
         atencion.setFin(inicio.plus(Duration.ofMinutes(atencion.getServicio().getDuracionMin())));
@@ -115,7 +115,7 @@ public class GestionTurnoService {
                     ? "Este turno ya estaba cancelado"
                     : "Este turno ya pasó");
         }
-        int minutos = atencion.getBarberia().getAnticipacionCancelacionMin();
+        int minutos = atencion.getNegocio().getAnticipacionCancelacionMin();
         if (!ahora.isBefore(atencion.getInicio().minusSeconds(minutos * 60L))) {
             throw new ConflictoException("turno", "Los cambios online se aceptan hasta " + anticipacion(minutos)
                     + " antes del turno. Comunicate con la barbería.");

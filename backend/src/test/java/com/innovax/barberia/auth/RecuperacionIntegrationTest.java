@@ -1,6 +1,6 @@
 package com.innovax.barberia.auth;
 
-import com.innovax.barberia.barberia.BarberiaRepository;
+import com.innovax.barberia.negocio.NegocioRepository;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -44,7 +44,7 @@ class RecuperacionIntegrationTest {
     @Autowired
     private UsuarioRepository usuarios;
     @Autowired
-    private BarberiaRepository barberias;
+    private NegocioRepository negocios;
     @Autowired
     private TokenRecuperacionRepository tokens;
     @Autowired
@@ -61,10 +61,10 @@ class RecuperacionIntegrationTest {
         usuarios.findByEmailIgnoreCase(EMAIL).ifPresent(usuarios::delete);   // por si quedó de una corrida cortada
 
         Usuario u = new Usuario();
-        u.setBarberia(barberias.findById(JADE).orElseThrow());
+        u.setNegocio(negocios.findById(JADE).orElseThrow());
         u.setEmail(EMAIL);
         u.setPasswordHash(passwordEncoder.encode(PASSWORD_VIEJA));
-        u.setRol(Rol.BARBERO);
+        u.setRol(Rol.PROFESIONAL);
         usuario = usuarios.save(u);
     }
 

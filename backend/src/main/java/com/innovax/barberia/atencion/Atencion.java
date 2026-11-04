@@ -1,8 +1,8 @@
 package com.innovax.barberia.atencion;
 
 import com.innovax.barberia.auth.Usuario;
-import com.innovax.barberia.barberia.Barberia;
-import com.innovax.barberia.barbero.Barbero;
+import com.innovax.barberia.negocio.Negocio;
+import com.innovax.barberia.profesional.Profesional;
 import com.innovax.barberia.cliente.Cliente;
 import com.innovax.barberia.servicio.Servicio;
 import com.innovax.barberia.sucursal.Sucursal;
@@ -32,16 +32,16 @@ public class Atencion {
     private UUID id;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "barberia_id", nullable = false)
-    private Barberia barberia;
+    @JoinColumn(name = "negocio_id", nullable = false)
+    private Negocio negocio;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "sucursal_id", nullable = false)
     private Sucursal sucursal;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "barbero_id", nullable = false)
-    private Barbero barbero;
+    @JoinColumn(name = "profesional_id", nullable = false)
+    private Profesional profesional;
 
     /** Null = corte anónimo. */
     @ManyToOne(fetch = FetchType.LAZY)

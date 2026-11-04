@@ -1,7 +1,7 @@
 package com.innovax.barberia.notificacion;
 
 import com.innovax.barberia.atencion.Atencion;
-import com.innovax.barberia.barberia.Barberia;
+import com.innovax.barberia.negocio.Negocio;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -25,8 +25,8 @@ public class Notificacion {
     private UUID id;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "barberia_id", nullable = false)
-    private Barberia barberia;
+    @JoinColumn(name = "negocio_id", nullable = false)
+    private Negocio negocio;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "atencion_id", nullable = false)

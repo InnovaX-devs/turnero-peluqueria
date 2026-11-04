@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import axios from 'axios'
 import { Link, useParams } from 'react-router-dom'
-import { obtenerBarberiaPublica } from '../../api/reservaPublica'
+import { obtenerNegocioPublico } from '../../api/reservaPublica'
 import { cancelarTurno, obtenerTurno, reprogramarTurno } from '../../api/turno'
 import { mensajeDeError } from '../../lib/errores'
 import { fechaLarga, horaCorta } from '../../lib/fechas'
@@ -43,7 +43,7 @@ export function GestionTurnoPage() {
   useEffect(() => {
     if (!turno) return
     const anterior = document.title
-    document.title = `Tu turno en ${turno.barberia.nombre}`
+    document.title = `Tu turno en ${turno.negocio.nombre}`
     return () => {
       document.title = anterior
     }
@@ -133,7 +133,7 @@ export function GestionTurnoPage() {
         </div>
         <div>
           <dt>Barbero</dt>
-          <dd>{turno.barbero.nombre}</dd>
+          <dd>{turno.profesional.nombre}</dd>
         </div>
         <div>
           <dt>Cuándo</dt>
@@ -198,7 +198,7 @@ export function GestionTurnoPage() {
 function Encabezado({ turno }: { turno: TurnoPublico }) {
   return (
     <header className="turno-encabezado">
-      <p className="turno-barberia">{turno.barberia.nombre}</p>
+      <p className="turno-negocio">{turno.negocio.nombre}</p>
       <h1>{turno.clienteNombre ? `${turno.clienteNombre.split(' ')[0]}, este es tu turno` : 'Tu turno'}</h1>
     </header>
   )
@@ -206,7 +206,7 @@ function Encabezado({ turno }: { turno: TurnoPublico }) {
 
 function EstadoTurno({ turno }: { turno: TurnoPublico }) {
   const otroTurno = (
-    <Link className="boton-secundario turno-link" to={`/b/${turno.barberia.slug}`}>
+    <Link className="boton-secundario turno-link" to={`/b/${turno.negocio.slug}`}>
       Sacar otro turno
     </Link>
   )
@@ -264,9 +264,9 @@ interface ReprogramarProps {
 
 function Reprogramar({ turno, eleccion, onElegir, confirmando, error, onConfirmar, onVolver }: ReprogramarProps) {
   // El calendario necesita la anticipación máxima de la barbería
-  const { data: barberia, isPending, error: errorBarberia } = useQuery({
-    queryKey: ['barberia-publica', turno.barberia.slug],
-    queryFn: () => obtenerBarberiaPublica(turno.barberia.slug),
+  const { data: negocio, isPending, error: errorNegocio } = useQuery({
+    queryKey: ['negocio-publica', turno.negocio.slug],
+    queryFn: () => obtenerNegocioPublico(turno.negocio.slug),
     staleTime: 5 * 60 * 1000,
   })
 
@@ -279,18 +279,18 @@ function Reprogramar({ turno, eleccion, onElegir, confirmando, error, onConfirma
       </div>
       <h2 className="reserva-titulo-paso">Elegí el nuevo día y horario</h2>
       <p className="turno-limite">
-        Ahora: {cuando(turno.inicio)}, {turno.servicio.nombre} con {turno.barbero.nombre}.
+        Ahora: {cuando(turno.inicio)}, {turno.servicio.nombre} con {turno.profesional.nombre}.
       </p>
 
       {isPending && <p className="reserva-cargando">Cargando…</p>}
-      {errorBarberia && <p className="turno-error" role="alert">{mensajeDeError(errorBarberia)}</p>}
-      {barberia && (
+      {errorNegocio && <p className="turno-error" role="alert">{mensajeDeError(errorNegocio)}</p>}
+      {negocio && (
         <PasoHorario
-          slug={turno.barberia.slug}
-          anticipacionMaximaDias={barberia.anticipacionMaximaDias}
+          slug={turno.negocio.slug}
+          anticipacionMaximaDias={negocio.anticipacionMaximaDias}
           sucursalId={turno.sucursal.id}
           servicioId={turno.servicio.id}
-          barberoId={turno.barbero.id}
+          profesionalId={turno.profesional.id}
           fechaElegida={eleccion?.fecha ?? null}
           horaElegida={eleccion?.hora ?? null}
           onElegir={onElegir}

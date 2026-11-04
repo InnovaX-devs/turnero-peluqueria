@@ -23,14 +23,14 @@ class PermisosTestController {
         return "ok";
     }
 
-    @GetMapping("/barbero/{barberoId}")
-    String barbero(@PathVariable UUID barberoId) {
-        usuarioActual.verificarAccesoABarbero(barberoId);
+    @GetMapping("/profesional/{profesionalId}")
+    String profesional(@PathVariable UUID profesionalId) {
+        usuarioActual.verificarAccesoAProfesional(profesionalId);
         return "ok";
     }
 
-    @GetMapping("/mi-barberia")
-    String miBarberia() {
-        return usuarioActual.barberiaId().toString();
+    @GetMapping("/mi-negocio")
+    String miNegocio() {
+        return usuarioActual.negocioId().toString();
     }
 }

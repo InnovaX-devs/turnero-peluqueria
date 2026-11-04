@@ -13,8 +13,8 @@ import java.util.UUID;
 /**
  * Datos del usuario logueado, sacados del token.
  *
- * REGLA DEL EQUIPO: toda consulta del panel filtra por {@link #barberiaId()}.
- * Nunca se toma el barberia_id del request (body, query o path), siempre de acá.
+ * REGLA DEL EQUIPO: toda consulta del panel filtra por {@link #negocioId()}.
+ * Nunca se toma el negocio_id del request (body, query o path), siempre de acá.
  */
 @Component
 public class UsuarioActual {
@@ -31,16 +31,23 @@ public class UsuarioActual {
         return UUID.fromString(jwt().getSubject());
     }
 
-    public UUID barberiaId() {
-        return UUID.fromString(jwt().getClaimAsString(JwtService.CLAIM_BARBERIA));
+    public UUID negocioId() {
+        return UUID.fromString(claim(JwtService.CLAIM_NEGOCIO, JwtService.CLAIM_NEGOCIO_ANTERIOR));
     }
 
     public Rol rol() {
-        return Rol.valueOf(jwt().getClaimAsString(JwtService.CLAIM_ROL));
+        return Rol.desdeToken(jwt().getClaimAsString(JwtService.CLAIM_ROL));
     }
 
-    public Optional<UUID> barberoId() {
-        return Optional.ofNullable(jwt().getClaimAsString(JwtService.CLAIM_BARBERO)).map(UUID::fromString);
+    public Optional<UUID> profesionalId() {
+        return Optional.ofNullable(claim(JwtService.CLAIM_PROFESIONAL, JwtService.CLAIM_PROFESIONAL_ANTERIOR))
+                .map(UUID::fromString);
+    }
+
+    /** El claim con su nombre actual o, en tokens emitidos antes de V7, con el anterior. */
+    private String claim(String nombre, String nombreAnterior) {
+        String valor = jwt().getClaimAsString(nombre);
+        return valor != null ? valor : jwt().getClaimAsString(nombreAnterior);
     }
 
     public boolean esAdmin() {
@@ -49,13 +56,13 @@ public class UsuarioActual {
 
     /**
      * Un admin puede operar sobre cualquier barbero; un barbero, solo sobre sí mismo.
-     * Ojo: igual hay que verificar que el barbero sea de {@link #barberiaId()} al buscarlo en la base.
+     * Ojo: igual hay que verificar que el barbero sea de {@link #negocioId()} al buscarlo en la base.
      */
-    public void verificarAccesoABarbero(UUID barberoId) {
+    public void verificarAccesoAProfesional(UUID profesionalId) {
         if (esAdmin()) {
             return;
         }
-        boolean esElMismo = barberoId().map(barberoId::equals).orElse(false);
+        boolean esElMismo = profesionalId().map(profesionalId::equals).orElse(false);
         if (!esElMismo) {
             throw new AccessDeniedException("No tenés permiso sobre este barbero");
         }

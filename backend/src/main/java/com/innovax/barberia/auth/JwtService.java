@@ -16,9 +16,16 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class JwtService {
 
-    public static final String CLAIM_BARBERIA = "barberia";
+    public static final String CLAIM_NEGOCIO = "negocio";
     public static final String CLAIM_ROL = "rol";
-    public static final String CLAIM_BARBERO = "barbero";
+    public static final String CLAIM_PROFESIONAL = "profesional";
+
+    /**
+     * Nombres de los claims antes de la migración V7 (issue #64). Los tokens emitidos antes del
+     * deploy los siguen trayendo hasta que vencen; UsuarioActual los lee como alternativa.
+     */
+    static final String CLAIM_NEGOCIO_ANTERIOR = "barberia";
+    static final String CLAIM_PROFESIONAL_ANTERIOR = "barbero";
 
     private final JwtEncoder encoder;
     private final JwtProperties props;
@@ -26,7 +33,7 @@ public class JwtService {
     public record TokenGenerado(String valor, Instant expiraEn) {
     }
 
-    public TokenGenerado generar(Usuario usuario, UUID barberoId) {
+    public TokenGenerado generar(Usuario usuario, UUID profesionalId) {
         Instant ahora = Instant.now();
         Instant expira = ahora.plus(props.expiracion());
 
@@ -35,10 +42,10 @@ public class JwtService {
                 .issuedAt(ahora)
                 .expiresAt(expira)
                 .subject(usuario.getId().toString())
-                .claim(CLAIM_BARBERIA, usuario.getBarberia().getId().toString())
+                .claim(CLAIM_NEGOCIO, usuario.getNegocio().getId().toString())
                 .claim(CLAIM_ROL, usuario.getRol().name());
-        if (barberoId != null) {
-            claims.claim(CLAIM_BARBERO, barberoId.toString());
+        if (profesionalId != null) {
+            claims.claim(CLAIM_PROFESIONAL, profesionalId.toString());
         }
 
         JwsHeader header = JwsHeader.with(MacAlgorithm.HS256).build();

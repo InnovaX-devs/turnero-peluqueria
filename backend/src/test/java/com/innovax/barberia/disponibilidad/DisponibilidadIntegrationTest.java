@@ -1,7 +1,7 @@
 package com.innovax.barberia.disponibilidad;
 
-import com.innovax.barberia.barberia.Barberia;
-import com.innovax.barberia.barberia.BarberiaRepository;
+import com.innovax.barberia.negocio.Negocio;
+import com.innovax.barberia.negocio.NegocioRepository;
 import com.innovax.barberia.servicio.Servicio;
 import com.innovax.barberia.servicio.ServicioRepository;
 import com.innovax.barberia.sucursal.Sucursal;
@@ -41,14 +41,14 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 class DisponibilidadIntegrationTest {
 
     private static final ZoneId ZONA = ZoneId.of("America/Argentina/Cordoba");
-    private static final UUID BARBERIA_JADE = UUID.fromString("aaaaaaaa-0000-0000-0000-000000000001");
+    private static final UUID NEGOCIO_JADE = UUID.fromString("aaaaaaaa-0000-0000-0000-000000000001");
     private static final UUID SUCURSAL = UUID.fromString("bbbbbbbb-0000-0000-0000-000000000001");
     private static final UUID SERVICIO_CORTE = UUID.fromString("dddddddd-0000-0000-0000-000000000001");
 
     @Autowired
     private WebApplicationContext context;
     @Autowired
-    private BarberiaRepository barberias;
+    private NegocioRepository negocios;
     @Autowired
     private SucursalRepository sucursales;
     @Autowired
@@ -109,13 +109,13 @@ class DisponibilidadIntegrationTest {
 
     @Test
     void conReservasOnlineApagadasDevuelve400() throws Exception {
-        Barberia jade = barberias.findById(BARBERIA_JADE).orElseThrow();
+        Negocio jade = negocios.findById(NEGOCIO_JADE).orElseThrow();
         jade.setReservasOnline(false);
-        barberias.saveAndFlush(jade);
+        negocios.saveAndFlush(jade);
 
         consultar(proximoLunes)
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.errores.barberia").exists());
+                .andExpect(jsonPath("$.errores.negocio").exists());
     }
 
     // ---------- /dias ----------
@@ -130,9 +130,9 @@ class DisponibilidadIntegrationTest {
 
     @Test
     void unaSemanaConAnticipacionMaximaMasCortaNoFallaYSeCortaEnElLimite() throws Exception {
-        Barberia jade = barberias.findById(BARBERIA_JADE).orElseThrow();
+        Negocio jade = negocios.findById(NEGOCIO_JADE).orElseThrow();
         jade.setAnticipacionMaximaDias(3);
-        barberias.saveAndFlush(jade);
+        negocios.saveAndFlush(jade);
 
         LocalDate hoy = LocalDate.now(ZONA);
         consultarDias(hoy, hoy.plusDays(6))

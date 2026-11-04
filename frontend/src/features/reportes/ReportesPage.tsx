@@ -5,7 +5,7 @@ import { mensajeDeError } from '../../lib/errores'
 import { Selector } from '../../components/Selector'
 import { hoyISO } from '../../lib/fechas'
 import { formatearPrecio } from '../../lib/formato'
-import type { Ausentismo, BarberoReporte, ClienteFrecuente, Demanda } from '../../types/reportes'
+import type { Ausentismo, ProfesionalReporte, ClienteFrecuente, Demanda } from '../../types/reportes'
 import { useAuth } from '../auth/useAuth'
 import { useOpcionesRegistro } from '../atenciones/useOpcionesRegistro'
 import { periodoDe, type Periodo, type Preset } from '../caja/periodos'
@@ -24,7 +24,7 @@ const OPCIONES_DIAS = [30, 45, 60, 90]
 export function ReportesPage() {
   // El barbero ve solo sus números (el backend los filtra con su token); acá solo cambian los títulos.
   const { usuario } = useAuth()
-  const propio = usuario?.rol === 'BARBERO'
+  const propio = usuario?.rol === 'PROFESIONAL'
   const [preset, setPreset] = useState<Exclude<Preset, 'hoy'>>('mes')
   const [personalizado, setPersonalizado] = useState<Periodo>(() => periodoDe('mes'))
   const [sucursalId, setSucursalId] = useState<string | null>(null)
@@ -104,10 +104,10 @@ export function ReportesPage() {
 
       {data && (
         <div className={isFetching ? 'reportes caja-actualizando' : 'reportes'}>
-          <TarjetaCobrado barberos={data.porBarbero} propio={propio} />
+          <TarjetaCobrado profesionales={data.porProfesional} propio={propio} />
           <div className="reportes-fila">
             <TarjetaAusentismo ausentismo={data.ausentismo} />
-            <TarjetaBarberos barberos={data.porBarbero} propio={propio} />
+            <TarjetaProfesionales profesionales={data.porProfesional} propio={propio} />
           </div>
           <TarjetaDemanda demanda={data.demanda} />
           <TarjetaFrecuentes clientes={data.clientesFrecuentes} propio={propio} />
@@ -121,9 +121,9 @@ export function ReportesPage() {
 }
 
 /** Plata cobrada en el período. Para el barbero llega solo lo suyo; para el admin, todos los barberos sumados. */
-function TarjetaCobrado({ barberos, propio }: { barberos: BarberoReporte[]; propio: boolean }) {
-  const cobrado = barberos.reduce((suma, b) => suma + b.facturado, 0)
-  const cortes = barberos.reduce((suma, b) => suma + b.atendidos, 0)
+function TarjetaCobrado({ profesionales, propio }: { profesionales: ProfesionalReporte[]; propio: boolean }) {
+  const cobrado = profesionales.reduce((suma, b) => suma + b.facturado, 0)
+  const cortes = profesionales.reduce((suma, b) => suma + b.atendidos, 0)
   const ticketPromedio = cortes === 0 ? 0 : Math.round(cobrado / cortes)
   return (
     <div className="reporte-tarjeta reporte-cobrado">
@@ -170,11 +170,11 @@ function TarjetaAusentismo({ ausentismo }: { ausentismo: Ausentismo }) {
   )
 }
 
-function TarjetaBarberos({ barberos, propio }: { barberos: BarberoReporte[]; propio: boolean }) {
+function TarjetaProfesionales({ profesionales, propio }: { profesionales: ProfesionalReporte[]; propio: boolean }) {
   return (
     <div className="reporte-tarjeta">
       <h2>{propio ? 'Mis cortes' : 'Cortes por barbero'}</h2>
-      {barberos.length === 0 ? (
+      {profesionales.length === 0 ? (
         <p className="caja-estado">Sin turnos en este período.</p>
       ) : (
         <div className="reporte-tabla-scroll">
@@ -189,7 +189,7 @@ function TarjetaBarberos({ barberos, propio }: { barberos: BarberoReporte[]; pro
               </tr>
             </thead>
             <tbody>
-              {barberos.map((b) => (
+              {profesionales.map((b) => (
                 <tr key={b.id}>
                   {!propio && <td>{b.nombre}</td>}
                   <td><strong>{b.atendidos}</strong></td>
@@ -343,7 +343,7 @@ function ClientesQueNoVuelven({ propio }: { propio: boolean }) {
               </div>
               <a
                 className="boton-secundario reporte-whatsapp"
-                href={linkWhatsApp(c.telefono, c.nombre, data.barberiaNombre)}
+                href={linkWhatsApp(c.telefono, c.nombre, data.negocioNombre)}
                 target="_blank"
                 rel="noreferrer"
               >

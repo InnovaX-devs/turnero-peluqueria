@@ -33,7 +33,7 @@ class CalculadoraDisponibilidadTest {
 
     @Test
     void diaSinHorarioLaboralNoTieneSlots() {
-        List<LocalTime> libres = CalculadoraDisponibilidad.slotsLibresDeUnBarbero(
+        List<LocalTime> libres = CalculadoraDisponibilidad.slotsLibresDeUnProfesional(
                 List.of(), List.of(), 30, 30, UN_LUNES, ZONA,
                 enZona(UN_LUNES, LocalTime.of(0, 0)), 60);
 
@@ -44,7 +44,7 @@ class CalculadoraDisponibilidadTest {
     void descartaElUltimoSlotSiElServicioNoEntraAntesDeQueCierre() {
         HorarioLaboral jornada = horario(LocalTime.of(9, 0), LocalTime.of(20, 30));
 
-        List<LocalTime> libres = CalculadoraDisponibilidad.slotsLibresDeUnBarbero(
+        List<LocalTime> libres = CalculadoraDisponibilidad.slotsLibresDeUnProfesional(
                 List.of(jornada), List.of(), 45, 15, UN_LUNES, ZONA,
                 enZona(UN_LUNES, LocalTime.of(0, 0)), 0);
 
@@ -57,7 +57,7 @@ class CalculadoraDisponibilidadTest {
         HorarioLaboral jornada = horario(LocalTime.of(9, 0), LocalTime.of(13, 0));
         Intervalo turnoOcupado = new Intervalo(enZona(UN_LUNES, LocalTime.of(10, 0)), enZona(UN_LUNES, LocalTime.of(10, 40)));
 
-        List<LocalTime> libres = CalculadoraDisponibilidad.slotsLibresDeUnBarbero(
+        List<LocalTime> libres = CalculadoraDisponibilidad.slotsLibresDeUnProfesional(
                 List.of(jornada), List.of(turnoOcupado), 30, 30, UN_LUNES, ZONA,
                 enZona(UN_LUNES, LocalTime.of(0, 0)), 0);
 
@@ -70,7 +70,7 @@ class CalculadoraDisponibilidadTest {
         HorarioLaboral jornada = horario(LocalTime.of(9, 0), LocalTime.of(18, 0));
         Intervalo bloqueoMañana = new Intervalo(enZona(UN_LUNES, LocalTime.of(9, 0)), enZona(UN_LUNES, LocalTime.of(13, 0)));
 
-        List<LocalTime> libres = CalculadoraDisponibilidad.slotsLibresDeUnBarbero(
+        List<LocalTime> libres = CalculadoraDisponibilidad.slotsLibresDeUnProfesional(
                 List.of(jornada), List.of(bloqueoMañana), 30, 30, UN_LUNES, ZONA,
                 enZona(UN_LUNES, LocalTime.of(0, 0)), 0);
 
@@ -83,7 +83,7 @@ class CalculadoraDisponibilidadTest {
         HorarioLaboral jornada = horario(LocalTime.of(9, 0), LocalTime.of(18, 0));
         Instant ahora = enZona(UN_LUNES, LocalTime.of(9, 50));
 
-        List<LocalTime> libres = CalculadoraDisponibilidad.slotsLibresDeUnBarbero(
+        List<LocalTime> libres = CalculadoraDisponibilidad.slotsLibresDeUnProfesional(
                 List.of(jornada), List.of(), 30, 30, UN_LUNES, ZONA, ahora, 60);
 
         assertThat(libres).doesNotContain(LocalTime.of(9, 0), LocalTime.of(9, 30), LocalTime.of(10, 0), LocalTime.of(10, 30));
@@ -91,15 +91,15 @@ class CalculadoraDisponibilidadTest {
     }
 
     @Test
-    void cualquierBarberoUneLosSlotsDeTodosYRegistraQuienTieneCada() {
+    void cualquierProfesionalUneLosSlotsDeTodosYRegistraQuienTieneCada() {
         UUID lucas = UUID.randomUUID();
         UUID andres = UUID.randomUUID();
 
-        Map<UUID, List<LocalTime>> slotsPorBarbero = Map.of(
+        Map<UUID, List<LocalTime>> slotsPorProfesional = Map.of(
                 lucas, List.of(LocalTime.of(9, 0), LocalTime.of(9, 30)),
                 andres, List.of(LocalTime.of(9, 30), LocalTime.of(10, 0)));
 
-        List<SlotDisponibleResponse> combinados = CalculadoraDisponibilidad.combinarPorBarbero(slotsPorBarbero);
+        List<SlotDisponibleResponse> combinados = CalculadoraDisponibilidad.combinarPorProfesional(slotsPorProfesional);
 
         assertThat(combinados).extracting(SlotDisponibleResponse::hora)
                 .containsExactly(LocalTime.of(9, 0), LocalTime.of(9, 30), LocalTime.of(10, 0));
@@ -107,11 +107,11 @@ class CalculadoraDisponibilidadTest {
         SlotDisponibleResponse nueveYMedia = combinados.stream()
                 .filter(s -> s.hora().equals(LocalTime.of(9, 30)))
                 .findFirst().orElseThrow();
-        assertThat(nueveYMedia.barberos()).containsExactlyInAnyOrder(lucas, andres);
+        assertThat(nueveYMedia.profesionales()).containsExactlyInAnyOrder(lucas, andres);
 
         SlotDisponibleResponse nueveEnPunto = combinados.stream()
                 .filter(s -> s.hora().equals(LocalTime.of(9, 0)))
                 .findFirst().orElseThrow();
-        assertThat(nueveEnPunto.barberos()).containsExactly(lucas);
+        assertThat(nueveEnPunto.profesionales()).containsExactly(lucas);
     }
 }

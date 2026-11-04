@@ -15,10 +15,10 @@ export function tasaAusentismo(atendidos: number, ausentes: number): number | nu
 }
 
 /** Link de WhatsApp con un mensaje ya escrito. El teléfono viene en formato +549... */
-export function linkWhatsApp(telefono: string, nombre: string, barberia: string): string {
+export function linkWhatsApp(telefono: string, nombre: string, negocio: string): string {
   const primerNombre = nombre.trim().split(/\s+/)[0]
   const mensaje =
-    `¡Hola ${primerNombre}! ¿Cómo andás? Hace un tiempo que no te vemos por ${barberia}. ` +
+    `¡Hola ${primerNombre}! ¿Cómo andás? Hace un tiempo que no te vemos por ${negocio}. ` +
     '¿Querés que te reservemos un turno?'
   return `https://wa.me/${telefono.replace(/\D/g, '')}?text=${encodeURIComponent(mensaje)}`
 }

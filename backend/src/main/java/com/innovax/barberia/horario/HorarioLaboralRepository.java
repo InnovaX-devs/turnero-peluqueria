@@ -12,11 +12,11 @@ import java.util.UUID;
 public interface HorarioLaboralRepository extends JpaRepository<HorarioLaboral, UUID> {
 
     /** Los bloques de horario de un barbero en una sucursal para un día de la semana dado (puede haber varios, ej. mañana y tarde). */
-    List<HorarioLaboral> findByBarberoIdAndSucursalIdAndDiaSemana(UUID barberoId, UUID sucursalId, DayOfWeek diaSemana);
+    List<HorarioLaboral> findByProfesionalIdAndSucursalIdAndDiaSemana(UUID profesionalId, UUID sucursalId, DayOfWeek diaSemana);
 
-    List<HorarioLaboral> findByBarberoIdOrderByDiaSemanaAscHoraInicioAsc(UUID barberoId);
+    List<HorarioLaboral> findByProfesionalIdOrderByDiaSemanaAscHoraInicioAsc(UUID profesionalId);
 
     @Modifying(flushAutomatically = true)
-    @Query("delete from HorarioLaboral h where h.barbero.id = :barberoId")
-    void borrarDeBarbero(@Param("barberoId") UUID barberoId);
+    @Query("delete from HorarioLaboral h where h.profesional.id = :profesionalId")
+    void borrarDeProfesional(@Param("profesionalId") UUID profesionalId);
 }

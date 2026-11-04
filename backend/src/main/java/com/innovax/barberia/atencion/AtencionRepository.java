@@ -14,13 +14,13 @@ public interface AtencionRepository extends JpaRepository<Atencion, UUID> {
     /** Atenciones del barbero, en alguno de los estados dados, que se solapan con [inicioRango, finRango). */
     @Query("""
             select a from Atencion a
-            where a.barbero.id = :barberoId
+            where a.profesional.id = :profesionalId
               and a.estado in :estados
               and a.inicio < :finRango
               and a.fin > :inicioRango
             """)
     List<Atencion> findOcupadas(
-            @Param("barberoId") UUID barberoId,
+            @Param("profesionalId") UUID profesionalId,
             @Param("estados") Collection<EstadoAtencion> estados,
             @Param("inicioRango") Instant inicioRango,
             @Param("finRango") Instant finRango);
@@ -32,28 +32,28 @@ public interface AtencionRepository extends JpaRepository<Atencion, UUID> {
      */
     @Query("""
             select a from Atencion a
-            where a.barberia.id = :barberiaId
-              and (:barberoId is null or a.barbero.id = :barberoId)
+            where a.negocio.id = :negocioId
+              and (:profesionalId is null or a.profesional.id = :profesionalId)
               and a.inicio < :finRango
               and a.fin > :inicioRango
             order by a.inicio asc
             """)
     List<Atencion> findParaAgenda(
-            @Param("barberiaId") UUID barberiaId,
-            @Param("barberoId") UUID barberoId,
+            @Param("negocioId") UUID negocioId,
+            @Param("profesionalId") UUID profesionalId,
             @Param("inicioRango") Instant inicioRango,
             @Param("finRango") Instant finRango);
 
     /** Historial de un cliente (cualquier estado), de la más reciente a la más antigua. */
     @Query("""
             select a from Atencion a
-            join fetch a.barbero
+            join fetch a.profesional
             join fetch a.servicio
-            where a.barberia.id = :barberiaId
+            where a.negocio.id = :negocioId
               and a.cliente.id = :clienteId
             order by a.inicio desc
             """)
     List<Atencion> findHistorialDeCliente(
-            @Param("barberiaId") UUID barberiaId,
+            @Param("negocioId") UUID negocioId,
             @Param("clienteId") UUID clienteId);
 }

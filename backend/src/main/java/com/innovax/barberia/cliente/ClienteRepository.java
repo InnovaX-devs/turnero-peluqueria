@@ -13,40 +13,40 @@ import java.util.UUID;
 
 public interface ClienteRepository extends JpaRepository<Cliente, UUID> {
 
-    Optional<Cliente> findByBarberiaIdAndTelefono(UUID barberiaId, String telefono);
+    Optional<Cliente> findByNegocioIdAndTelefono(UUID negocioId, String telefono);
 
     /** Búsqueda por nombre (cuando lo tipeado no tiene números). */
-    List<Cliente> findTop10ByBarberiaIdAndNombreContainingIgnoreCaseOrderByNombreAsc(UUID barberiaId, String nombre);
+    List<Cliente> findTop10ByNegocioIdAndNombreContainingIgnoreCaseOrderByNombreAsc(UUID negocioId, String nombre);
 
     /** Búsqueda por nombre o por parte del teléfono (ej. "4111" encuentra +5493584111111). */
     @Query("""
             select c from Cliente c
-            where c.barberia.id = :barberiaId
+            where c.negocio.id = :negocioId
               and (lower(c.nombre) like lower(concat('%', :texto, '%'))
                    or c.telefono like concat('%', :digitos, '%'))
             order by c.nombre
             """)
     List<Cliente> buscarPorNombreOTelefono(
-            @Param("barberiaId") UUID barberiaId,
+            @Param("negocioId") UUID negocioId,
             @Param("texto") String texto,
             @Param("digitos") String digitos,
             Pageable pagina);
 
-    Optional<Cliente> findByIdAndBarberiaId(UUID id, UUID barberiaId);
+    Optional<Cliente> findByIdAndNegocioId(UUID id, UUID negocioId);
 
     // ---------- Listado del panel, paginado ----------
     // Filtro común: sin texto trae todos; con texto busca en el nombre o (si hay 3+ dígitos) en el teléfono.
     // Son consultas nativas porque el orden por última visita necesita un LEFT JOIN a un agregado.
 
     String FILTRO_LISTADO = """
-            c.barberia_id = :barberiaId
+            c.negocio_id = :negocioId
               AND (:texto = ''
                    OR lower(c.nombre) LIKE '%' || lower(:texto) || '%'
                    OR (:digitos <> '' AND c.telefono LIKE '%' || :digitos || '%'))
             """;
 
     @Query(value = "SELECT count(*) FROM cliente c WHERE " + FILTRO_LISTADO, nativeQuery = true)
-    long contarListado(@Param("barberiaId") UUID barberiaId,
+    long contarListado(@Param("negocioId") UUID negocioId,
                        @Param("texto") String texto,
                        @Param("digitos") String digitos);
 
@@ -54,7 +54,7 @@ public interface ClienteRepository extends JpaRepository<Cliente, UUID> {
              ORDER BY lower(c.nombre), c.id
              LIMIT :limite OFFSET :desde
             """, nativeQuery = true)
-    List<Cliente> listarPorNombre(@Param("barberiaId") UUID barberiaId,
+    List<Cliente> listarPorNombre(@Param("negocioId") UUID negocioId,
                                   @Param("texto") String texto,
                                   @Param("digitos") String digitos,
                                   @Param("limite") int limite,
@@ -65,13 +65,13 @@ public interface ClienteRepository extends JpaRepository<Cliente, UUID> {
             SELECT c.* FROM cliente c
             LEFT JOIN (SELECT a.cliente_id, max(a.inicio) AS ultima
                        FROM atencion a
-                       WHERE a.barberia_id = :barberiaId AND a.estado = 'COMPLETADA' AND a.cliente_id IS NOT NULL
+                       WHERE a.negocio_id = :negocioId AND a.estado = 'COMPLETADA' AND a.cliente_id IS NOT NULL
                        GROUP BY a.cliente_id) u ON u.cliente_id = c.id
             WHERE\s""" + FILTRO_LISTADO + """
              ORDER BY u.ultima DESC NULLS LAST, lower(c.nombre), c.id
              LIMIT :limite OFFSET :desde
             """, nativeQuery = true)
-    List<Cliente> listarPorUltimaVisita(@Param("barberiaId") UUID barberiaId,
+    List<Cliente> listarPorUltimaVisita(@Param("negocioId") UUID negocioId,
                                         @Param("texto") String texto,
                                         @Param("digitos") String digitos,
                                         @Param("limite") int limite,

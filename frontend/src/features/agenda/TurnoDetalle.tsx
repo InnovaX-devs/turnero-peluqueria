@@ -94,7 +94,7 @@ export function TurnoDetalle({ turno, onCerrar }: { turno: Turno; onCerrar: () =
     Servicio: ${turnoActual.servicioNombre}
     Fecha: ${fecha}
     Horario: ${horaInicio} a ${horaFin}
-    Profesional: ${turnoActual.barberoNombre}
+    Profesional: ${turnoActual.profesionalNombre}
     Precio: ${precio}
 
     ¡Muchas gracias por elegirnos!`
@@ -136,7 +136,7 @@ export function TurnoDetalle({ turno, onCerrar }: { turno: Turno; onCerrar: () =
           </div>
           <div>
             <dt>Barbero</dt>
-            <dd>{turnoActual.barberoNombre}</dd>
+            <dd>{turnoActual.profesionalNombre}</dd>
           </div>
           <div>
             <dt>Estado</dt>

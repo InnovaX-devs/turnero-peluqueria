@@ -7,9 +7,9 @@ import com.innovax.barberia.atencion.dto.CrearReservaRequest;
 import com.innovax.barberia.auth.Usuario;
 import com.innovax.barberia.auth.UsuarioActual;
 import com.innovax.barberia.auth.UsuarioRepository;
-import com.innovax.barberia.barberia.Barberia;
-import com.innovax.barberia.barbero.Barbero;
-import com.innovax.barberia.barbero.BarberoRepository;
+import com.innovax.barberia.negocio.Negocio;
+import com.innovax.barberia.profesional.Profesional;
+import com.innovax.barberia.profesional.ProfesionalRepository;
 import com.innovax.barberia.cliente.Cliente;
 import com.innovax.barberia.cliente.ClienteRepository;
 import com.innovax.barberia.common.ConflictoException;
@@ -57,7 +57,7 @@ public class AtencionService {
     private final ClienteRepository clientes;
     private final SucursalRepository sucursales;
     private final ServicioRepository servicios;
-    private final BarberoRepository barberos;
+    private final ProfesionalRepository profesionales;
     private final DisponibilidadService disponibilidadService;
     private final UsuarioActual usuarioActual;
     private final UsuarioRepository usuarios;
@@ -69,38 +69,38 @@ public class AtencionService {
                 .orElseThrow(() -> new RecursoNoEncontradoException("Sucursal no encontrada"));
         Servicio servicio = servicios.findById(request.servicioId())
                 .orElseThrow(() -> new RecursoNoEncontradoException("Servicio no encontrado"));
-        Barbero barbero = barberos.findById(request.barberoId())
+        Profesional profesional = profesionales.findById(request.profesionalId())
                 .orElseThrow(() -> new RecursoNoEncontradoException("Barbero no encontrado"));
 
-        Barberia barberia = sucursal.getBarberia();
-        validarPertenecenALaMismaBarberia(barberia, servicio, barbero);
+        Negocio negocio = sucursal.getNegocio();
+        validarPertenecenAlMismoNegocio(negocio, servicio, profesional);
 
         if (!servicio.isActivo()) {
             throw new DatosInvalidosException("servicioId", "Ese servicio ya no está disponible");
         }
-        if (!barberia.isReservasOnline()) {
-            throw new DatosInvalidosException("barberia", "Esta barbería no acepta reservas online por ahora");
+        if (!negocio.isReservasOnline()) {
+            throw new DatosInvalidosException("negocio", "Esta barbería no acepta reservas online por ahora");
         }
-        if (!barbero.isActivo() || !barbero.getSucursales().contains(sucursal) || !barbero.getServicios().contains(servicio)) {
-            throw new DatosInvalidosException("barbero", "No atiende ese servicio en esa sucursal");
+        if (!profesional.isActivo() || !profesional.getSucursales().contains(sucursal) || !profesional.getServicios().contains(servicio)) {
+            throw new DatosInvalidosException("profesional", "No atiende ese servicio en esa sucursal");
         }
 
         // 1) Chequeo rápido dentro de la transacción: mismo criterio que la grilla pública.
-        if (!disponibilidadService.estaDisponible(sucursal.getId(), servicio.getId(), barbero.getId(),
+        if (!disponibilidadService.estaDisponible(sucursal.getId(), servicio.getId(), profesional.getId(),
                 request.fecha(), request.hora())) {
             throw new ConflictoException("horario", MENSAJE_HORARIO_OCUPADO);
         }
 
-        ZoneId zonaHoraria = ZoneId.of(barberia.getZonaHoraria());
+        ZoneId zonaHoraria = ZoneId.of(negocio.getZonaHoraria());
         Instant inicio = ZonedDateTime.of(request.fecha(), request.hora(), zonaHoraria).toInstant();
         Instant fin = inicio.plus(Duration.ofMinutes(servicio.getDuracionMin()));
 
-        Cliente cliente = obtenerOCrearCliente(barberia, request.clienteNombre(), request.clienteTelefono());
+        Cliente cliente = obtenerOCrearCliente(negocio, request.clienteNombre(), request.clienteTelefono());
 
         Atencion atencion = new Atencion();
-        atencion.setBarberia(barberia);
+        atencion.setNegocio(negocio);
         atencion.setSucursal(sucursal);
-        atencion.setBarbero(barbero);
+        atencion.setProfesional(profesional);
         atencion.setCliente(cliente);
         atencion.setServicio(servicio);
         atencion.setInicio(inicio);
@@ -147,10 +147,10 @@ public class AtencionService {
 
         // Aislamiento entre barberías: si no es de la barbería del usuario logueado, se responde
         // igual que si no existiera (no se revela que el id pertenece a otra barbería).
-        if (!atencion.getBarberia().getId().equals(usuarioActual.barberiaId())) {
+        if (!atencion.getNegocio().getId().equals(usuarioActual.negocioId())) {
             throw new RecursoNoEncontradoException("Turno no encontrado");
         }
-        usuarioActual.verificarAccesoABarbero(atencion.getBarbero().getId());
+        usuarioActual.verificarAccesoAProfesional(atencion.getProfesional().getId());
 
         if (atencion.getEstado() != EstadoAtencion.RESERVADA) {
             throw new ConflictoException("estado", "Este turno ya no está reservado");
@@ -181,11 +181,11 @@ public class AtencionService {
         return TurnoAgendaResponse.de(atenciones.save(atencion));
     }
 
-    private Cliente obtenerOCrearCliente(Barberia barberia, String nombre, String telefono) {
-        Cliente cliente = clientes.findByBarberiaIdAndTelefono(barberia.getId(), telefono)
+    private Cliente obtenerOCrearCliente(Negocio negocio, String nombre, String telefono) {
+        Cliente cliente = clientes.findByNegocioIdAndTelefono(negocio.getId(), telefono)
                 .orElseGet(() -> {
                     Cliente nuevo = new Cliente();
-                    nuevo.setBarberia(barberia);
+                    nuevo.setNegocio(negocio);
                     nuevo.setTelefono(telefono);
                     return nuevo;
                 });
@@ -193,12 +193,12 @@ public class AtencionService {
         return clientes.save(cliente);
     }
 
-    private void validarPertenecenALaMismaBarberia(Barberia barberia, Servicio servicio, Barbero barbero) {
-        if (!servicio.getBarberia().getId().equals(barberia.getId())) {
+    private void validarPertenecenAlMismoNegocio(Negocio negocio, Servicio servicio, Profesional profesional) {
+        if (!servicio.getNegocio().getId().equals(negocio.getId())) {
             throw new DatosInvalidosException("servicioId", "No pertenece a la barbería de la sucursal");
         }
-        if (!barbero.getBarberia().getId().equals(barberia.getId())) {
-            throw new DatosInvalidosException("barberoId", "No pertenece a la barbería de la sucursal");
+        if (!profesional.getNegocio().getId().equals(negocio.getId())) {
+            throw new DatosInvalidosException("profesionalId", "No pertenece a la barbería de la sucursal");
         }
     }
 }

@@ -2,8 +2,8 @@ package com.innovax.barberia.caja;
 
 import com.innovax.barberia.atencion.EstadoAtencion;
 import com.innovax.barberia.auth.UsuarioActual;
-import com.innovax.barberia.barberia.Barberia;
-import com.innovax.barberia.barberia.BarberiaRepository;
+import com.innovax.barberia.negocio.Negocio;
+import com.innovax.barberia.negocio.NegocioRepository;
 import com.innovax.barberia.caja.dto.CajaResponse;
 import com.innovax.barberia.common.DatosInvalidosException;
 import com.innovax.barberia.common.RecursoNoEncontradoException;
@@ -33,7 +33,7 @@ public class CajaService {
     private static final DateTimeFormatter HORA_CSV = DateTimeFormatter.ofPattern("HH:mm");
 
     private final UsuarioActual usuarioActual;
-    private final BarberiaRepository barberias;
+    private final NegocioRepository negocios;
     private final SucursalRepository sucursales;
     private final CajaRepository caja;
 
@@ -48,8 +48,8 @@ public class CajaService {
         long total = filas.stream().mapToLong(FilaCaja::precioFinal).sum();
         int cantidad = filas.size();
 
-        List<CajaResponse.Grupo> porBarbero = agrupar(filas, FilaCaja::barberoId,
-                f -> f.barberoNombre() + " " + f.barberoApellido());
+        List<CajaResponse.Grupo> porProfesional = agrupar(filas, FilaCaja::profesionalId,
+                f -> f.profesionalNombre() + " " + f.profesionalApellido());
         List<CajaResponse.Grupo> porServicio = agrupar(filas, FilaCaja::servicioId, FilaCaja::servicioNombre);
 
         Map<String, long[]> metodos = new LinkedHashMap<>();
@@ -79,7 +79,7 @@ public class CajaService {
                 .toList();
 
         return new CajaResponse(desde, hasta, total, cantidad, cantidad == 0 ? 0 : total / cantidad,
-                porBarbero, porServicio, porMetodo, porDia);
+                porProfesional, porServicio, porMetodo, porDia);
     }
 
     /** Detalle de cada corte del período, para abrir en Excel (separador ";" y montos con coma). */
@@ -92,7 +92,7 @@ public class CajaService {
             var inicio = f.inicio().atZone(p.zona());
             csv.append(FECHA_CSV.format(inicio)).append(';')
                     .append(HORA_CSV.format(inicio)).append(';')
-                    .append(celda(f.barberoNombre() + " " + f.barberoApellido())).append(';')
+                    .append(celda(f.profesionalNombre() + " " + f.profesionalApellido())).append(';')
                     .append(celda(f.servicioNombre())).append(';')
                     .append(celda(f.clienteNombre() == null ? "Sin cliente" : f.clienteNombre())).append(';')
                     .append(f.metodoPago() == null ? "" : f.metodoPago().name()).append(';')
@@ -110,21 +110,21 @@ public class CajaService {
         }
 
         // Aislamiento: la barbería sale siempre del token
-        UUID barberiaId = usuarioActual.barberiaId();
-        Barberia barberia = barberias.findById(barberiaId)
+        UUID negocioId = usuarioActual.negocioId();
+        Negocio negocio = negocios.findById(negocioId)
                 .orElseThrow(() -> new IllegalStateException("La barbería del token no existe"));
         if (sucursalId != null) {
             sucursales.findById(sucursalId)
-                    .filter(s -> s.getBarberia().getId().equals(barberiaId))
+                    .filter(s -> s.getNegocio().getId().equals(negocioId))
                     .orElseThrow(() -> new RecursoNoEncontradoException("Sucursal no encontrada"));
         }
 
         // Los días son de la barbería: "hoy" en Córdoba, no en UTC
-        ZoneId zona = ZoneId.of(barberia.getZonaHoraria());
+        ZoneId zona = ZoneId.of(negocio.getZonaHoraria());
         var inicio = desde.atStartOfDay(zona).toInstant();
         var fin = hasta.plusDays(1).atStartOfDay(zona).toInstant();
 
-        return new Periodo(zona, caja.buscar(barberiaId, EstadoAtencion.COMPLETADA, inicio, fin, sucursalId));
+        return new Periodo(zona, caja.buscar(negocioId, EstadoAtencion.COMPLETADA, inicio, fin, sucursalId));
     }
 
     private static List<CajaResponse.Grupo> agrupar(

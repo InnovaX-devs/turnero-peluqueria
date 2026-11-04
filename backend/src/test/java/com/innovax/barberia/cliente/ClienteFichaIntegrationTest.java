@@ -5,9 +5,9 @@ import com.innovax.barberia.atencion.AtencionRepository;
 import com.innovax.barberia.atencion.EstadoAtencion;
 import com.innovax.barberia.atencion.MetodoPago;
 import com.innovax.barberia.atencion.OrigenAtencion;
-import com.innovax.barberia.barberia.Barberia;
-import com.innovax.barberia.barberia.BarberiaRepository;
-import com.innovax.barberia.barbero.BarberoRepository;
+import com.innovax.barberia.negocio.Negocio;
+import com.innovax.barberia.negocio.NegocioRepository;
+import com.innovax.barberia.profesional.ProfesionalRepository;
 import com.innovax.barberia.servicio.ServicioRepository;
 import com.innovax.barberia.sucursal.SucursalRepository;
 import com.jayway.jsonpath.JsonPath;
@@ -44,25 +44,25 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest
 class ClienteFichaIntegrationTest {
 
-    private static final String BARBERIA = "aaaaaaaa-0000-0000-0000-000000000001";
+    private static final String NEGOCIO = "aaaaaaaa-0000-0000-0000-000000000001";
     private static final String SUCURSAL = "bbbbbbbb-0000-0000-0000-000000000001";
-    private static final String BARBERO_LUCAS = "cccccccc-0000-0000-0000-000000000001";
-    private static final String BARBERO_ANDRES = "cccccccc-0000-0000-0000-000000000002";
+    private static final String PROFESIONAL_LUCAS = "cccccccc-0000-0000-0000-000000000001";
+    private static final String PROFESIONAL_ANDRES = "cccccccc-0000-0000-0000-000000000002";
     private static final String SERVICIO_CORTE = "dddddddd-0000-0000-0000-000000000001";
     private static final String SERVICIO_BARBA = "dddddddd-0000-0000-0000-000000000002";
 
     @Autowired private WebApplicationContext context;
     @Autowired private ClienteRepository clientes;
     @Autowired private AtencionRepository atenciones;
-    @Autowired private BarberiaRepository barberias;
+    @Autowired private NegocioRepository negocios;
     @Autowired private SucursalRepository sucursales;
     @Autowired private ServicioRepository servicios;
-    @Autowired private BarberoRepository barberos;
+    @Autowired private ProfesionalRepository profesionales;
 
     private MockMvc mvc;
     private final List<UUID> atencionesCreadas = new ArrayList<>();
     private final List<UUID> clientesCreados = new ArrayList<>();
-    private final List<UUID> barberiasCreadas = new ArrayList<>();
+    private final List<UUID> negociosCreados = new ArrayList<>();
 
     @BeforeEach
     void setUp() {
@@ -73,12 +73,12 @@ class ClienteFichaIntegrationTest {
     void tearDown() {
         atenciones.deleteAllById(atencionesCreadas);
         clientes.deleteAllById(clientesCreados);
-        barberias.deleteAllById(barberiasCreadas);
+        negocios.deleteAllById(negociosCreados);
     }
 
-    private Cliente cliente(Barberia barberia, String nombre, String telefono, String notas) {
+    private Cliente cliente(Negocio negocio, String nombre, String telefono, String notas) {
         Cliente c = new Cliente();
-        c.setBarberia(barberia);
+        c.setNegocio(negocio);
         c.setNombre(nombre);
         c.setTelefono(telefono);
         c.setNotas(notas);
@@ -88,15 +88,15 @@ class ClienteFichaIntegrationTest {
     }
 
     private Cliente clienteJade(String nombre, String telefono, String notas) {
-        return cliente(barberias.getReferenceById(UUID.fromString(BARBERIA)), nombre, telefono, notas);
+        return cliente(negocios.getReferenceById(UUID.fromString(NEGOCIO)), nombre, telefono, notas);
     }
 
-    private Atencion atencion(Cliente cliente, String barberoId, String servicioId, Instant inicio,
+    private Atencion atencion(Cliente cliente, String profesionalId, String servicioId, Instant inicio,
                               EstadoAtencion estado, long precio) {
         Atencion a = new Atencion();
-        a.setBarberia(barberias.getReferenceById(UUID.fromString(BARBERIA)));
+        a.setNegocio(negocios.getReferenceById(UUID.fromString(NEGOCIO)));
         a.setSucursal(sucursales.getReferenceById(UUID.fromString(SUCURSAL)));
-        a.setBarbero(barberos.getReferenceById(UUID.fromString(barberoId)));
+        a.setProfesional(profesionales.getReferenceById(UUID.fromString(profesionalId)));
         a.setServicio(servicios.getReferenceById(UUID.fromString(servicioId)));
         a.setCliente(cliente);
         a.setInicio(inicio);
@@ -173,12 +173,12 @@ class ClienteFichaIntegrationTest {
     }
 
     @Test
-    void listadoNoMuestraClientesDeOtraBarberia() throws Exception {
-        Barberia otra = new Barberia();
+    void listadoNoMuestraClientesDeOtroNegocio() throws Exception {
+        Negocio otra = new Negocio();
         otra.setNombre("Otra barberia");
         otra.setSlug("otra-listado-" + UUID.randomUUID().toString().substring(0, 8));
-        otra = barberias.saveAndFlush(otra);
-        barberiasCreadas.add(otra.getId());
+        otra = negocios.saveAndFlush(otra);
+        negociosCreados.add(otra.getId());
         cliente(otra, "Cliente Ajeno Listado", "+5493584900005", null);
 
         mvc.perform(get("/api/clientes/listado").param("q", "Ajeno Listado").header("Authorization", admin()))
@@ -219,10 +219,10 @@ class ClienteFichaIntegrationTest {
         Cliente reciente = clienteJade("Orden Visita Reciente", "+5493584900112", null);
         clienteJade("Orden Visita Nunca", "+5493584900113", null);
         Instant base = LocalDate.of(2020, 1, 10).atTime(15, 0).toInstant(ZoneOffset.UTC);
-        atencion(viejo, BARBERO_LUCAS, SERVICIO_CORTE, base, EstadoAtencion.COMPLETADA, 1_500_000);
+        atencion(viejo, PROFESIONAL_LUCAS, SERVICIO_CORTE, base, EstadoAtencion.COMPLETADA, 1_500_000);
         // Faltó después: no cuenta como visita
-        atencion(viejo, BARBERO_LUCAS, SERVICIO_CORTE, base.plus(700, ChronoUnit.DAYS), EstadoAtencion.AUSENTE, 1_500_000);
-        atencion(reciente, BARBERO_LUCAS, SERVICIO_CORTE, base.plus(365, ChronoUnit.DAYS), EstadoAtencion.COMPLETADA, 1_500_000);
+        atencion(viejo, PROFESIONAL_LUCAS, SERVICIO_CORTE, base.plus(700, ChronoUnit.DAYS), EstadoAtencion.AUSENTE, 1_500_000);
+        atencion(reciente, PROFESIONAL_LUCAS, SERVICIO_CORTE, base.plus(365, ChronoUnit.DAYS), EstadoAtencion.COMPLETADA, 1_500_000);
 
         mvc.perform(get("/api/clientes/listado").param("q", "Orden Visita").param("orden", "ultimaVisita")
                         .header("Authorization", admin()))
@@ -252,10 +252,10 @@ class ClienteFichaIntegrationTest {
     void fichaMuestraDatosHistorialYAusencias() throws Exception {
         Cliente c = clienteJade("Cliente Ficha", "+5493584900006", "Degradé en 2, arriba tijera");
         Instant base = LocalDate.of(2020, 3, 10).atTime(15, 0).toInstant(ZoneOffset.UTC);
-        atencion(c, BARBERO_LUCAS, SERVICIO_CORTE, base, EstadoAtencion.COMPLETADA, 1_500_000);
-        atencion(c, BARBERO_ANDRES, SERVICIO_BARBA, base.plus(30, ChronoUnit.DAYS), EstadoAtencion.COMPLETADA, 500_000);
-        atencion(c, BARBERO_LUCAS, SERVICIO_CORTE, base.plus(60, ChronoUnit.DAYS), EstadoAtencion.AUSENTE, 1_500_000);
-        atencion(c, BARBERO_LUCAS, SERVICIO_CORTE, base.plus(90, ChronoUnit.DAYS), EstadoAtencion.AUSENTE, 1_500_000);
+        atencion(c, PROFESIONAL_LUCAS, SERVICIO_CORTE, base, EstadoAtencion.COMPLETADA, 1_500_000);
+        atencion(c, PROFESIONAL_ANDRES, SERVICIO_BARBA, base.plus(30, ChronoUnit.DAYS), EstadoAtencion.COMPLETADA, 500_000);
+        atencion(c, PROFESIONAL_LUCAS, SERVICIO_CORTE, base.plus(60, ChronoUnit.DAYS), EstadoAtencion.AUSENTE, 1_500_000);
+        atencion(c, PROFESIONAL_LUCAS, SERVICIO_CORTE, base.plus(90, ChronoUnit.DAYS), EstadoAtencion.AUSENTE, 1_500_000);
 
         mvc.perform(get("/api/clientes/{id}", c.getId()).header("Authorization", admin()))
                 .andExpect(status().isOk())
@@ -267,10 +267,10 @@ class ClienteFichaIntegrationTest {
                 // De la más reciente a la más antigua
                 .andExpect(jsonPath("$.historial[0].estado").value("AUSENTE"))
                 .andExpect(jsonPath("$.historial[3].estado").value("COMPLETADA"))
-                .andExpect(jsonPath("$.historial[3].barberoNombre").value("Lucas Sanchez"))
+                .andExpect(jsonPath("$.historial[3].profesionalNombre").value("Lucas Sanchez"))
                 .andExpect(jsonPath("$.historial[3].servicioNombre").value("Corte"))
                 .andExpect(jsonPath("$.historial[3].precioFinal").value(1_500_000))
-                .andExpect(jsonPath("$.historial[2].barberoNombre").value("Andres Biassi"))
+                .andExpect(jsonPath("$.historial[2].profesionalNombre").value("Andres Biassi"))
                 .andExpect(jsonPath("$.historial[2].servicioNombre").value("Barba"))
                 .andExpect(jsonPath("$.historial[2].precioFinal").value(500_000));
     }
@@ -287,12 +287,12 @@ class ClienteFichaIntegrationTest {
     }
 
     @Test
-    void fichaDeClienteInexistenteODeOtraBarberiaDevuelve404() throws Exception {
-        Barberia otra = new Barberia();
+    void fichaDeClienteInexistenteODeOtroNegocioDevuelve404() throws Exception {
+        Negocio otra = new Negocio();
         otra.setNombre("Otra barberia");
         otra.setSlug("otra-ficha-" + UUID.randomUUID().toString().substring(0, 8));
-        otra = barberias.saveAndFlush(otra);
-        barberiasCreadas.add(otra.getId());
+        otra = negocios.saveAndFlush(otra);
+        negociosCreados.add(otra.getId());
         Cliente ajeno = cliente(otra, "Cliente Ajeno Ficha", "+5493584900008", "secreto");
         String token = admin();
 
@@ -347,7 +347,7 @@ class ClienteFichaIntegrationTest {
     }
 
     @Test
-    void unBarberoTambienPuedeVerLaFichaYEditarLaNota() throws Exception {
+    void unProfesionalTambienPuedeVerLaFichaYEditarLaNota() throws Exception {
         Cliente c = clienteJade("Cliente Barbero", "+5493584900011", null);
         String token = login("lucas@jade.com", "barbero123");
 
@@ -366,7 +366,7 @@ class ClienteFichaIntegrationTest {
     void elDetalleDelTurnoTraeLaNotaDelCliente() throws Exception {
         Cliente c = clienteJade("Cliente Agenda", "+5493584900012", "Degradé en 2, arriba tijera");
         Instant inicio = Instant.now().plus(45, ChronoUnit.DAYS).truncatedTo(ChronoUnit.HOURS);
-        Atencion turno = atencion(c, BARBERO_ANDRES, SERVICIO_CORTE, inicio, EstadoAtencion.RESERVADA, 1_500_000);
+        Atencion turno = atencion(c, PROFESIONAL_ANDRES, SERVICIO_CORTE, inicio, EstadoAtencion.RESERVADA, 1_500_000);
         LocalDate dia = inicio.atZone(ZoneOffset.UTC).toLocalDate();
 
         mvc.perform(get("/api/agenda")

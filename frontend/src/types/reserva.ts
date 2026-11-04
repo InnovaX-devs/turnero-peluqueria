@@ -6,7 +6,7 @@ export interface SucursalPublica {
   telefono: string | null
 }
 
-export interface BarberiaPublica {
+export interface NegocioPublico {
   nombre: string
   slug: string
   logoUrl: string | null
@@ -23,7 +23,7 @@ export interface ServicioPublico {
   precio: number
 }
 
-export interface BarberoPublico {
+export interface ProfesionalPublico {
   id: string
   nombre: string
   apellido: string
@@ -36,7 +36,7 @@ export interface SlotDisponible {
   /** "HH:mm" o "HH:mm:ss" según cómo lo serialice el backend */
   hora: string
   /** Barberos libres en ese horario (con "cualquiera" puede haber varios) */
-  barberos: string[]
+  profesionales: string[]
 }
 
 export interface DisponibilidadDia {
@@ -47,7 +47,7 @@ export interface DisponibilidadDia {
 export interface CrearReservaRequest {
   sucursalId: string
   servicioId: string
-  barberoId: string
+  profesionalId: string
   fecha: string
   hora: string
   clienteNombre: string
@@ -61,8 +61,8 @@ export interface ReservaCreada {
   inicio: string
   fin: string
   estado: string
-  barberoId: string
-  barberoNombre: string
+  profesionalId: string
+  profesionalNombre: string
   servicioId: string
   servicioNombre: string
   /** En centavos */

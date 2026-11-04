@@ -36,7 +36,7 @@ export const ITEMS_NEGOCIO: ItemNav[] = [
 
 /** Configuración del negocio: desplegable "Gestión" en desktop. */
 export const ITEMS_GESTION: ItemNav[] = [
-  { to: '/panel/barberos', etiqueta: 'Barberos', icono: Scissors, soloAdmin: true },
+  { to: '/panel/profesionales', etiqueta: 'Barberos', icono: Scissors, soloAdmin: true },
   { to: '/panel/servicios', etiqueta: 'Servicios', icono: Tag, soloAdmin: true },
   { to: '/panel/configuracion', etiqueta: 'Configuración', icono: Settings, soloAdmin: true },
 ]

@@ -20,7 +20,7 @@ public final class CalculadoraDisponibilidad {
     private CalculadoraDisponibilidad() {
     }
 
-    public static List<LocalTime> slotsLibresDeUnBarbero(
+    public static List<LocalTime> slotsLibresDeUnProfesional(
             List<HorarioLaboral> horariosDelDia,
             List<Intervalo> ocupados,
             int duracionServicioMin,
@@ -51,10 +51,10 @@ public final class CalculadoraDisponibilidad {
         return libres.stream().distinct().sorted().toList();
     }
 
-    public static List<SlotDisponibleResponse> combinarPorBarbero(Map<UUID, List<LocalTime>> slotsPorBarbero) {
+    public static List<SlotDisponibleResponse> combinarPorProfesional(Map<UUID, List<LocalTime>> slotsPorProfesional) {
         Map<LocalTime, List<UUID>> agrupados = new TreeMap<>();
-        slotsPorBarbero.forEach((barberoId, horas) ->
-                horas.forEach(hora -> agrupados.computeIfAbsent(hora, h -> new ArrayList<>()).add(barberoId)));
+        slotsPorProfesional.forEach((profesionalId, horas) ->
+                horas.forEach(hora -> agrupados.computeIfAbsent(hora, h -> new ArrayList<>()).add(profesionalId)));
 
         return agrupados.entrySet().stream()
                 .map(e -> new SlotDisponibleResponse(e.getKey(), List.copyOf(e.getValue())))
