@@ -4,6 +4,7 @@ import com.innovax.barberia.agenda.dto.TurnoAgendaResponse;
 import com.innovax.barberia.atencion.dto.AtencionResponse;
 import com.innovax.barberia.atencion.dto.CambiarEstadoTurnoRequest;
 import com.innovax.barberia.atencion.dto.CrearReservaRequest;
+import com.innovax.barberia.atencion.dto.MarcarLlegadaRequest;
 import com.innovax.barberia.auth.Usuario;
 import com.innovax.barberia.auth.UsuarioActual;
 import com.innovax.barberia.auth.UsuarioRepository;
@@ -178,6 +179,34 @@ public class AtencionService {
         atencion.setEstadoCambiadoPor(usuario);
         atencion.setEstadoCambiadoEn(Instant.now());
 
+        return TurnoAgendaResponse.de(atenciones.save(atencion));
+    }
+
+    /**
+     * Sala de espera (issue #71): marca que el cliente llegó al local, o lo desmarca si se tocó por error.
+     * Solo para turnos RESERVADA; no cambia el estado ni el horario, así que no afecta disponibilidad,
+     * recordatorios ni la restricción de turnos superpuestos. Mismos permisos que cambiar el estado.
+     */
+    @Transactional
+    public TurnoAgendaResponse marcarLlegada(UUID turnoId, MarcarLlegadaRequest request) {
+        Atencion atencion = atenciones.findById(turnoId)
+                .orElseThrow(() -> new RecursoNoEncontradoException("Turno no encontrado"));
+        if (!atencion.getNegocio().getId().equals(usuarioActual.negocioId())) {
+            throw new RecursoNoEncontradoException("Turno no encontrado");
+        }
+        usuarioActual.verificarAccesoAProfesional(atencion.getProfesional().getId());
+
+        if (atencion.getEstado() != EstadoAtencion.RESERVADA) {
+            throw new ConflictoException("estado", "Este turno ya no está reservado");
+        }
+
+        if (request.llego()) {
+            if (atencion.getLlegadaEn() == null) {
+                atencion.setLlegadaEn(Instant.now()); // si ya estaba marcado se respeta la hora original
+            }
+        } else {
+            atencion.setLlegadaEn(null);
+        }
         return TurnoAgendaResponse.de(atenciones.save(atencion));
     }
 

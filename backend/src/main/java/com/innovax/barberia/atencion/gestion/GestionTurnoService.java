@@ -91,6 +91,7 @@ public class GestionTurnoService {
         Instant inicio = ZonedDateTime.of(request.fecha(), request.hora(), zona).toInstant();
         atencion.setInicio(inicio);
         atencion.setFin(inicio.plus(Duration.ofMinutes(atencion.getServicio().getDuracionMin())));
+        atencion.setLlegadaEn(null); // si lo había marcado en sala para el horario anterior, ya no vale
         atencion.setEstado(EstadoAtencion.RESERVADA);
         try {
             // Si otra reserva ganó ese horario justo en el medio, la EXCLUDE constraint lo rechaza acá

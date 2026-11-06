@@ -8,6 +8,7 @@ import type { Bloqueo, Turno } from '../../types/agenda'
 import { useAuth } from '../auth/useAuth'
 import { BloqueoForm } from './BloqueoForm'
 import { ResumenDia } from './ResumenDia'
+import { SalaDeEspera } from './SalaDeEspera'
 import { TurnoDetalle } from './TurnoDetalle'
 import {
   ETIQUETAS_ESTADO,
@@ -16,6 +17,7 @@ import {
   agruparPorDia,
   combinarItems,
   diasDelRango,
+  estaEnSala,
   formatearFechaCorta,
   formatearFechaLarga,
   formatearHora,
@@ -40,10 +42,14 @@ export function AgendaPage() {
  const [formBloqueo, setFormBloqueo] = useState<{ bloqueo: Bloqueo | null } | null>(null)
   const { desde, hasta } = rangoDeVista(vista, fecha)
   const filtroProfesional = veTodo ? (profesionalId ?? undefined) : undefined
+  const incluyeHoy = desde <= hoyISO() && hoyISO() <= hasta
 
   const { data, isPending, error, refetch } = useQuery({
     queryKey: ['agenda', desde, hasta, filtroProfesional],
     queryFn: () => obtenerAgenda(desde, hasta, filtroProfesional),
+    // Viendo hoy, se refresca sola cada minuto: así la sala de espera y los estados se ven al día
+    // aunque otra persona (recepción, otro barbero) marque algo desde su compu.
+    refetchInterval: incluyeHoy ? 60_000 : false,
   })
 
   const dias = useMemo(() => diasDelRango(desde, hasta), [desde, hasta])
@@ -61,6 +67,10 @@ export function AgendaPage() {
       <h1 className="agenda-titulo">Agenda</h1>
 
       {vista === 'dia' && data && <ResumenDia turnos={data.turnos} fecha={fecha} esAdmin={esAdmin} />}
+
+      {vista === 'dia' && fecha === hoyISO() && data && (
+        <SalaDeEspera turnos={data.turnos} mostrarProfesional={mostrarProfesional} onElegir={setSeleccionado} />
+      )}
 
       <header className="agenda-controles">
         <div className="agenda-navegacion">
@@ -190,7 +200,11 @@ function TarjetaTurno({ turno, mostrarProfesional }: { turno: Turno; mostrarProf
         {mostrarProfesional && <span className="agenda-item-profesional">{turno.profesionalNombre}</span>}
       </div>
       <div className="agenda-item-badges">
-        <span className={`agenda-badge estado-${turno.estado.toLowerCase()}`}>{ETIQUETAS_ESTADO[turno.estado]}</span>
+        {estaEnSala(turno) ? (
+          <span className="agenda-badge en-sala">En sala</span>
+        ) : (
+          <span className={`agenda-badge estado-${turno.estado.toLowerCase()}`}>{ETIQUETAS_ESTADO[turno.estado]}</span>
+        )}
         <span className={`agenda-badge pago-${turno.estadoPago.toLowerCase()}`}>{ETIQUETAS_PAGO[turno.estadoPago]}</span>
       </div>
     </>

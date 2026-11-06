@@ -6,6 +6,12 @@ export async function obtenerAgenda(desde: string, hasta: string, profesionalId?
   return data
 }
 
+/** Sala de espera: true cuando el cliente llega, false para desmarcarlo. */
+export async function marcarLlegadaTurno(id: string, llego: boolean): Promise<Turno> {
+  const { data } = await api.patch<Turno>(`/api/agenda/turnos/${id}/llegada`, { llego })
+  return data
+}
+
 export async function cambiarEstadoTurno(id: string, datos: CambiarEstadoTurno): Promise<Turno> {
   const { data } = await api.patch<Turno>(`/api/agenda/turnos/${id}/estado`, datos)
   return data

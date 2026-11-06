@@ -3,6 +3,7 @@ package com.innovax.barberia.agenda;
 import com.innovax.barberia.agenda.dto.TurnoAgendaResponse;
 import com.innovax.barberia.atencion.AtencionService;
 import com.innovax.barberia.atencion.dto.CambiarEstadoTurnoRequest;
+import com.innovax.barberia.atencion.dto.MarcarLlegadaRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -28,5 +29,11 @@ public class AgendaTurnoController {
     @PatchMapping("/{id}/estado")
     public TurnoAgendaResponse cambiarEstado(@PathVariable UUID id, @Valid @RequestBody CambiarEstadoTurnoRequest request) {
         return atencionService.cambiarEstado(id, request);
+    }
+
+    /** Sala de espera (issue #71): {"llego": true} cuando el cliente llega, false para desmarcarlo. */
+    @PatchMapping("/{id}/llegada")
+    public TurnoAgendaResponse marcarLlegada(@PathVariable UUID id, @Valid @RequestBody MarcarLlegadaRequest request) {
+        return atencionService.marcarLlegada(id, request);
     }
 }

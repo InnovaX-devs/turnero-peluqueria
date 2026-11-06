@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
-import { cambiarEstadoTurno } from '../../api/agenda'
+import { cambiarEstadoTurno, marcarLlegadaTurno } from '../../api/agenda'
 import { mensajeDeError } from '../../lib/errores'
 import { Selector } from '../../components/Selector'
 import type { CambiarEstadoTurno, MetodoPago, Turno } from '../../types/agenda'
@@ -50,6 +50,15 @@ export function TurnoDetalle({ turno, onCerrar }: { turno: Turno; onCerrar: () =
       setTurnoActual(actualizado)
       setAccion(null)
       setErrorValidacion(null)
+    },
+  })
+
+  // Sala de espera (issue #71): marcar que el cliente llegó, o desmarcarlo si se tocó por error.
+  const llegada = useMutation({
+    mutationFn: (llego: boolean) => marcarLlegadaTurno(turnoActual.id, llego),
+    onSuccess: (actualizado) => {
+      queryClient.invalidateQueries({ queryKey: ['agenda'] })
+      setTurnoActual(actualizado)
     },
   })
 
@@ -168,6 +177,43 @@ export function TurnoDetalle({ turno, onCerrar }: { turno: Turno; onCerrar: () =
             </div>
           )}
         </dl>
+
+        {puedeCambiarEstado && (
+          <div className="agenda-modal-llegada">
+            {turnoActual.llegadaEn ? (
+              <>
+                <p>
+                  <strong>En sala</strong> desde las {formatearHora(turnoActual.llegadaEn)}
+                </p>
+                <button
+                  type="button"
+                  className="boton-secundario"
+                  disabled={llegada.isPending}
+                  onClick={() => llegada.mutate(false)}
+                >
+                  Todavía no llegó
+                </button>
+              </>
+            ) : (
+              <>
+                <p>¿Ya llegó?</p>
+                <button
+                  type="button"
+                  className="boton-principal"
+                  disabled={llegada.isPending}
+                  onClick={() => llegada.mutate(true)}
+                >
+                  {llegada.isPending ? 'Guardando…' : 'Llegó'}
+                </button>
+              </>
+            )}
+            {llegada.isError && (
+              <p className="agenda-modal-error" role="alert">
+                {mensajeDeError(llegada.error)}
+              </p>
+            )}
+          </div>
+        )}
 
         {puedeCambiarEstado && (
           <div className="agenda-modal-estado">

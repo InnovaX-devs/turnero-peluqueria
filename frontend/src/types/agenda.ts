@@ -27,6 +27,8 @@ export interface Turno {
   /** Quién marcó el turno como completado/ausente/cancelado. Null = nunca se cambió. */
   estadoCambiadoPorEmail: string | null
   estadoCambiadoEn: string | null
+  /** Cuándo llegó el cliente (sala de espera). Null = todavía no llegó. */
+  llegadaEn: string | null
 }
 
 

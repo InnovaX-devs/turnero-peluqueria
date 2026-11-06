@@ -90,6 +90,9 @@ public class Atencion {
     /** Cuándo se hizo ese último cambio de estado. */
     private Instant estadoCambiadoEn;
 
+    /** Cuándo llegó el cliente al local (sala de espera, issue #71). Null = todavía no llegó. */
+    private Instant llegadaEn;
+
     @CreationTimestamp
     @Column(nullable = false, updatable = false)
     private Instant createdAt;
