@@ -22,6 +22,7 @@ import com.innovax.barberia.servicio.ServicioRepository;
 import com.innovax.barberia.sucursal.Sucursal;
 import com.innovax.barberia.sucursal.SucursalRepository;
 import com.innovax.barberia.notificacion.NotificacionService;
+import com.innovax.barberia.listaespera.ListaEsperaService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
@@ -63,6 +64,7 @@ public class AtencionService {
     private final UsuarioActual usuarioActual;
     private final UsuarioRepository usuarios;
     private final NotificacionService notificaciones;
+    private final ListaEsperaService listaEspera;
 
     @Transactional
     public AtencionResponse reservarOnline(CrearReservaRequest request) {
@@ -173,6 +175,9 @@ public class AtencionService {
         }
 
         atencion.setEstado(nuevoEstado);
+        if (nuevoEstado == EstadoAtencion.CANCELADA) {
+            listaEspera.avisarLugarLiberado(atencion, atencion.getInicio());
+        }
 
         Usuario usuario = usuarios.findById(usuarioActual.id())
                 .orElseThrow(() -> new IllegalStateException("El usuario del token no existe"));

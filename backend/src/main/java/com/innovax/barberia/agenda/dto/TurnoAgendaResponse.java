@@ -39,7 +39,9 @@ public record TurnoAgendaResponse(
         String estadoCambiadoPorEmail,
         Instant estadoCambiadoEn,
         /** Cuándo llegó el cliente (sala de espera). Null = todavía no llegó. */
-        Instant llegadaEn
+        Instant llegadaEn,
+        /** Cargado a propósito encima de otro turno o fuera de horario. */
+        boolean sobreturno
 ) {
 
     public static TurnoAgendaResponse de(Atencion a) {
@@ -63,6 +65,7 @@ public record TurnoAgendaResponse(
                 a.getNotas(),
                 a.getEstadoCambiadoPor() != null ? a.getEstadoCambiadoPor().getEmail() : null,
                 a.getEstadoCambiadoEn(),
-                a.getLlegadaEn());
+                a.getLlegadaEn(),
+                a.isSobreturno());
     }
 }

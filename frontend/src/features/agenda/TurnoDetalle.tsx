@@ -47,6 +47,8 @@ export function TurnoDetalle({ turno, onCerrar }: { turno: Turno; onCerrar: () =
     onSuccess: (actualizado) => {
       // La agenda ya cargada puede tener este turno con el estado viejo: se refresca en segundo plano.
       queryClient.invalidateQueries({ queryKey: ['agenda'] })
+      // Si se canceló, la lista de espera puede tener un aviso nuevo
+      queryClient.invalidateQueries({ queryKey: ['lista-espera'] })
       setTurnoActual(actualizado)
       setAccion(null)
       setErrorValidacion(null)
@@ -149,7 +151,10 @@ export function TurnoDetalle({ turno, onCerrar }: { turno: Turno; onCerrar: () =
           </div>
           <div>
             <dt>Estado</dt>
-            <dd>{ETIQUETAS_ESTADO[turnoActual.estado]}</dd>
+            <dd>
+              {ETIQUETAS_ESTADO[turnoActual.estado]}
+              {turnoActual.sobreturno && ' · Sobreturno'}
+            </dd>
           </div>
           <div>
             <dt>Pago</dt>

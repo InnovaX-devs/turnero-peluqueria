@@ -29,6 +29,26 @@ export interface Turno {
   estadoCambiadoEn: string | null
   /** Cuándo llegó el cliente (sala de espera). Null = todavía no llegó. */
   llegadaEn: string | null
+  /** Cargado a propósito encima de otro turno o fuera de horario (solo admin/recepción). */
+  sobreturno: boolean
+}
+
+/** Turno dado desde el panel. Fecha (YYYY-MM-DD) y hora (HH:mm) en la zona del negocio. */
+export interface NuevoTurno {
+  clienteId: string
+  servicioId: string
+  profesionalId: string
+  sucursalId: string | null
+  fecha: string
+  hora: string
+  notas: string | null
+  sobreturno: boolean
+}
+
+export interface HorariosLibres {
+  fecha: string
+  /** "HH:mm" o "HH:mm:ss" */
+  horas: string[]
 }
 
 

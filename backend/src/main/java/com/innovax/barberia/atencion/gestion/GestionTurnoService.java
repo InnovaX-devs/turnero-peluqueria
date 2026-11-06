@@ -9,6 +9,7 @@ import com.innovax.barberia.common.ConflictoException;
 import com.innovax.barberia.common.DatosInvalidosException;
 import com.innovax.barberia.common.RecursoNoEncontradoException;
 import com.innovax.barberia.disponibilidad.DisponibilidadService;
+import com.innovax.barberia.listaespera.ListaEsperaService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
@@ -34,6 +35,7 @@ public class GestionTurnoService {
     private final GestionTurnoRepository turnos;
     private final AtencionRepository atenciones;
     private final DisponibilidadService disponibilidadService;
+    private final ListaEsperaService listaEspera;
 
     @Transactional(readOnly = true)
     public TurnoPublicoResponse obtener(UUID token) {
@@ -50,6 +52,7 @@ public class GestionTurnoService {
         atencion.setEstadoCambiadoEn(ahora);
         atencion.setEstadoCambiadoPor(null); // lo canceló el cliente, no un usuario del panel
         atenciones.saveAndFlush(atencion);
+        listaEspera.avisarLugarLiberado(atencion, atencion.getInicio());
         return TurnoPublicoResponse.de(atencion, ahora);
     }
 
@@ -88,10 +91,14 @@ public class GestionTurnoService {
         }
 
         ZoneId zona = ZoneId.of(negocio.getZonaHoraria());
+        Instant inicioAnterior = atencion.getInicio();
         Instant inicio = ZonedDateTime.of(request.fecha(), request.hora(), zona).toInstant();
         atencion.setInicio(inicio);
         atencion.setFin(inicio.plus(Duration.ofMinutes(atencion.getServicio().getDuracionMin())));
         atencion.setLlegadaEn(null); // si lo había marcado en sala para el horario anterior, ya no vale
+        // El horario nuevo salió de la grilla normal: deja de ser sobreturno y vuelve a respetar la regla
+        // de turnos superpuestos (si no, quedaría "libre de la regla" en un horario cualquiera).
+        atencion.setSobreturno(false);
         atencion.setEstado(EstadoAtencion.RESERVADA);
         try {
             // Si otra reserva ganó ese horario justo en el medio, la EXCLUDE constraint lo rechaza acá
@@ -102,6 +109,7 @@ public class GestionTurnoService {
             }
             throw e;
         }
+        listaEspera.avisarLugarLiberado(atencion, inicioAnterior); // el horario viejo quedó libre
         return TurnoPublicoResponse.de(atencion, ahora);
     }
 

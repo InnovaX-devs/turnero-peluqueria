@@ -9,6 +9,8 @@ import { useAuth } from '../auth/useAuth'
 import { BloqueoForm } from './BloqueoForm'
 import { ResumenDia } from './ResumenDia'
 import { SalaDeEspera } from './SalaDeEspera'
+import { ListaEspera } from './ListaEspera'
+import { NuevoTurno } from './NuevoTurno'
 import { TurnoDetalle } from './TurnoDetalle'
 import {
   ETIQUETAS_ESTADO,
@@ -39,6 +41,7 @@ export function AgendaPage() {
   const [profesionalId, setProfesionalId] = useState<string | null>(null)
   const [seleccionado, setSeleccionado] = useState<Turno | null>(null)
   // null = cerrado; { bloqueo: null } = bloqueo nuevo; { bloqueo } = editar ese bloqueo
+  const [nuevoTurno, setNuevoTurno] = useState(false)
  const [formBloqueo, setFormBloqueo] = useState<{ bloqueo: Bloqueo | null } | null>(null)
   const { desde, hasta } = rangoDeVista(vista, fecha)
   const filtroProfesional = veTodo ? (profesionalId ?? undefined) : undefined
@@ -72,6 +75,8 @@ export function AgendaPage() {
         <SalaDeEspera turnos={data.turnos} mostrarProfesional={mostrarProfesional} onElegir={setSeleccionado} />
       )}
 
+      {vista === 'dia' && <ListaEspera fecha={fecha} />}
+
       <header className="agenda-controles">
         <div className="agenda-navegacion">
           <button type="button" className="boton-secundario" onClick={() => moverFecha(-1)} aria-label="Anterior">
@@ -97,6 +102,10 @@ export function AgendaPage() {
               Semana
             </button>
           </div>
+
+          <button type="button" className="boton-secundario" onClick={() => setNuevoTurno(true)}>
+            + Nuevo turno
+          </button>
 
           <button type="button" className="boton-secundario" onClick={() => setFormBloqueo({ bloqueo: null })}>
             + Bloquear horario
@@ -175,6 +184,14 @@ export function AgendaPage() {
 
       {seleccionado && <TurnoDetalle turno={seleccionado} onCerrar={() => setSeleccionado(null)} />}
 
+      {nuevoTurno && (
+        <NuevoTurno
+          fechaInicial={fecha}
+          profesionalInicialId={filtroProfesional ?? null}
+          onCerrar={() => setNuevoTurno(false)}
+        />
+      )}
+
       {formBloqueo && (
         <BloqueoForm
           bloqueo={formBloqueo.bloqueo}
@@ -200,6 +217,7 @@ function TarjetaTurno({ turno, mostrarProfesional }: { turno: Turno; mostrarProf
         {mostrarProfesional && <span className="agenda-item-profesional">{turno.profesionalNombre}</span>}
       </div>
       <div className="agenda-item-badges">
+        {turno.sobreturno && <span className="agenda-badge sobreturno">Sobreturno</span>}
         {estaEnSala(turno) ? (
           <span className="agenda-badge en-sala">En sala</span>
         ) : (
