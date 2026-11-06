@@ -88,11 +88,11 @@ public class NotificacionService {
 
     // ---------- Lo que usa el panel ----------
 
-    /** Mensajes en el estado dado. El admin ve los de toda la barbería; un barbero, solo los de sus turnos. */
+    /** Mensajes en el estado dado. Admin y recepción ven los de todo el negocio; un profesional, solo los de sus turnos. */
     @Transactional(readOnly = true)
     public List<NotificacionResponse> listar(EstadoNotificacion estado) {
         UUID profesionalId = null;
-        if (!usuarioActual.esAdmin()) {
+        if (!usuarioActual.veTodoElNegocio()) {
             profesionalId = usuarioActual.profesionalId()
                     .orElseThrow(() -> new AccessDeniedException("Tu usuario no está vinculado a un barbero"));
         }

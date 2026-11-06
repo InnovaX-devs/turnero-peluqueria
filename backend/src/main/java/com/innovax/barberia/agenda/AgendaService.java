@@ -29,8 +29,8 @@ import java.util.UUID;
  * Agenda del panel (turnos + bloqueos), para la vista día/semana.
  *
  * <p>REGLA DE PERMISOS: un usuario con rol PROFESIONAL ve siempre y solo su propia agenda, sin
- * importar qué {@code profesionalId} venga en el request (ver {@link UsuarioActual}). Un ADMIN puede
- * pedir un barbero puntual o dejar el filtro vacío para ver la agenda completa de la barbería.
+ * importar qué {@code profesionalId} venga en el request (ver {@link UsuarioActual}). ADMIN y
+ * RECEPCION pueden pedir un profesional puntual o dejar el filtro vacío para ver la agenda completa.
  */
 @Service
 @RequiredArgsConstructor

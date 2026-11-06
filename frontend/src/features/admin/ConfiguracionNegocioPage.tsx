@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query'
 import { obtenerNegocio } from '../../api/negocio'
 import { mensajeDeError } from '../../lib/errores'
 import { FormularioNegocio } from './FormularioNegocio'
+import { UsuariosRecepcion } from './UsuariosRecepcion'
 import './configuracion.css'
 
 /** Pantalla de configuración de la barbería (solo admin). */
@@ -27,6 +28,8 @@ export function ConfiguracionNegocioPage() {
       )}
 
       {data && <FormularioNegocio negocio={data} />}
+
+      <UsuariosRecepcion />
     </section>
   )
 }

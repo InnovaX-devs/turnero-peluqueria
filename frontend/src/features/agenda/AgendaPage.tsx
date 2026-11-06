@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { obtenerAgenda } from '../../api/agenda'
 import { mensajeDeError } from '../../lib/errores'
+import { veTodoElNegocio } from '../../lib/roles'
 import { Selector } from '../../components/Selector'
 import type { Bloqueo, Turno } from '../../types/agenda'
 import { useAuth } from '../auth/useAuth'
@@ -28,6 +29,8 @@ import './agenda.css'
 export function AgendaPage() {
   const { usuario } = useAuth()
   const esAdmin = usuario?.rol === 'ADMIN'
+  // Admin y recepción ven la agenda de todos y pueden filtrar; el barbero, solo la suya.
+  const veTodo = veTodoElNegocio(usuario?.rol)
 
   const [fecha, setFecha] = useState(() => hoyISO())
   const [vista, setVista] = useState<Vista>('dia')
@@ -36,7 +39,7 @@ export function AgendaPage() {
   // null = cerrado; { bloqueo: null } = bloqueo nuevo; { bloqueo } = editar ese bloqueo
  const [formBloqueo, setFormBloqueo] = useState<{ bloqueo: Bloqueo | null } | null>(null)
   const { desde, hasta } = rangoDeVista(vista, fecha)
-  const filtroProfesional = esAdmin ? (profesionalId ?? undefined) : undefined
+  const filtroProfesional = veTodo ? (profesionalId ?? undefined) : undefined
 
   const { data, isPending, error, refetch } = useQuery({
     queryKey: ['agenda', desde, hasta, filtroProfesional],
@@ -46,8 +49,8 @@ export function AgendaPage() {
   const dias = useMemo(() => diasDelRango(desde, hasta), [desde, hasta])
   const porDia = useMemo(() => agruparPorDia(data ? combinarItems(data) : [], dias), [data, dias])
 
-  // Si el admin ve varios barberos a la vez, hay que aclarar de quién es cada turno.
-  const mostrarProfesional = esAdmin && profesionalId === null
+  // Si se ven varios barberos a la vez, hay que aclarar de quién es cada turno.
+  const mostrarProfesional = veTodo && profesionalId === null
 
   function moverFecha(pasos: number) {
     setFecha((f) => sumarDias(f, vista === 'dia' ? pasos : pasos * 7))
@@ -89,7 +92,7 @@ export function AgendaPage() {
             + Bloquear horario
           </button>
 
-          {esAdmin && data && data.profesionales.length > 0 && (
+          {veTodo && data && data.profesionales.length > 0 && (
             <Selector
               variante="pill"
               alinear="derecha"

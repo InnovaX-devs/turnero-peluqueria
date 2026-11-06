@@ -4,6 +4,7 @@ import { LoginPage } from '../features/auth/LoginPage'
 import { RecuperarPage } from '../features/auth/RecuperarPage'
 import { RutaAdmin } from '../features/auth/RutaAdmin'
 import { RutaProtegida } from '../features/auth/RutaProtegida'
+import { RutaRoles } from '../features/auth/RutaRoles'
 import { ClienteFichaPage } from '../features/clientes/ClienteFichaPage'
 import { ClientesPage } from '../features/clientes/ClientesPage'
 import { CuentaPage } from '../features/cuenta/CuentaPage'
@@ -35,8 +36,10 @@ export function App() {
           <Route path="clientes" element={<ClientesPage />} />
           <Route path="clientes/:id" element={<ClienteFichaPage />} />
           <Route path="cuenta" element={<CuentaPage />} />
-          {/* Admin: toda la barbería. Barbero: solo lo suyo (lo filtra el backend). */}
-          <Route path="reportes" element={<ReportesPage />} />
+          {/* Admin: toda la barbería. Barbero: solo lo suyo (lo filtra el backend). Recepción no. */}
+          <Route element={<RutaRoles roles={['ADMIN', 'PROFESIONAL']} />}>
+            <Route path="reportes" element={<ReportesPage />} />
+          </Route>
 
           {/* Solo admin */}
           <Route element={<RutaAdmin />}>

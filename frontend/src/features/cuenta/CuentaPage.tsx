@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from 'react'
 import { cambiarPassword } from '../../api/auth'
 import { erroresDeCampos, mensajeDeError } from '../../lib/errores'
+import { etiquetaRol } from '../../lib/roles'
 import { useAuth } from '../auth/useAuth'
 import '../auth/auth.css'
 import './cuenta.css'
@@ -58,7 +59,7 @@ export function CuentaPage() {
         </div>
         <div>
           <dt>Rol</dt>
-          <dd>{usuario?.rol === 'ADMIN' ? 'Admin' : 'Barbero'}</dd>
+          <dd>{etiquetaRol(usuario?.rol)}</dd>
         </div>
       </dl>
 

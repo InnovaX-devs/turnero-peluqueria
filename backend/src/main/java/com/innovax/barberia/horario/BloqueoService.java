@@ -146,10 +146,10 @@ public class BloqueoService {
         return pedidos.stream().distinct().map(id -> resolverProfesional(negocio, id)).toList();
     }
 
-    /** Barbero logueado: siempre él mismo. Admin: el que elija (o él mismo si también corta). */
+    /** Profesional logueado: siempre él mismo. Admin o recepción: el que elija (o él mismo si también atiende). */
     private Profesional resolverProfesional(Negocio negocio, UUID profesionalPedido) {
         UUID profesionalId;
-        if (!usuarioActual.esAdmin()) {
+        if (!usuarioActual.veTodoElNegocio()) {
             profesionalId = usuarioActual.profesionalId()
                     .orElseThrow(() -> new AccessDeniedException("El usuario no está vinculado a un barbero"));
             if (profesionalPedido != null) {

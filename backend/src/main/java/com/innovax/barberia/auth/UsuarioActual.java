@@ -50,16 +50,26 @@ public class UsuarioActual {
         return valor != null ? valor : jwt().getClaimAsString(nombreAnterior);
     }
 
+    /** Solo el dueño: configuración, caja, servicios, profesionales, reportes de todo el negocio. */
     public boolean esAdmin() {
         return rol() == Rol.ADMIN;
     }
 
     /**
-     * Un admin puede operar sobre cualquier barbero; un barbero, solo sobre sí mismo.
-     * Ojo: igual hay que verificar que el barbero sea de {@link #negocioId()} al buscarlo en la base.
+     * Opera sobre los turnos de todos los profesionales del negocio (agenda, bloqueos, registrar
+     * atención, mensajes): el admin y recepción. Un profesional, solo sobre lo suyo.
+     */
+    public boolean veTodoElNegocio() {
+        Rol rol = rol();
+        return rol == Rol.ADMIN || rol == Rol.RECEPCION;
+    }
+
+    /**
+     * Admin y recepción pueden operar sobre cualquier profesional; un profesional, solo sobre sí mismo.
+     * Ojo: igual hay que verificar que el profesional sea de {@link #negocioId()} al buscarlo en la base.
      */
     public void verificarAccesoAProfesional(UUID profesionalId) {
-        if (esAdmin()) {
+        if (veTodoElNegocio()) {
             return;
         }
         boolean esElMismo = profesionalId().map(profesionalId::equals).orElse(false);
