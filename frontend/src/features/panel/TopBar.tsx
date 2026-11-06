@@ -2,6 +2,7 @@ import { useRef, useState, type ReactNode } from 'react'
 import { NavLink, useLocation } from 'react-router-dom'
 import { ChevronDown, CircleUser, LogOut, Plus, Scissors } from 'lucide-react'
 import { useCerrarAfuera } from '../../hooks/useCerrarAfuera'
+import { etiquetaRol } from '../../lib/roles'
 import type { Usuario } from '../../types/auth'
 import { ITEMS_GESTION, ITEMS_NEGOCIO, ITEMS_PRINCIPALES, ITEM_CUENTA, visibles, type ItemNav } from './navegacion'
 
@@ -117,17 +118,17 @@ export function TopBar({ usuario, onRegistrar, onCerrarSesion }: Props) {
       {/* Celu: solo la marca; la navegación va abajo */}
       <header className="nav-reset sticky top-0 z-10 flex h-14 items-center justify-between bg-barra px-4 md:hidden">
         <Logo usuario={usuario} />
-        <span className="etiqueta-mono text-barra-texto/60">{esAdmin ? 'Admin' : 'Barbero'}</span>
+        <span className="etiqueta-mono text-barra-texto/60">{etiquetaRol(usuario?.rol)}</span>
       </header>
 
       <header className="nav-reset sticky top-0 z-10 hidden h-[68px] items-center gap-6 bg-barra px-7 md:flex">
         <Logo usuario={usuario} />
 
         <nav aria-label="Secciones del panel" className="flex flex-1 items-center gap-1">
-          {visibles(ITEMS_PRINCIPALES, esAdmin).map((i) => (
+          {visibles(ITEMS_PRINCIPALES, usuario?.rol).map((i) => (
             <Enlace key={i.to} item={i} />
           ))}
-          {visibles(ITEMS_NEGOCIO, esAdmin).map((i) => (
+          {visibles(ITEMS_NEGOCIO, usuario?.rol).map((i) => (
             <Enlace key={i.to} item={i} />
           ))}
           {esAdmin && (
@@ -180,7 +181,7 @@ export function TopBar({ usuario, onRegistrar, onCerrarSesion }: Props) {
                   <p className="m-0 truncate text-[13px] font-semibold text-barra-texto">{usuario.negocioNombre}</p>
                 )}
                 <p className="m-0 truncate text-[13px] font-medium text-barra-texto">{usuario?.email}</p>
-                <p className="etiqueta-mono m-0 mt-0.5 text-barra-texto/60">{esAdmin ? 'Admin' : 'Barbero'}</p>
+                <p className="etiqueta-mono m-0 mt-0.5 text-barra-texto/60">{etiquetaRol(usuario?.rol)}</p>
               </div>
               <NavLink to={ITEM_CUENTA.to} role="menuitem" className={(s) => `${claseItemMenu(s)} mt-1`} onClick={cerrar}>
                 <CircleUser size={14} strokeWidth={1.75} aria-hidden="true" />

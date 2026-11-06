@@ -10,6 +10,7 @@ import {
   Wallet,
   type LucideIcon,
 } from 'lucide-react'
+import type { Rol } from '../../types/auth'
 
 export interface ItemNav {
   to: string
@@ -17,6 +18,8 @@ export interface ItemNav {
   icono: LucideIcon
   /** true = solo lo ve un admin */
   soloAdmin?: boolean
+  /** true = no lo ve recepción (ej. Reportes) */
+  sinRecepcion?: boolean
   /** true = NavLink exacto (para "/panel", que si no queda activo siempre) */
   exacto?: boolean
 }
@@ -28,10 +31,10 @@ export const ITEMS_PRINCIPALES: ItemNav[] = [
   { to: '/panel/mensajes', etiqueta: 'Mensajes', icono: MessageSquare },
 ]
 
-/** Caja es solo admin; Reportes lo ven todos (el barbero ve únicamente los suyos). En desktop van en la top bar; en el celu, dentro de "Más". */
+/** Caja es solo admin; Reportes lo ven admin y barbero (el barbero ve únicamente los suyos), no recepción. En desktop van en la top bar; en el celu, dentro de "Más". */
 export const ITEMS_NEGOCIO: ItemNav[] = [
   { to: '/panel/caja', etiqueta: 'Caja', icono: Wallet, soloAdmin: true },
-  { to: '/panel/reportes', etiqueta: 'Reportes', icono: ChartColumn },
+  { to: '/panel/reportes', etiqueta: 'Reportes', icono: ChartColumn, sinRecepcion: true },
 ]
 
 /** Configuración del negocio: desplegable "Gestión" en desktop. */
@@ -43,6 +46,8 @@ export const ITEMS_GESTION: ItemNav[] = [
 
 export const ITEM_CUENTA: ItemNav = { to: '/panel/cuenta', etiqueta: 'Mi cuenta', icono: CircleUser }
 
-export function visibles(items: ItemNav[], esAdmin: boolean) {
-  return items.filter((i) => !i.soloAdmin || esAdmin)
+export function visibles(items: ItemNav[], rol: Rol | undefined) {
+  return items
+    .filter((i) => !i.soloAdmin || rol === 'ADMIN')
+    .filter((i) => !i.sinRecepcion || rol !== 'RECEPCION')
 }

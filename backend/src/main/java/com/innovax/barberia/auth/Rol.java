@@ -2,7 +2,12 @@ package com.innovax.barberia.auth;
 
 public enum Rol {
     ADMIN,
-    PROFESIONAL;
+    PROFESIONAL,
+    /**
+     * Secretaría / recepción (issue #70): da y mueve turnos de todos los profesionales y registra
+     * clientes y cobros, pero no ve configuración, caja ni reportes. No está vinculado a un profesional.
+     */
+    RECEPCION;
 
     /**
      * Lee el rol guardado en un token. Acepta "BARBERO", el nombre de PROFESIONAL antes de la

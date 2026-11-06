@@ -131,6 +131,21 @@ export function agruparPorDia(items: ItemAgenda[], dias: string[]): Map<string, 
 }
 
 /** wa.me necesita el teléfono en dígitos, sin el "+" (el teléfono ya viene en formato E.164). */
+/** En la sala de espera: reservado y con hora de llegada. */
+export function estaEnSala(turno: Turno): boolean {
+  return turno.estado === 'RESERVADA' && turno.llegadaEn !== null
+}
+
+/** "recién", "5 min", "1 h 10 min" desde la hora de llegada. */
+export function tiempoEsperando(llegadaISO: string, ahora: number): string {
+  const min = Math.max(0, Math.floor((ahora - new Date(llegadaISO).getTime()) / 60_000))
+  if (min < 1) return 'recién'
+  if (min < 60) return `${min} min`
+  const h = Math.floor(min / 60)
+  const resto = min % 60
+  return resto === 0 ? `${h} h` : `${h} h ${resto} min`
+}
+
 export function linkWhatsApp(telefono: string): string {
   return `https://wa.me/${telefono.replace(/\D/g, '')}`
 }

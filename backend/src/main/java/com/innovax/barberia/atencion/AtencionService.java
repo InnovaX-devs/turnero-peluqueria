@@ -4,6 +4,7 @@ import com.innovax.barberia.agenda.dto.TurnoAgendaResponse;
 import com.innovax.barberia.atencion.dto.AtencionResponse;
 import com.innovax.barberia.atencion.dto.CambiarEstadoTurnoRequest;
 import com.innovax.barberia.atencion.dto.CrearReservaRequest;
+import com.innovax.barberia.atencion.dto.MarcarLlegadaRequest;
 import com.innovax.barberia.auth.Usuario;
 import com.innovax.barberia.auth.UsuarioActual;
 import com.innovax.barberia.auth.UsuarioRepository;
@@ -21,6 +22,7 @@ import com.innovax.barberia.servicio.ServicioRepository;
 import com.innovax.barberia.sucursal.Sucursal;
 import com.innovax.barberia.sucursal.SucursalRepository;
 import com.innovax.barberia.notificacion.NotificacionService;
+import com.innovax.barberia.listaespera.ListaEsperaService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
@@ -62,6 +64,7 @@ public class AtencionService {
     private final UsuarioActual usuarioActual;
     private final UsuarioRepository usuarios;
     private final NotificacionService notificaciones;
+    private final ListaEsperaService listaEspera;
 
     @Transactional
     public AtencionResponse reservarOnline(CrearReservaRequest request) {
@@ -172,12 +175,43 @@ public class AtencionService {
         }
 
         atencion.setEstado(nuevoEstado);
+        if (nuevoEstado == EstadoAtencion.CANCELADA) {
+            listaEspera.avisarLugarLiberado(atencion, atencion.getInicio());
+        }
 
         Usuario usuario = usuarios.findById(usuarioActual.id())
                 .orElseThrow(() -> new IllegalStateException("El usuario del token no existe"));
         atencion.setEstadoCambiadoPor(usuario);
         atencion.setEstadoCambiadoEn(Instant.now());
 
+        return TurnoAgendaResponse.de(atenciones.save(atencion));
+    }
+
+    /**
+     * Sala de espera (issue #71): marca que el cliente llegó al local, o lo desmarca si se tocó por error.
+     * Solo para turnos RESERVADA; no cambia el estado ni el horario, así que no afecta disponibilidad,
+     * recordatorios ni la restricción de turnos superpuestos. Mismos permisos que cambiar el estado.
+     */
+    @Transactional
+    public TurnoAgendaResponse marcarLlegada(UUID turnoId, MarcarLlegadaRequest request) {
+        Atencion atencion = atenciones.findById(turnoId)
+                .orElseThrow(() -> new RecursoNoEncontradoException("Turno no encontrado"));
+        if (!atencion.getNegocio().getId().equals(usuarioActual.negocioId())) {
+            throw new RecursoNoEncontradoException("Turno no encontrado");
+        }
+        usuarioActual.verificarAccesoAProfesional(atencion.getProfesional().getId());
+
+        if (atencion.getEstado() != EstadoAtencion.RESERVADA) {
+            throw new ConflictoException("estado", "Este turno ya no está reservado");
+        }
+
+        if (request.llego()) {
+            if (atencion.getLlegadaEn() == null) {
+                atencion.setLlegadaEn(Instant.now()); // si ya estaba marcado se respeta la hora original
+            }
+        } else {
+            atencion.setLlegadaEn(null);
+        }
         return TurnoAgendaResponse.de(atenciones.save(atencion));
     }
 

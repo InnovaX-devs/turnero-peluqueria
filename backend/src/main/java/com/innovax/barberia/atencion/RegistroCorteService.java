@@ -60,10 +60,10 @@ public class RegistroCorteService {
     public OpcionesRegistroResponse opciones() {
         Negocio negocio = negocioActual();
         UUID propio = usuarioActual.profesionalId().orElse(null);
-        // El admin elige entre todos; el barbero solo se ve a sí mismo
+        // Admin y recepción eligen entre todos; el profesional solo se ve a sí mismo
         List<Profesional> visibles = profesionales.findByNegocioIdAndActivoTrueOrderByNombreAscApellidoAsc(negocio.getId())
                 .stream()
-                .filter(b -> usuarioActual.esAdmin() || b.getId().equals(propio))
+                .filter(b -> usuarioActual.veTodoElNegocio() || b.getId().equals(propio))
                 .toList();
         return OpcionesRegistroResponse.de(negocio, propio,
                 servicios.findByNegocioIdAndActivoTrueOrderByOrdenAscNombreAsc(negocio.getId()),
@@ -118,10 +118,10 @@ public class RegistroCorteService {
         return AtencionResponse.de(atencion);
     }
 
-    /** Barbero logueado: siempre él mismo. Admin: el que elija (o él mismo si también corta). */
+    /** Profesional logueado: siempre él mismo. Admin o recepción: el que elija (o él mismo si también atiende). */
     private Profesional resolverProfesional(Negocio negocio, UUID profesionalPedido) {
         UUID profesionalId;
-        if (!usuarioActual.esAdmin()) {
+        if (!usuarioActual.veTodoElNegocio()) {
             profesionalId = usuarioActual.profesionalId()
                     .orElseThrow(() -> new AccessDeniedException("El usuario no está vinculado a un barbero"));
             if (profesionalPedido != null) {

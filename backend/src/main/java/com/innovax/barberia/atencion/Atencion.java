@@ -18,7 +18,7 @@ import java.util.UUID;
 
 /**
  * Un corte: puede ser un turno reservado online o una atención cargada a mano.
- * La base impide dos atenciones RESERVADA/COMPLETADA superpuestas del mismo barbero.
+ * La base impide dos atenciones RESERVADA/COMPLETADA superpuestas del mismo barbero (salvo sobreturnos).
  */
 @Entity
 @Table(name = "atencion")
@@ -89,6 +89,17 @@ public class Atencion {
 
     /** Cuándo se hizo ese último cambio de estado. */
     private Instant estadoCambiadoEn;
+
+    /** Cuándo llegó el cliente al local (sala de espera, issue #71). Null = todavía no llegó. */
+    private Instant llegadaEn;
+
+    /**
+     * Sobreturno (issue #71): cargado a propósito encima de otro turno o fuera del horario. Queda afuera
+     * de la regla de la base que impide turnos superpuestos. Solo lo crea admin o recepción desde el panel;
+     * la reserva online nunca.
+     */
+    @Column(nullable = false)
+    private boolean sobreturno = false;
 
     @CreationTimestamp
     @Column(nullable = false, updatable = false)

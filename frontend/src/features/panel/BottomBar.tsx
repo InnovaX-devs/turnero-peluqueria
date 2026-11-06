@@ -2,6 +2,7 @@ import { useRef, useState } from 'react'
 import { NavLink, useLocation } from 'react-router-dom'
 import { Ellipsis, LogOut, Plus, X } from 'lucide-react'
 import { useCerrarAfuera } from '../../hooks/useCerrarAfuera'
+import { etiquetaRol } from '../../lib/roles'
 import type { Usuario } from '../../types/auth'
 import { ITEMS_GESTION, ITEMS_NEGOCIO, ITEMS_PRINCIPALES, ITEM_CUENTA, visibles, type ItemNav } from './navegacion'
 
@@ -52,7 +53,6 @@ function Tab({ item }: { item: ItemNav }) {
 }
 
 export function BottomBar({ usuario, onRegistrar, onCerrarSesion }: Props) {
-  const esAdmin = usuario?.rol === 'ADMIN'
   const [masAbierto, setMasAbierto] = useState(false)
   const hojaRef = useRef<HTMLDivElement>(null)
   const { pathname } = useLocation()
@@ -60,8 +60,8 @@ export function BottomBar({ usuario, onRegistrar, onCerrarSesion }: Props) {
   useCerrarAfuera(hojaRef, masAbierto, cerrar)
 
   const itemsMas = [
-    ...visibles(ITEMS_NEGOCIO, esAdmin),
-    ...visibles(ITEMS_GESTION, esAdmin),
+    ...visibles(ITEMS_NEGOCIO, usuario?.rol),
+    ...visibles(ITEMS_GESTION, usuario?.rol),
     ITEM_CUENTA,
   ]
   const masActivo = itemsMas.some((i) => pathname.startsWith(i.to))
@@ -118,7 +118,7 @@ export function BottomBar({ usuario, onRegistrar, onCerrarSesion }: Props) {
             <div className="mb-2 flex items-center justify-between">
               <div className="min-w-0">
                 <p className="m-0 truncate text-sm font-semibold">{usuario?.email}</p>
-                <p className="etiqueta-mono m-0 mt-0.5 text-texto-suave">{esAdmin ? 'Admin' : 'Barbero'}</p>
+                <p className="etiqueta-mono m-0 mt-0.5 text-texto-suave">{etiquetaRol(usuario?.rol)}</p>
               </div>
               <button
                 type="button"

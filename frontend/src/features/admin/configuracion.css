@@ -236,3 +236,63 @@
   flex-basis: 100%;
   margin-top: 0;
 }
+/* Usuarios de recepción (issue #70) */
+.config-recepcion {
+  margin-top: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.config-recepcion-titulo {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.config-recepcion-lista {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.config-recepcion-fila {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 12px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--borde);
+}
+
+.config-recepcion-datos {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.config-recepcion-email {
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.config-recepcion-acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.config-recepcion-fila > .config-ok,
+.config-recepcion-fila > .config-error {
+  flex-basis: 100%;
+}
+
+.config-recepcion-nuevo {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}

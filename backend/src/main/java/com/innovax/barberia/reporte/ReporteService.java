@@ -104,12 +104,16 @@ public class ReporteService {
     }
 
     /**
-     * Un barbero ve solo sus propios números: el id sale siempre del token, nunca del request.
-     * El admin ve toda la barbería (null = sin filtro).
+     * Un profesional ve solo sus propios números: el id sale siempre del token, nunca del request.
+     * El admin ve todo el negocio (null = sin filtro). Recepción no ve reportes: además del
+     * {@code @PreAuthorize} del controller, acá se corta explícito por si se llama desde otro lado.
      */
     private UUID profesionalAcotado() {
-        if (usuarioActual.rol() != Rol.PROFESIONAL) {
+        if (usuarioActual.esAdmin()) {
             return null;
+        }
+        if (usuarioActual.rol() != Rol.PROFESIONAL) {
+            throw new AccessDeniedException("No tenés permiso para ver reportes");
         }
         return usuarioActual.profesionalId()
                 .orElseThrow(() -> new AccessDeniedException("Tu usuario no está vinculado a un barbero"));

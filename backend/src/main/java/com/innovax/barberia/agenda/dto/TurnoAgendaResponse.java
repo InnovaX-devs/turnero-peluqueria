@@ -37,7 +37,11 @@ public record TurnoAgendaResponse(
         String notas,
         /** Quién marcó el turno como completado/ausente/cancelado. Null = nunca se cambió. */
         String estadoCambiadoPorEmail,
-        Instant estadoCambiadoEn
+        Instant estadoCambiadoEn,
+        /** Cuándo llegó el cliente (sala de espera). Null = todavía no llegó. */
+        Instant llegadaEn,
+        /** Cargado a propósito encima de otro turno o fuera de horario. */
+        boolean sobreturno
 ) {
 
     public static TurnoAgendaResponse de(Atencion a) {
@@ -60,6 +64,8 @@ public record TurnoAgendaResponse(
                 a.getCliente() != null ? a.getCliente().getNotas() : null,
                 a.getNotas(),
                 a.getEstadoCambiadoPor() != null ? a.getEstadoCambiadoPor().getEmail() : null,
-                a.getEstadoCambiadoEn());
+                a.getEstadoCambiadoEn(),
+                a.getLlegadaEn(),
+                a.isSobreturno());
     }
 }

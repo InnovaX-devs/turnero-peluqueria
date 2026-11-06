@@ -371,8 +371,18 @@ button.agenda-item:active {
 @media (min-width: 640px) {
   .agenda-controles {
     flex-direction: row;
+    flex-wrap: wrap;
     align-items: center;
     justify-content: space-between;
+  }
+
+  /* La fecha queda siempre al lado de las flechas; si no entra todo, bajan los filtros juntos */
+  .agenda-navegacion {
+    flex-wrap: nowrap;
+  }
+
+  .agenda-fecha {
+    white-space: nowrap;
   }
 
   .agenda-modal-fondo {
@@ -464,4 +474,171 @@ button.agenda-item:active {
 .agenda-modal-confirmar .boton-principal {
   width: auto;
   flex: 1 1 auto;
+}
+/* ---------- Sala de espera (issue #71) ---------- */
+
+.agenda-badge.en-sala {
+  background: #e8f0fe;
+  color: #1a56c4;
+}
+
+.sala {
+  margin: 0 0 20px;
+  padding: 16px;
+  background: var(--fondo-tarjeta);
+  border: 1px solid var(--borde);
+  border-radius: 16px;
+}
+
+.sala-titulo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 12px;
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.sala-cantidad {
+  font-family: var(--fuente-mono);
+  font-size: 0.75rem;
+  font-weight: 500;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: #e8f0fe;
+  color: #1a56c4;
+}
+
+.sala-lista {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.sala-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 10px 12px;
+  text-align: left;
+  border: 1px solid var(--borde);
+  border-radius: 12px;
+  background: var(--fondo);
+  color: var(--texto);
+  cursor: pointer;
+}
+
+.sala-item:hover {
+  border-color: var(--texto-suave);
+}
+
+.sala-espera {
+  flex-shrink: 0;
+  min-width: 72px;
+  font-family: var(--fuente-mono);
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #1a56c4;
+}
+
+.sala-cuerpo {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.sala-detalle {
+  font-size: 0.85rem;
+  color: var(--texto-suave);
+  overflow-wrap: anywhere;
+}
+
+.agenda-modal-llegada {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 12px;
+  margin: 0 0 16px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: var(--fondo);
+}
+
+.agenda-modal-llegada p {
+  margin: 0;
+}
+
+.agenda-modal-llegada .agenda-modal-error {
+  flex-basis: 100%;
+}
+
+.agenda-modal-llegada .boton-principal,
+.agenda-modal-llegada .boton-secundario {
+  width: auto;
+  padding: 10px 20px;
+}
+
+/* ---------- Lista de espera y sobreturnos (issue #71) ---------- */
+
+.agenda-badge.sobreturno {
+  background: #fff4e5;
+  color: #a15c00;
+}
+
+.espera {
+  margin: 0 0 20px;
+  padding: 16px;
+  background: var(--fondo-tarjeta);
+  border: 1px solid var(--borde);
+  border-radius: 16px;
+}
+
+.espera-aviso-cantidad {
+  font-family: var(--fuente-mono);
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: #fff4e5;
+  color: #a15c00;
+}
+
+.espera-item {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 12px;
+  padding: 10px 12px;
+  border: 1px solid var(--borde);
+  border-radius: 12px;
+  background: var(--fondo);
+}
+
+.espera-item.con-aviso {
+  border-color: #f0b35a;
+  background: #fffaf2;
+}
+
+.espera-aviso {
+  margin-top: 2px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #a15c00;
+}
+
+.espera-acciones {
+  display: flex;
+  gap: 8px;
+}
+
+.espera-acciones .boton-secundario {
+  width: auto;
+  padding: 8px 16px;
+  text-decoration: none;
 }

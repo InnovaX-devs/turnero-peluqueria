@@ -1,6 +1,7 @@
 package com.innovax.barberia.agenda;
 
 import com.innovax.barberia.agenda.dto.AgendaResponse;
+import com.innovax.barberia.agenda.dto.HorariosLibresResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -21,6 +22,7 @@ import java.util.UUID;
 public class AgendaController {
 
     private final AgendaService agendaService;
+    private final TurnoPanelService turnoPanelService;
 
     @GetMapping
     public AgendaResponse agenda(
@@ -28,5 +30,15 @@ public class AgendaController {
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate hasta,
             @RequestParam(required = false) UUID profesionalId) {
         return agendaService.consultar(desde, hasta, profesionalId);
+    }
+
+    /** Horarios libres para dar turno desde el panel (issue #71). */
+    @GetMapping("/horarios-libres")
+    public HorariosLibresResponse horariosLibres(
+            @RequestParam UUID profesionalId,
+            @RequestParam UUID servicioId,
+            @RequestParam(required = false) UUID sucursalId,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fecha) {
+        return turnoPanelService.horariosLibres(profesionalId, servicioId, sucursalId, fecha);
     }
 }
