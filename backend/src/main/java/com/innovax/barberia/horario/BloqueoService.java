@@ -6,10 +6,10 @@ import com.innovax.barberia.atencion.Atencion;
 import com.innovax.barberia.atencion.AtencionRepository;
 import com.innovax.barberia.atencion.EstadoAtencion;
 import com.innovax.barberia.auth.UsuarioActual;
-import com.innovax.barberia.barberia.Barberia;
-import com.innovax.barberia.barberia.BarberiaRepository;
-import com.innovax.barberia.barbero.Barbero;
-import com.innovax.barberia.barbero.BarberoRepository;
+import com.innovax.barberia.negocio.Negocio;
+import com.innovax.barberia.negocio.NegocioRepository;
+import com.innovax.barberia.profesional.Profesional;
+import com.innovax.barberia.profesional.ProfesionalRepository;
 import com.innovax.barberia.common.DatosInvalidosException;
 import com.innovax.barberia.common.RecursoNoEncontradoException;
 import com.innovax.barberia.horario.dto.BloqueoRequest;
@@ -40,8 +40,8 @@ import java.util.UUID;
 public class BloqueoService {
 
     private final UsuarioActual usuarioActual;
-    private final BarberiaRepository barberias;
-    private final BarberoRepository barberos;
+    private final NegocioRepository negocios;
+    private final ProfesionalRepository profesionales;
     private final BloqueoRepository bloqueos;
     private final AtencionRepository atenciones;
 
@@ -51,12 +51,12 @@ public class BloqueoService {
      */
     @Transactional(readOnly = true)
     public List<TurnoAgendaResponse> turnosEnConflicto(BloqueoRequest request) {
-        Barberia barberia = barberiaActual();
-        List<Barbero> destino = resolverBarberos(barberia, request.barberoIds());
-        Rango rango = calcularRango(barberia, request);
+        Negocio negocio = negocioActual();
+        List<Profesional> destino = resolverProfesionales(negocio, request.profesionalIds());
+        Rango rango = calcularRango(negocio, request);
         return destino.stream()
-                .flatMap(barbero -> atenciones
-                        .findOcupadas(barbero.getId(), Set.of(EstadoAtencion.RESERVADA), rango.inicio(), rango.fin())
+                .flatMap(profesional -> atenciones
+                        .findOcupadas(profesional.getId(), Set.of(EstadoAtencion.RESERVADA), rango.inicio(), rango.fin())
                         .stream())
                 .sorted(Comparator.comparing(Atencion::getInicio))
                 .map(TurnoAgendaResponse::de)
@@ -65,14 +65,14 @@ public class BloqueoService {
 
     @Transactional
     public List<BloqueoAgendaResponse> crear(BloqueoRequest request) {
-        Barberia barberia = barberiaActual();
+        Negocio negocio = negocioActual();
         // Se valida todo antes de guardar: si un barbero o el horario no sirven, no se crea ningún bloqueo
-        List<Barbero> destino = resolverBarberos(barberia, request.barberoIds());
-        Rango rango = calcularRango(barberia, request);
+        List<Profesional> destino = resolverProfesionales(negocio, request.profesionalIds());
+        Rango rango = calcularRango(negocio, request);
 
-        List<Bloqueo> nuevos = destino.stream().map(barbero -> {
+        List<Bloqueo> nuevos = destino.stream().map(profesional -> {
             Bloqueo bloqueo = new Bloqueo();
-            aplicar(bloqueo, barbero, rango, request.motivo());
+            aplicar(bloqueo, profesional, rango, request.motivo());
             return bloqueo;
         }).toList();
         return bloqueos.saveAllAndFlush(nuevos).stream().map(BloqueoAgendaResponse::de).toList();
@@ -80,25 +80,25 @@ public class BloqueoService {
 
     @Transactional
     public BloqueoAgendaResponse actualizar(UUID id, BloqueoRequest request) {
-        Barberia barberia = barberiaActual();
-        Bloqueo bloqueo = bloqueoPropio(barberia, id);
-        List<UUID> pedidos = request.barberoIds() == null ? List.of() : request.barberoIds();
+        Negocio negocio = negocioActual();
+        Bloqueo bloqueo = bloqueoPropio(negocio, id);
+        List<UUID> pedidos = request.profesionalIds() == null ? List.of() : request.profesionalIds();
         if (pedidos.size() > 1) {
-            throw new DatosInvalidosException("barberoIds", "Al editar un bloqueo se puede elegir un solo barbero");
+            throw new DatosInvalidosException("profesionalIds", "Al editar un bloqueo se puede elegir un solo barbero");
         }
-        UUID barberoId = pedidos.isEmpty() ? bloqueo.getBarbero().getId() : pedidos.get(0);
-        Barbero barbero = resolverBarbero(barberia, barberoId);
-        aplicar(bloqueo, barbero, calcularRango(barberia, request), request.motivo());
+        UUID profesionalId = pedidos.isEmpty() ? bloqueo.getProfesional().getId() : pedidos.get(0);
+        Profesional profesional = resolverProfesional(negocio, profesionalId);
+        aplicar(bloqueo, profesional, calcularRango(negocio, request), request.motivo());
         return BloqueoAgendaResponse.de(bloqueos.saveAndFlush(bloqueo));
     }
 
     @Transactional
     public void eliminar(UUID id) {
-        bloqueos.delete(bloqueoPropio(barberiaActual(), id));
+        bloqueos.delete(bloqueoPropio(negocioActual(), id));
     }
 
-    private void aplicar(Bloqueo bloqueo, Barbero barbero, Rango rango, String motivoPedido) {
-        bloqueo.setBarbero(barbero);
+    private void aplicar(Bloqueo bloqueo, Profesional profesional, Rango rango, String motivoPedido) {
+        bloqueo.setProfesional(profesional);
         bloqueo.setInicio(rango.inicio());
         bloqueo.setFin(rango.fin());
         String motivo = motivoPedido == null ? "" : motivoPedido.trim();
@@ -106,8 +106,8 @@ public class BloqueoService {
     }
 
     /** Sin horas: el día completo, de 00:00 a 00:00 del día siguiente en la zona de la barbería. */
-    private Rango calcularRango(Barberia barberia, BloqueoRequest request) {
-        ZoneId zona = ZoneId.of(barberia.getZonaHoraria());
+    private Rango calcularRango(Negocio negocio, BloqueoRequest request) {
+        ZoneId zona = ZoneId.of(negocio.getZonaHoraria());
         LocalDate fecha = request.fecha();
         LocalTime desde = request.horaDesde();
         LocalTime hasta = request.horaHasta();
@@ -130,44 +130,44 @@ public class BloqueoService {
     }
 
     /** El bloqueo tiene que ser de un barbero de esta barbería (si no, 404) y accesible para el usuario (si no, 403). */
-    private Bloqueo bloqueoPropio(Barberia barberia, UUID id) {
+    private Bloqueo bloqueoPropio(Negocio negocio, UUID id) {
         Bloqueo bloqueo = bloqueos.findById(id)
-                .filter(b -> b.getBarbero().getBarberia().getId().equals(barberia.getId()))
+                .filter(b -> b.getProfesional().getNegocio().getId().equals(negocio.getId()))
                 .orElseThrow(() -> new RecursoNoEncontradoException("Bloqueo no encontrado"));
-        usuarioActual.verificarAccesoABarbero(bloqueo.getBarbero().getId());
+        usuarioActual.verificarAccesoAProfesional(bloqueo.getProfesional().getId());
         return bloqueo;
     }
 
     /** Sin barberos indicados: el del usuario logueado. Repetidos se cuentan una sola vez. */
-    private List<Barbero> resolverBarberos(Barberia barberia, List<UUID> pedidos) {
+    private List<Profesional> resolverProfesionales(Negocio negocio, List<UUID> pedidos) {
         if (pedidos == null || pedidos.isEmpty()) {
-            return List.of(resolverBarbero(barberia, null));
+            return List.of(resolverProfesional(negocio, null));
         }
-        return pedidos.stream().distinct().map(id -> resolverBarbero(barberia, id)).toList();
+        return pedidos.stream().distinct().map(id -> resolverProfesional(negocio, id)).toList();
     }
 
     /** Barbero logueado: siempre él mismo. Admin: el que elija (o él mismo si también corta). */
-    private Barbero resolverBarbero(Barberia barberia, UUID barberoPedido) {
-        UUID barberoId;
+    private Profesional resolverProfesional(Negocio negocio, UUID profesionalPedido) {
+        UUID profesionalId;
         if (!usuarioActual.esAdmin()) {
-            barberoId = usuarioActual.barberoId()
+            profesionalId = usuarioActual.profesionalId()
                     .orElseThrow(() -> new AccessDeniedException("El usuario no está vinculado a un barbero"));
-            if (barberoPedido != null) {
-                usuarioActual.verificarAccesoABarbero(barberoPedido); // 403 si pide otro
+            if (profesionalPedido != null) {
+                usuarioActual.verificarAccesoAProfesional(profesionalPedido); // 403 si pide otro
             }
-        } else if (barberoPedido != null) {
-            barberoId = barberoPedido;
+        } else if (profesionalPedido != null) {
+            profesionalId = profesionalPedido;
         } else {
-            barberoId = usuarioActual.barberoId()
-                    .orElseThrow(() -> new DatosInvalidosException("barberoId", "Elegí el barbero"));
+            profesionalId = usuarioActual.profesionalId()
+                    .orElseThrow(() -> new DatosInvalidosException("profesionalId", "Elegí el barbero"));
         }
-        return barberos.findById(barberoId)
-                .filter(b -> b.getBarberia().getId().equals(barberia.getId()))
+        return profesionales.findById(profesionalId)
+                .filter(b -> b.getNegocio().getId().equals(negocio.getId()))
                 .orElseThrow(() -> new RecursoNoEncontradoException("Barbero no encontrado"));
     }
 
-    private Barberia barberiaActual() {
-        return barberias.findById(usuarioActual.barberiaId())
+    private Negocio negocioActual() {
+        return negocios.findById(usuarioActual.negocioId())
                 .orElseThrow(() -> new IllegalStateException("La barbería del token no existe"));
     }
 

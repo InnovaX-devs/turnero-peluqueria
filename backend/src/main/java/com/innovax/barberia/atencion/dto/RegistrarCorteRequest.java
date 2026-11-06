@@ -19,7 +19,7 @@ public record RegistrarCorteRequest(
         UUID servicioId,
 
         /** null = el barbero logueado */
-        UUID barberoId,
+        UUID profesionalId,
 
         /** null = la única sucursal del barbero */
         UUID sucursalId,

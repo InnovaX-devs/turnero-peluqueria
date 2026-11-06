@@ -10,8 +10,8 @@ public record BloqueoAgendaResponse(
         Instant inicio,
         Instant fin,
         String motivo,
-        UUID barberoId,
-        String barberoNombre
+        UUID profesionalId,
+        String profesionalNombre
 ) {
 
     public static BloqueoAgendaResponse de(Bloqueo b) {
@@ -20,7 +20,7 @@ public record BloqueoAgendaResponse(
                 b.getInicio(),
                 b.getFin(),
                 b.getMotivo(),
-                b.getBarbero().getId(),
-                b.getBarbero().getNombre() + " " + b.getBarbero().getApellido());
+                b.getProfesional().getId(),
+                b.getProfesional().getNombre() + " " + b.getProfesional().getApellido());
     }
 }

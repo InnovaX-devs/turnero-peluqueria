@@ -14,7 +14,7 @@ const CLAVE_PREFERENCIAS = 'registroCorte.preferencias'
 interface Preferencias {
   servicioId?: string
   metodoPago?: MetodoPago
-  barberoId?: string
+  profesionalId?: string
 }
 
 function leerPreferencias(): Preferencias {
@@ -38,21 +38,21 @@ export interface ValoresIniciales {
   servicioId: string | null
   precio: string
   metodoPago: MetodoPago
-  barberoId: string | null
+  profesionalId: string | null
 }
 
 export function valoresIniciales(opciones: OpcionesRegistro): ValoresIniciales {
   const prefs = leerPreferencias()
   const servicio = opciones.servicios.find((s) => s.id === prefs.servicioId) ?? opciones.servicios[0]
-  const barbero =
-    opciones.barberos.find((b) => b.id === opciones.barberoPropioId) ??
-    opciones.barberos.find((b) => b.id === prefs.barberoId) ??
-    (opciones.barberos.length === 1 ? opciones.barberos[0] : undefined)
+  const profesional =
+    opciones.profesionales.find((b) => b.id === opciones.profesionalPropioId) ??
+    opciones.profesionales.find((b) => b.id === prefs.profesionalId) ??
+    (opciones.profesionales.length === 1 ? opciones.profesionales[0] : undefined)
   return {
     servicioId: servicio ? servicio.id : null,
     precio: servicio ? centavosAPesos(servicio.precio) : '',
     metodoPago: prefs.metodoPago ?? 'EFECTIVO',
-    barberoId: barbero ? barbero.id : null,
+    profesionalId: profesional ? profesional.id : null,
   }
 }
 

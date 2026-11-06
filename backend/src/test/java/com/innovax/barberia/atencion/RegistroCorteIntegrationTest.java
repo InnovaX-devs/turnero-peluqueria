@@ -95,7 +95,7 @@ class RegistroCorteIntegrationTest {
     }
 
     @Test
-    void barberoRegistraUnCorteAnonimoConLoMinimo() throws Exception {
+    void profesionalRegistraUnCorteAnonimoConLoMinimo() throws Exception {
         String respuesta = registrar(lucas(), """
                 {"servicioId":"%s","precioFinal":1500000,"metodoPago":"EFECTIVO"}
                 """.formatted(CORTE), 201);
@@ -105,7 +105,7 @@ class RegistroCorteIntegrationTest {
         assertThat(a.getOrigen()).isEqualTo(OrigenAtencion.MANUAL);
         assertThat(a.getMetodoPago()).isEqualTo(MetodoPago.EFECTIVO);
         assertThat(a.getCliente()).isNull();
-        assertThat(a.getBarbero().getId()).isEqualTo(LUCAS);
+        assertThat(a.getProfesional().getId()).isEqualTo(LUCAS);
         assertThat(a.getSucursal().getId()).isEqualTo(SUCURSAL); // su única sucursal
         assertThat(Duration.between(a.getInicio(), Instant.now()).abs()).isLessThan(Duration.ofMinutes(1));
     }
@@ -133,18 +133,18 @@ class RegistroCorteIntegrationTest {
     }
 
     @Test
-    void barberoNoPuedeRegistrarParaOtroBarbero() throws Exception {
+    void profesionalNoPuedeRegistrarParaOtroProfesional() throws Exception {
         registrar(lucas(), """
-                {"servicioId":"%s","barberoId":"%s","precioFinal":1500000,"metodoPago":"EFECTIVO"}
+                {"servicioId":"%s","profesionalId":"%s","precioFinal":1500000,"metodoPago":"EFECTIVO"}
                 """.formatted(CORTE, ANDRES), 403);
     }
 
     @Test
-    void adminTieneQueElegirElBarbero() throws Exception {
+    void adminTieneQueElegirElProfesional() throws Exception {
         String token = admin(); // el admin del seed no está vinculado a un barbero
         registrar(token, corteEnElPasado("10:00"), 400);
         registrar(token, """
-                {"servicioId":"%s","barberoId":"%s","precioFinal":1500000,"metodoPago":"TARJETA"}
+                {"servicioId":"%s","profesionalId":"%s","precioFinal":1500000,"metodoPago":"TARJETA"}
                 """.formatted(CORTE, ANDRES), 201);
     }
 

@@ -19,7 +19,7 @@ import java.util.UUID;
  */
 @RestController
 @RequestMapping("/api/reportes")
-@PreAuthorize("hasAnyRole('ADMIN', 'BARBERO')")
+@PreAuthorize("hasAnyRole('ADMIN', 'PROFESIONAL')")
 @RequiredArgsConstructor
 public class ReporteController {
 

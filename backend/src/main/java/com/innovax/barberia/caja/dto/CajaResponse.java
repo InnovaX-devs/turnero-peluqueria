@@ -14,7 +14,7 @@ public record CajaResponse(
         long total,
         int cantidad,
         long ticketPromedio,
-        List<Grupo> porBarbero,
+        List<Grupo> porProfesional,
         List<Grupo> porServicio,
         List<GrupoMetodo> porMetodoPago,
         List<Dia> porDia) {

@@ -1,7 +1,7 @@
 package com.innovax.barberia.auth;
 
-import com.innovax.barberia.barbero.Barbero;
-import com.innovax.barberia.barbero.BarberoRepository;
+import com.innovax.barberia.profesional.Profesional;
+import com.innovax.barberia.profesional.ProfesionalRepository;
 import com.innovax.barberia.common.DatosInvalidosException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -16,7 +16,7 @@ import java.util.UUID;
 public class AuthService {
 
     private final UsuarioRepository usuarios;
-    private final BarberoRepository barberos;
+    private final ProfesionalRepository profesionales;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
     private final UsuarioActual usuarioActual;
@@ -31,16 +31,16 @@ public class AuthService {
             throw new CredencialesInvalidasException();
         }
 
-        UUID barberoId = barberoIdDe(usuario);
-        JwtService.TokenGenerado token = jwtService.generar(usuario, barberoId);
-        return new LoginResponse(token.valor(), token.expiraEn(), aResponse(usuario, barberoId));
+        UUID profesionalId = profesionalIdDe(usuario);
+        JwtService.TokenGenerado token = jwtService.generar(usuario, profesionalId);
+        return new LoginResponse(token.valor(), token.expiraEn(), aResponse(usuario, profesionalId));
     }
 
     @Transactional(readOnly = true)
     public UsuarioResponse yo() {
         Usuario usuario = usuarios.findById(usuarioActual.id())
                 .orElseThrow(CredencialesInvalidasException::new);
-        return aResponse(usuario, barberoIdDe(usuario));
+        return aResponse(usuario, profesionalIdDe(usuario));
     }
 
     /**
@@ -66,13 +66,13 @@ public class AuthService {
         usuario.setPasswordHash(passwordEncoder.encode(nueva));
     }
 
-    private UUID barberoIdDe(Usuario usuario) {
-        return barberos.findByUsuarioId(usuario.getId()).map(Barbero::getId).orElse(null);
+    private UUID profesionalIdDe(Usuario usuario) {
+        return profesionales.findByUsuarioId(usuario.getId()).map(Profesional::getId).orElse(null);
     }
 
-    private UsuarioResponse aResponse(Usuario u, UUID barberoId) {
-        var barberia = u.getBarberia();
-        return new UsuarioResponse(u.getId(), u.getEmail(), u.getRol(), barberia.getId(), barberoId,
-                barberia.getNombre(), barberia.getLogoUrl());
+    private UsuarioResponse aResponse(Usuario u, UUID profesionalId) {
+        var negocio = u.getNegocio();
+        return new UsuarioResponse(u.getId(), u.getEmail(), u.getRol(), negocio.getId(), profesionalId,
+                negocio.getNombre(), negocio.getLogoUrl());
     }
 }

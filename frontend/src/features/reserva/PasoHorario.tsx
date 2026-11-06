@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import {
-  obtenerBarberosPublicos,
+  obtenerProfesionalesPublicos,
   obtenerDiasDisponibles,
   obtenerDisponibilidad,
   obtenerServiciosPublicos,
@@ -9,14 +9,14 @@ import {
 import { mensajeDeError } from '../../lib/errores'
 import { diaSemanaCorto, diasEntre, fechaLarga, horaCorta, hoyISO, mesYAnio, sumarDias } from '../../lib/fechas'
 import { formatearDuracion } from '../../lib/formato'
-import { BARBERO_CUALQUIERA } from './flujo'
+import { PROFESIONAL_CUALQUIERA } from './flujo'
 
 const DIAS_POR_SEMANA = 7
 
 export interface EleccionHorario {
   fecha: string
   hora: string
-  barberoAsignadoId: string
+  profesionalAsignadoId: string
 }
 
 interface Props {
@@ -24,17 +24,17 @@ interface Props {
   anticipacionMaximaDias: number
   sucursalId: string
   servicioId: string
-  /** Un id o BARBERO_CUALQUIERA */
-  barberoId: string
+  /** Un id o PROFESIONAL_CUALQUIERA */
+  profesionalId: string
   fechaElegida: string | null
   horaElegida: string | null
   onElegir: (eleccion: EleccionHorario) => void
 }
 
 export function PasoHorario(props: Props) {
-  const { slug, anticipacionMaximaDias, sucursalId, servicioId, barberoId, fechaElegida, horaElegida, onElegir } = props
-  const esCualquiera = barberoId === BARBERO_CUALQUIERA
-  const consulta = { sucursalId, servicioId, barberoId: esCualquiera ? null : barberoId }
+  const { slug, anticipacionMaximaDias, sucursalId, servicioId, profesionalId, fechaElegida, horaElegida, onElegir } = props
+  const esCualquiera = profesionalId === PROFESIONAL_CUALQUIERA
+  const consulta = { sucursalId, servicioId, profesionalId: esCualquiera ? null : profesionalId }
 
   const hoy = hoyISO()
   const ultimoDia = sumarDias(hoy, anticipacionMaximaDias)
@@ -53,7 +53,7 @@ export function PasoHorario(props: Props) {
   const haySiguiente = sumarDias(inicio, DIAS_POR_SEMANA) <= ultimoDia
 
   const qDias = useQuery({
-    queryKey: ['dias-disponibles', sucursalId, servicioId, consulta.barberoId, inicio, fin],
+    queryKey: ['dias-disponibles', sucursalId, servicioId, consulta.profesionalId, inicio, fin],
     queryFn: () => obtenerDiasDisponibles(consulta, inicio, fin),
     staleTime: 30 * 1000,
   })
@@ -63,7 +63,7 @@ export function PasoHorario(props: Props) {
   const diaActivo = diaTocado && diasLibres.includes(diaTocado) ? diaTocado : (diasLibres[0] ?? null)
 
   const qSlots = useQuery({
-    queryKey: ['disponibilidad', sucursalId, servicioId, consulta.barberoId, diaActivo],
+    queryKey: ['disponibilidad', sucursalId, servicioId, consulta.profesionalId, diaActivo],
     queryFn: () => obtenerDisponibilidad(consulta, diaActivo as string),
     enabled: diaActivo !== null,
     staleTime: 30 * 1000,
@@ -75,15 +75,15 @@ export function PasoHorario(props: Props) {
     queryFn: () => obtenerServiciosPublicos(slug, sucursalId),
     staleTime: 5 * 60 * 1000,
   })
-  const { data: barberos } = useQuery({
-    queryKey: ['barberos-publicos', slug, sucursalId, servicioId],
-    queryFn: () => obtenerBarberosPublicos(slug, sucursalId, servicioId),
+  const { data: profesionales } = useQuery({
+    queryKey: ['profesionales-publicos', slug, sucursalId, servicioId],
+    queryFn: () => obtenerProfesionalesPublicos(slug, sucursalId, servicioId),
     staleTime: 60 * 1000,
   })
   const servicio = servicios?.find((s) => s.id === servicioId)
-  const barbero = barberos?.find((b) => b.id === barberoId)
-  const nombreBarbero = esCualquiera ? 'Cualquier barbero' : barbero ? `${barbero.nombre} ${barbero.apellido}` : ''
-  const iniciales = esCualquiera ? '✦' : barbero ? `${barbero.nombre[0]}${barbero.apellido[0]}`.toUpperCase() : ''
+  const profesional = profesionales?.find((b) => b.id === profesionalId)
+  const nombreProfesional = esCualquiera ? 'Cualquier barbero' : profesional ? `${profesional.nombre} ${profesional.apellido}` : ''
+  const iniciales = esCualquiera ? '✦' : profesional ? `${profesional.nombre[0]}${profesional.apellido[0]}`.toUpperCase() : ''
 
   function cambiarSemana(delta: number) {
     setSemana((s) => s + delta)
@@ -158,14 +158,14 @@ export function PasoHorario(props: Props) {
         <>
           <h3 className="reserva-fecha-titulo">{fechaLarga(diaActivo)}</h3>
 
-          <div className="reserva-resumen-barbero">
-            {!esCualquiera && barbero?.fotoUrl ? (
-              <img className="reserva-avatar reserva-avatar-chico" src={barbero.fotoUrl} alt="" />
+          <div className="reserva-resumen-profesional">
+            {!esCualquiera && profesional?.fotoUrl ? (
+              <img className="reserva-avatar reserva-avatar-chico" src={profesional.fotoUrl} alt="" />
             ) : (
               <span className="reserva-avatar reserva-avatar-chico" aria-hidden="true">{iniciales}</span>
             )}
             <div>
-              <strong>{nombreBarbero}</strong>
+              <strong>{nombreProfesional}</strong>
               {servicio && <span>Duración: {formatearDuracion(servicio.duracionMin)}</span>}
             </div>
           </div>
@@ -200,7 +200,7 @@ export function PasoHorario(props: Props) {
                           fecha: diaActivo,
                           hora,
                           // Con "cualquiera", el turno queda para el primer barbero libre en ese horario
-                          barberoAsignadoId: esCualquiera ? slot.barberos[0] : barberoId,
+                          profesionalAsignadoId: esCualquiera ? slot.profesionales[0] : profesionalId,
                         })
                       }
                     >

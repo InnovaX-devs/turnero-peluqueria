@@ -7,7 +7,7 @@ import type { Servicio } from '../../types/servicio'
 import { FormularioServicio } from './FormularioServicio'
 import { CLAVE_LISTA_SERVICIOS, useInvalidarServicios } from './servicios'
 import '../admin/configuracion.css'
-import '../barberos/barberos.css'
+import '../profesionales/profesionales.css'
 import './servicios.css'
 
 export function ServiciosPage() {
@@ -65,7 +65,7 @@ export function ServiciosPage() {
 
   function datos(s: Servicio) {
     return (
-      <span className="barbero-detalle-linea">
+      <span className="profesional-detalle-linea">
         {formatearDuracion(s.duracionMin)} · {formatearPrecio(s.precio)}
       </span>
     )
@@ -80,15 +80,15 @@ export function ServiciosPage() {
       )
     }
     return (
-      <li key={s.id} className="barbero-tarjeta barbero-inactivo">
-        <div className="barbero-info">
+      <li key={s.id} className="profesional-tarjeta profesional-inactivo">
+        <div className="profesional-info">
           <strong>
             {s.nombre}
             <span className="badge badge-inactivo">Inactivo</span>
           </strong>
           {datos(s)}
         </div>
-        <div className="barbero-acciones">
+        <div className="profesional-acciones">
           <button type="button" className="boton-secundario" onClick={() => setFormulario(s.id)}>
             Editar
           </button>
@@ -107,13 +107,13 @@ export function ServiciosPage() {
   }
 
   return (
-    <section className="barberos servicios">
+    <section className="profesionales servicios">
       {formulario === 'nuevo' && (
-        <button type="button" className="barbero-volver" onClick={() => setFormulario(null)}>
+        <button type="button" className="profesional-volver" onClick={() => setFormulario(null)}>
           ← Servicios
         </button>
       )}
-      <div className="barberos-cabecera">
+      <div className="profesionales-cabecera">
         <h1>Servicios</h1>
         {formulario !== 'nuevo' && (
           <button type="button" className="boton-secundario" onClick={() => setFormulario('nuevo')}>
@@ -146,7 +146,7 @@ export function ServiciosPage() {
           <p className="config-ayuda servicios-ayuda">
             Este es el orden en que se muestran en la página de reservas. Usá las flechas para cambiarlo.
           </p>
-          <ul className="barberos-lista">
+          <ul className="profesionales-lista">
             {activos.map((s, i) =>
               formulario === s.id ? (
                 <li key={s.id}>
@@ -157,7 +157,7 @@ export function ServiciosPage() {
                   />
                 </li>
               ) : (
-                <li key={s.id} className="barbero-tarjeta servicio-tarjeta">
+                <li key={s.id} className="profesional-tarjeta servicio-tarjeta">
                   <div className="servicio-orden">
                     <button
                       type="button"
@@ -176,12 +176,12 @@ export function ServiciosPage() {
                       ▼
                     </button>
                   </div>
-                  <div className="barbero-info">
+                  <div className="profesional-info">
                     <strong>{s.nombre}</strong>
                     {datos(s)}
                   </div>
                   {confirmandoBaja !== s.id && (
-                    <div className="barbero-acciones">
+                    <div className="profesional-acciones">
                       <button type="button" className="boton-secundario" onClick={() => setFormulario(s.id)}>
                         Editar
                       </button>
@@ -200,7 +200,7 @@ export function ServiciosPage() {
                       <span>
                         Deja de mostrarse para reservar y registrar cortes. Las atenciones ya registradas se conservan.
                       </span>
-                      <div className="barbero-acciones">
+                      <div className="profesional-acciones">
                         <button
                           type="button"
                           className="boton-secundario servicio-baja-confirmar"
@@ -224,11 +224,11 @@ export function ServiciosPage() {
 
       {inactivos.length > 0 && (
         <>
-          <label className="barberos-filtro servicios-filtro">
+          <label className="profesionales-filtro servicios-filtro">
             <input type="checkbox" checked={verInactivos} onChange={(e) => setVerInactivos(e.target.checked)} />
             Mostrar dados de baja ({inactivos.length})
           </label>
-          {verInactivos && <ul className="barberos-lista">{inactivos.map(tarjetaInactiva)}</ul>}
+          {verInactivos && <ul className="profesionales-lista">{inactivos.map(tarjetaInactiva)}</ul>}
         </>
       )}
     </section>

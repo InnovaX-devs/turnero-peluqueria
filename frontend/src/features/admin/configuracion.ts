@@ -1,4 +1,4 @@
-import type { ActualizarBarberia } from '../../types/barberia'
+import type { ActualizarNegocio } from '../../types/negocio'
 
 export const INTERVALOS = [15, 30]
 export const ANTICIPACIONES_MINIMAS = [0, 15, 30, 60, 120, 180, 360, 720, 1440, 2880]
@@ -32,7 +32,7 @@ export function normalizarSlug(texto: string): string {
 }
 
 /** Lo que se manda a la API. */
-export function aDatos(f: Formulario): ActualizarBarberia {
+export function aDatos(f: Formulario): ActualizarNegocio {
   return {
     nombre: f.nombre.trim(),
     slug: f.slug.replace(/-+$/, ''),
@@ -46,7 +46,7 @@ export function aDatos(f: Formulario): ActualizarBarberia {
   }
 }
 
-export function sonIguales(a: ActualizarBarberia, b: ActualizarBarberia): boolean {
+export function sonIguales(a: ActualizarNegocio, b: ActualizarNegocio): boolean {
   return (
     a.nombre === b.nombre &&
     a.slug === b.slug &&

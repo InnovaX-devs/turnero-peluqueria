@@ -58,7 +58,7 @@ class CambiarPasswordIntegrationTest {
     }
 
     @Test
-    void unBarberoTambienPuedeCambiarLaSuya() throws Exception {
+    void unProfesionalTambienPuedeCambiarLaSuya() throws Exception {
         cambiar(token("lucas@jade.com", "barbero123"), "barbero123", "lucasNueva1")
                 .andExpect(status().isNoContent());
         login("lucas@jade.com", "lucasNueva1").andExpect(status().isOk());

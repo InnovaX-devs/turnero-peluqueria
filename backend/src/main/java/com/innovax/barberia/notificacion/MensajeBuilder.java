@@ -27,13 +27,13 @@ public class MensajeBuilder {
     }
 
     public String confirmacion(Atencion a) {
-        return saludo(a) + "Tu turno en " + a.getBarberia().getNombre() + " quedó confirmado.\n\n"
+        return saludo(a) + "Tu turno en " + a.getNegocio().getNombre() + " quedó confirmado.\n\n"
                 + detalle(a)
                 + "\n" + pieGestion(a);
     }
 
     public String recordatorio(Atencion a) {
-        return saludo(a) + "Te recordamos tu turno en " + a.getBarberia().getNombre() + ".\n\n"
+        return saludo(a) + "Te recordamos tu turno en " + a.getNegocio().getNombre() + ".\n\n"
                 + detalle(a)
                 + "\n" + pieGestion(a);
     }
@@ -46,17 +46,17 @@ public class MensajeBuilder {
     }
 
     private String detalle(Atencion a) {
-        ZonedDateTime inicio = a.getInicio().atZone(ZoneId.of(a.getBarberia().getZonaHoraria()));
+        ZonedDateTime inicio = a.getInicio().atZone(ZoneId.of(a.getNegocio().getZonaHoraria()));
         return "Fecha: " + inicio.format(DIA) + "\n"
                 + "Hora: " + inicio.format(HORA) + " hs\n"
-                + "Barbero: " + a.getBarbero().getNombre() + " " + a.getBarbero().getApellido() + "\n"
+                + "Barbero: " + a.getProfesional().getNombre() + " " + a.getProfesional().getApellido() + "\n"
                 + "Servicio: " + a.getServicio().getNombre() + "\n"
                 + "Dirección: " + a.getSucursal().getDireccion() + ", " + a.getSucursal().getCiudad() + "\n";
     }
 
     private String pieGestion(Atencion a) {
         return "Si necesitás cancelarlo o cambiarlo (hasta "
-                + textoAnticipacion(a.getBarberia().getAnticipacionCancelacionMin()) + " antes), entrá acá:\n"
+                + textoAnticipacion(a.getNegocio().getAnticipacionCancelacionMin()) + " antes), entrá acá:\n"
                 + links.gestionTurno(a.getTokenGestion());
     }
 

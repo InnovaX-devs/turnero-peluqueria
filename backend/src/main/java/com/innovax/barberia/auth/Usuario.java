@@ -1,6 +1,6 @@
 package com.innovax.barberia.auth;
 
-import com.innovax.barberia.barberia.Barberia;
+import com.innovax.barberia.negocio.Negocio;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -22,8 +22,8 @@ public class Usuario {
     private UUID id;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "barberia_id", nullable = false)
-    private Barberia barberia;
+    @JoinColumn(name = "negocio_id", nullable = false)
+    private Negocio negocio;
 
     @Column(nullable = false, unique = true, length = 255)
     private String email;

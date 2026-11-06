@@ -4,9 +4,9 @@ import com.innovax.barberia.atencion.Atencion;
 import com.innovax.barberia.atencion.AtencionRepository;
 import com.innovax.barberia.atencion.EstadoAtencion;
 import com.innovax.barberia.atencion.OrigenAtencion;
-import com.innovax.barberia.barberia.Barberia;
-import com.innovax.barberia.barberia.BarberiaRepository;
-import com.innovax.barberia.barbero.BarberoRepository;
+import com.innovax.barberia.negocio.Negocio;
+import com.innovax.barberia.negocio.NegocioRepository;
+import com.innovax.barberia.profesional.ProfesionalRepository;
 import com.innovax.barberia.cliente.ClienteRepository;
 import com.innovax.barberia.disponibilidad.DisponibilidadService;
 import com.innovax.barberia.servicio.Servicio;
@@ -61,9 +61,9 @@ class GestionTurnoIntegrationTest {
 
     @Autowired private WebApplicationContext context;
     @Autowired private AtencionRepository atenciones;
-    @Autowired private BarberiaRepository barberias;
+    @Autowired private NegocioRepository negocios;
     @Autowired private SucursalRepository sucursales;
-    @Autowired private BarberoRepository barberos;
+    @Autowired private ProfesionalRepository profesionales;
     @Autowired private ServicioRepository servicios;
     @Autowired private ClienteRepository clientes;
     @Autowired private DisponibilidadService disponibilidad;
@@ -89,21 +89,21 @@ class GestionTurnoIntegrationTest {
     @AfterEach
     void limpiar() {
         creadas.forEach(atenciones::deleteById);
-        Barberia jade = barberias.findById(JADE).orElseThrow();
+        Negocio jade = negocios.findById(JADE).orElseThrow();
         jade.setAnticipacionCancelacionMin(120);
         jade.setReservasOnline(true);
-        barberias.save(jade);
+        negocios.save(jade);
     }
 
     private static Instant en(LocalDate dia, int hora, int minuto) {
         return ZonedDateTime.of(dia, LocalTime.of(hora, minuto), ZONA).toInstant();
     }
 
-    private Atencion crear(UUID barbero, UUID servicio, Instant inicio, int duracion) {
+    private Atencion crear(UUID profesional, UUID servicio, Instant inicio, int duracion) {
         Atencion a = new Atencion();
-        a.setBarberia(barberias.findById(JADE).orElseThrow());
+        a.setNegocio(negocios.findById(JADE).orElseThrow());
         a.setSucursal(sucursales.findById(SUCURSAL).orElseThrow());
-        a.setBarbero(barberos.findById(barbero).orElseThrow());
+        a.setProfesional(profesionales.findById(profesional).orElseThrow());
         a.setServicio(servicios.findById(servicio).orElseThrow());
         a.setCliente(clientes.findById(JUAN).orElseThrow());
         a.setInicio(inicio);
@@ -117,10 +117,10 @@ class GestionTurnoIntegrationTest {
     }
 
     private void configurar(int anticipacionCancelacionMin, boolean reservasOnline) {
-        Barberia jade = barberias.findById(JADE).orElseThrow();
+        Negocio jade = negocios.findById(JADE).orElseThrow();
         jade.setAnticipacionCancelacionMin(anticipacionCancelacionMin);
         jade.setReservasOnline(reservasOnline);
-        barberias.save(jade);
+        negocios.save(jade);
     }
 
     private ResultActions ver(UUID token) throws Exception {
@@ -149,9 +149,9 @@ class GestionTurnoIntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.estado").value("RESERVADA"))
                 .andExpect(jsonPath("$.servicio.nombre").value("Corte y Barba"))
-                .andExpect(jsonPath("$.barbero.nombre").value("Lucas Sanchez"))
+                .andExpect(jsonPath("$.profesional.nombre").value("Lucas Sanchez"))
                 .andExpect(jsonPath("$.clienteNombre").value("Juan Gomez"))
-                .andExpect(jsonPath("$.barberia.slug").value("jade"))
+                .andExpect(jsonPath("$.negocio.slug").value("jade"))
                 .andExpect(jsonPath("$.anticipacionCancelacionMin").value(120))
                 .andExpect(jsonPath("$.puedeCancelar").value(true))
                 .andExpect(jsonPath("$.puedeReprogramar").value(true));
@@ -243,7 +243,7 @@ class GestionTurnoIntegrationTest {
     }
 
     @Test
-    void fueraDelHorarioDelBarberoDevuelve409() throws Exception {
+    void fueraDelHorarioDelProfesionalDevuelve409() throws Exception {
         // De 13 a 16 Lucas no trabaja
         reprogramar(turno.getTokenGestion(), lunes, "14:00").andExpect(status().isConflict());
         assertThat(recargar(turno).getInicio()).isEqualTo(en(lunes, 10, 0));

@@ -7,11 +7,11 @@ import type { ReservaCreada, SucursalPublica } from '../../types/reserva'
 interface Props {
   reserva: ReservaCreada
   sucursal: SucursalPublica | undefined
-  barberiaNombre: string
+  negocioNombre: string
   onOtroTurno: () => void
 }
 
-export function ReservaConfirmada({ reserva, sucursal, barberiaNombre, onOtroTurno }: Props) {
+export function ReservaConfirmada({ reserva, sucursal, negocioNombre, onOtroTurno }: Props) {
   const [copiado, setCopiado] = useState(false)
   const link = linkDelTurno(reserva.tokenGestion)
 
@@ -42,7 +42,7 @@ export function ReservaConfirmada({ reserva, sucursal, barberiaNombre, onOtroTur
         </div>
         <div>
           <dt>Barbero</dt>
-          <dd>{reserva.barberoNombre}</dd>
+          <dd>{reserva.profesionalNombre}</dd>
         </div>
         <div>
           <dt>Cuándo</dt>
@@ -73,7 +73,7 @@ export function ReservaConfirmada({ reserva, sucursal, barberiaNombre, onOtroTur
           </button>
           <a
             className="boton-secundario"
-            href={linkWhatsAppParaGuardar(link, barberiaNombre)}
+            href={linkWhatsAppParaGuardar(link, negocioNombre)}
             target="_blank"
             rel="noreferrer"
           >

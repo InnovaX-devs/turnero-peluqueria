@@ -1,7 +1,7 @@
 import { useState, type FormEvent } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import axios from 'axios'
-import { crearReserva, obtenerBarberosPublicos, obtenerServiciosPublicos } from '../../api/reservaPublica'
+import { crearReserva, obtenerProfesionalesPublicos, obtenerServiciosPublicos } from '../../api/reservaPublica'
 import { erroresDeCampos, mensajeDeError } from '../../lib/errores'
 import { Selector } from '../../components/Selector'
 import { fechaLarga } from '../../lib/fechas'
@@ -13,7 +13,7 @@ interface Props {
   slug: string
   sucursal: SucursalPublica
   servicioId: string
-  barberoId: string
+  profesionalId: string
   fecha: string
   hora: string
   onConfirmada: (reserva: ReservaCreada) => void
@@ -22,7 +22,7 @@ interface Props {
 
 const esHorarioOcupado = (e: unknown) => axios.isAxiosError(e) && e.response?.status === 409
 
-export function PasoDatos({ slug, sucursal, servicioId, barberoId, fecha, hora, onConfirmada, onElegirOtroHorario }: Props) {
+export function PasoDatos({ slug, sucursal, servicioId, profesionalId, fecha, hora, onConfirmada, onElegirOtroHorario }: Props) {
   const queryClient = useQueryClient()
   const [nombre, setNombre] = useState('')
   const [codigoPais, setCodigoPais] = useState('AR')
@@ -46,7 +46,7 @@ export function PasoDatos({ slug, sucursal, servicioId, barberoId, fecha, hora, 
       // La disponibilidad cambió: que los próximos turnos se consulten de nuevo
       queryClient.invalidateQueries({ queryKey: ['disponibilidad'] })
       queryClient.invalidateQueries({ queryKey: ['dias-disponibles'] })
-      queryClient.invalidateQueries({ queryKey: ['barberos-publicos'] })
+      queryClient.invalidateQueries({ queryKey: ['profesionales-publicos'] })
       onConfirmada(reserva)
     },
     onError: (error) => {
@@ -61,12 +61,12 @@ export function PasoDatos({ slug, sucursal, servicioId, barberoId, fecha, hora, 
   })
 
   // El barbero puede venir de "cualquiera": se busca por el id asignado
-  const { data: barberos } = useQuery({
-    queryKey: ['barberos-publicos', slug, sucursal.id, servicioId],
-    queryFn: () => obtenerBarberosPublicos(slug, sucursal.id, servicioId),
+  const { data: profesionales } = useQuery({
+    queryKey: ['profesionales-publicos', slug, sucursal.id, servicioId],
+    queryFn: () => obtenerProfesionalesPublicos(slug, sucursal.id, servicioId),
     staleTime: 60 * 1000,
   })
-  const barbero = barberos?.find((b) => b.id === barberoId)
+  const profesional = profesionales?.find((b) => b.id === profesionalId)
 
   function handleSubmit(e: FormEvent) {
     e.preventDefault()
@@ -82,7 +82,7 @@ export function PasoDatos({ slug, sucursal, servicioId, barberoId, fecha, hora, 
     mutacion.mutate({
       sucursalId: sucursal.id,
       servicioId,
-      barberoId,
+      profesionalId,
       fecha,
       hora,
       clienteNombre: nombreLimpio,
@@ -113,7 +113,7 @@ export function PasoDatos({ slug, sucursal, servicioId, barberoId, fecha, hora, 
         </div>
         <div>
           <dt>Barbero</dt>
-          <dd>{barbero ? `${barbero.nombre} ${barbero.apellido}` : '…'}</dd>
+          <dd>{profesional ? `${profesional.nombre} ${profesional.apellido}` : '…'}</dd>
         </div>
         <div>
           <dt>Cuándo</dt>

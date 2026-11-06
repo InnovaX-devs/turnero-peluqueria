@@ -31,23 +31,23 @@ export function AgendaPage() {
 
   const [fecha, setFecha] = useState(() => hoyISO())
   const [vista, setVista] = useState<Vista>('dia')
-  const [barberoId, setBarberoId] = useState<string | null>(null)
+  const [profesionalId, setProfesionalId] = useState<string | null>(null)
   const [seleccionado, setSeleccionado] = useState<Turno | null>(null)
   // null = cerrado; { bloqueo: null } = bloqueo nuevo; { bloqueo } = editar ese bloqueo
  const [formBloqueo, setFormBloqueo] = useState<{ bloqueo: Bloqueo | null } | null>(null)
   const { desde, hasta } = rangoDeVista(vista, fecha)
-  const filtroBarbero = esAdmin ? (barberoId ?? undefined) : undefined
+  const filtroProfesional = esAdmin ? (profesionalId ?? undefined) : undefined
 
   const { data, isPending, error, refetch } = useQuery({
-    queryKey: ['agenda', desde, hasta, filtroBarbero],
-    queryFn: () => obtenerAgenda(desde, hasta, filtroBarbero),
+    queryKey: ['agenda', desde, hasta, filtroProfesional],
+    queryFn: () => obtenerAgenda(desde, hasta, filtroProfesional),
   })
 
   const dias = useMemo(() => diasDelRango(desde, hasta), [desde, hasta])
   const porDia = useMemo(() => agruparPorDia(data ? combinarItems(data) : [], dias), [data, dias])
 
   // Si el admin ve varios barberos a la vez, hay que aclarar de quién es cada turno.
-  const mostrarBarbero = esAdmin && barberoId === null
+  const mostrarProfesional = esAdmin && profesionalId === null
 
   function moverFecha(pasos: number) {
     setFecha((f) => sumarDias(f, vista === 'dia' ? pasos : pasos * 7))
@@ -89,16 +89,16 @@ export function AgendaPage() {
             + Bloquear horario
           </button>
 
-          {esAdmin && data && data.barberos.length > 0 && (
+          {esAdmin && data && data.profesionales.length > 0 && (
             <Selector
               variante="pill"
               alinear="derecha"
               etiqueta="Filtrar por barbero"
-              valor={barberoId ?? ''}
-              onChange={(v) => setBarberoId(v === '' ? null : v)}
+              valor={profesionalId ?? ''}
+              onChange={(v) => setProfesionalId(v === '' ? null : v)}
               opciones={[
                 { valor: '', etiqueta: 'Todos los barberos' },
-                ...data.barberos.map((b) => ({ valor: b.id, etiqueta: b.nombre })),
+                ...data.profesionales.map((b) => ({ valor: b.id, etiqueta: b.nombre })),
               ]}
             />
           )}
@@ -138,7 +138,7 @@ export function AgendaPage() {
                               className="agenda-item agenda-item-turno"
                               onClick={() => setSeleccionado(turno)}
                             >
-                              <TarjetaTurno turno={turno} mostrarBarbero={mostrarBarbero} />
+                              <TarjetaTurno turno={turno} mostrarProfesional={mostrarProfesional} />
                             </button>
                           ) : bloqueo ? (
                             <button
@@ -146,7 +146,7 @@ export function AgendaPage() {
                               className="agenda-item agenda-item-bloqueo"
                               onClick={() => setFormBloqueo({ bloqueo })}
                             >
-                              <TarjetaBloqueo bloqueo={bloqueo} mostrarBarbero={mostrarBarbero} />
+                              <TarjetaBloqueo bloqueo={bloqueo} mostrarProfesional={mostrarProfesional} />
                             </button>
                           ) : null}
                         </li>
@@ -166,7 +166,7 @@ export function AgendaPage() {
         <BloqueoForm
           bloqueo={formBloqueo.bloqueo}
           fechaInicial={fecha}
-          barberoInicialId={filtroBarbero ?? null}
+          profesionalInicialId={filtroProfesional ?? null}
           onCerrar={() => setFormBloqueo(null)}
         />
       )}
@@ -174,7 +174,7 @@ export function AgendaPage() {
   )
 }
 
-function TarjetaTurno({ turno, mostrarBarbero }: { turno: Turno; mostrarBarbero: boolean }) {
+function TarjetaTurno({ turno, mostrarProfesional }: { turno: Turno; mostrarProfesional: boolean }) {
   return (
     <>
       <div className="agenda-item-hora">
@@ -184,7 +184,7 @@ function TarjetaTurno({ turno, mostrarBarbero }: { turno: Turno; mostrarBarbero:
       <div className="agenda-item-cuerpo">
         <strong>{turno.clienteNombre ?? 'Sin cliente'}</strong>
         <span className="agenda-item-servicio">{turno.servicioNombre}</span>
-        {mostrarBarbero && <span className="agenda-item-barbero">{turno.barberoNombre}</span>}
+        {mostrarProfesional && <span className="agenda-item-profesional">{turno.profesionalNombre}</span>}
       </div>
       <div className="agenda-item-badges">
         <span className={`agenda-badge estado-${turno.estado.toLowerCase()}`}>{ETIQUETAS_ESTADO[turno.estado]}</span>
@@ -194,7 +194,7 @@ function TarjetaTurno({ turno, mostrarBarbero }: { turno: Turno; mostrarBarbero:
   )
 }
 
-function TarjetaBloqueo({ bloqueo, mostrarBarbero }: { bloqueo: Bloqueo; mostrarBarbero: boolean }) {
+function TarjetaBloqueo({ bloqueo, mostrarProfesional }: { bloqueo: Bloqueo; mostrarProfesional: boolean }) {
   return (
     <>
       <div className="agenda-item-hora">
@@ -209,7 +209,7 @@ function TarjetaBloqueo({ bloqueo, mostrarBarbero }: { bloqueo: Bloqueo; mostrar
       </div>
       <div className="agenda-item-cuerpo">
         <strong>{bloqueo.motivo ?? 'Bloqueado'}</strong>
-        {mostrarBarbero && <span className="agenda-item-barbero">{bloqueo.barberoNombre}</span>}
+        {mostrarProfesional && <span className="agenda-item-profesional">{bloqueo.profesionalNombre}</span>}
       </div>
     </>
   )

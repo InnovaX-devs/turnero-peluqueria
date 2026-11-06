@@ -99,22 +99,22 @@ class BloqueoIntegrationTest {
     }
 
     /** Body de un bloqueo por rango horario, para un barbero (null = el logueado). */
-    private String rango(String barberoId, int desdeHora, int hastaHora, String motivo) {
-        return rangoVarios(new String[]{barberoId}, desdeHora, hastaHora, motivo);
+    private String rango(String profesionalId, int desdeHora, int hastaHora, String motivo) {
+        return rangoVarios(new String[]{profesionalId}, desdeHora, hastaHora, motivo);
     }
 
     /** Body de un bloqueo por rango horario, para varios barberos. */
-    private String rangoVarios(String[] barberoIds, int desdeHora, int hastaHora, String motivo) {
+    private String rangoVarios(String[] profesionalIds, int desdeHora, int hastaHora, String motivo) {
         return """
-                {"barberoIds":%s,"fecha":"%s","horaDesde":"%02d:00","horaHasta":"%02d:00","motivo":%s}
-                """.formatted(lista(barberoIds), lunes, desdeHora, hastaHora,
+                {"profesionalIds":%s,"fecha":"%s","horaDesde":"%02d:00","horaHasta":"%02d:00","motivo":%s}
+                """.formatted(lista(profesionalIds), lunes, desdeHora, hastaHora,
                 motivo == null ? "null" : "\"" + motivo + "\"");
     }
 
-    private String diaCompleto(String barberoId) {
+    private String diaCompleto(String profesionalId) {
         return """
-                {"barberoIds":%s,"fecha":"%s"}
-                """.formatted(lista(barberoId), lunes);
+                {"profesionalIds":%s,"fecha":"%s"}
+                """.formatted(lista(profesionalId), lunes);
     }
 
     private String crear(String token, String json, int statusEsperado) throws Exception {
@@ -137,10 +137,10 @@ class BloqueoIntegrationTest {
     }
 
     @Test
-    void barberoCreaUnBloqueoPorRangoHorario() throws Exception {
+    void profesionalCreaUnBloqueoPorRangoHorario() throws Exception {
         Bloqueo b = bloqueoDe(crear(lucas(), rango(null, 13, 14, "Almuerzo"), 201));
 
-        assertThat(b.getBarbero().getId()).isEqualTo(UUID.fromString(LUCAS)); // el logueado
+        assertThat(b.getProfesional().getId()).isEqualTo(UUID.fromString(LUCAS)); // el logueado
         assertThat(b.getInicio()).isEqualTo(a(lunes, 13, 0));
         assertThat(b.getFin()).isEqualTo(a(lunes, 14, 0));
         assertThat(b.getMotivo()).isEqualTo("Almuerzo");
@@ -176,26 +176,26 @@ class BloqueoIntegrationTest {
     // ---------- Permisos ----------
 
     @Test
-    void barberoNoPuedeBloquearAOtroBarbero() throws Exception {
+    void profesionalNoPuedeBloquearAOtroProfesional() throws Exception {
         crear(lucas(), rango(ANDRES, 13, 14, null), 403);
     }
 
     @Test
-    void adminTieneQueElegirBarberoYPuedeBloquearACualquiera() throws Exception {
+    void adminTieneQueElegirProfesionalYPuedeBloquearACualquiera() throws Exception {
         String token = admin(); // el admin del seed no está vinculado a un barbero
         crear(token, rango(null, 13, 14, null), 400);
         Bloqueo b = bloqueoDe(crear(token, rango(ANDRES, 13, 14, null), 201));
-        assertThat(b.getBarbero().getId()).isEqualTo(UUID.fromString(ANDRES));
+        assertThat(b.getProfesional().getId()).isEqualTo(UUID.fromString(ANDRES));
     }
 
     // ---------- Turnos en conflicto ----------
 
-    private void reservar(String barberoId, int hora, String telefono) throws Exception {
+    private void reservar(String profesionalId, int hora, String telefono) throws Exception {
         mvc.perform(post("/api/public/reservas").contentType(MediaType.APPLICATION_JSON)
                         .content("""
-                                {"sucursalId":"%s","servicioId":"%s","barberoId":"%s","fecha":"%s","hora":"%02d:00",
+                                {"sucursalId":"%s","servicioId":"%s","profesionalId":"%s","fecha":"%s","hora":"%02d:00",
                                  "clienteNombre":"Cliente Test","clienteTelefono":"%s"}
-                                """.formatted(SUCURSAL, SERVICIO_CORTE, barberoId, lunes, hora, telefono)))
+                                """.formatted(SUCURSAL, SERVICIO_CORTE, profesionalId, lunes, hora, telefono)))
                 .andExpect(status().isCreated());
     }
 
@@ -233,7 +233,7 @@ class BloqueoIntegrationTest {
     }
 
     @Test
-    void losTurnosDeOtroBarberoNoSonConflicto() throws Exception {
+    void losTurnosDeOtroProfesionalNoSonConflicto() throws Exception {
         reservar(ANDRES, 10, "+5493584990012");
         mvc.perform(post("/api/bloqueos/conflictos").header("Authorization", lucas())
                         .contentType(MediaType.APPLICATION_JSON).content(rango(null, 9, 11, null)))
@@ -242,12 +242,12 @@ class BloqueoIntegrationTest {
 
         // ---------- Varios barberos a la vez ----------
 
-    private long bloqueosDe(String barberoId) {
-        return bloqueos.findSolapados(UUID.fromString(barberoId), a(lunes, 0, 0), a(lunes.plusDays(1), 0, 0)).size();
+    private long bloqueosDe(String profesionalId) {
+        return bloqueos.findSolapados(UUID.fromString(profesionalId), a(lunes, 0, 0), a(lunes.plusDays(1), 0, 0)).size();
     }
 
     @Test
-    void adminBloqueaVariosBarberosDeUnaVez() throws Exception {
+    void adminBloqueaVariosProfesionalesDeUnaVez() throws Exception {
         String respuesta = crear(admin(), rangoVarios(new String[]{LUCAS, ANDRES}, 13, 14, "Feriado"), 201);
 
         assertThat((List<?>) JsonPath.read(respuesta, "$")).hasSize(2); // uno por barbero
@@ -256,27 +256,27 @@ class BloqueoIntegrationTest {
     }
 
     @Test
-    void unBarberoRepetidoEnLaListaSeBloqueaUnaSolaVez() throws Exception {
+    void unProfesionalRepetidoEnLaListaSeBloqueaUnaSolaVez() throws Exception {
         String respuesta = crear(admin(), rangoVarios(new String[]{LUCAS, LUCAS}, 13, 14, null), 201);
         assertThat((List<?>) JsonPath.read(respuesta, "$")).hasSize(1);
     }
 
     @Test
-    void siUnBarberoDeLaListaNoExisteNoSeCreaNingunBloqueo() throws Exception {
+    void siUnProfesionalDeLaListaNoExisteNoSeCreaNingunBloqueo() throws Exception {
         String token = admin();
         crear(token, rangoVarios(new String[]{LUCAS, UUID.randomUUID().toString()}, 13, 14, null), 404);
         assertThat(bloqueosDe(LUCAS)).isZero();
     }
 
     @Test
-    void barberoNoPuedeIncluirAOtroBarberoEnLaLista() throws Exception {
+    void profesionalNoPuedeIncluirAOtroProfesionalEnLaLista() throws Exception {
         crear(lucas(), rangoVarios(new String[]{LUCAS, ANDRES}, 13, 14, null), 403);
         assertThat(bloqueosDe(LUCAS)).isZero();
         assertThat(bloqueosDe(ANDRES)).isZero();
     }
 
     @Test
-    void losConflictosSeBuscanEnTodosLosBarberosElegidos() throws Exception {
+    void losConflictosSeBuscanEnTodosLosProfesionalesElegidos() throws Exception {
         reservar(LUCAS, 10, "+5493584990014");
         reservar(ANDRES, 10, "+5493584990015");
 
@@ -293,7 +293,7 @@ class BloqueoIntegrationTest {
     }
 
     @Test
-    void alEditarSoloSePuedeElegirUnBarbero() throws Exception {
+    void alEditarSoloSePuedeElegirUnProfesional() throws Exception {
         String token = admin();
         String id = JsonPath.read(crear(token, rango(LUCAS, 13, 14, null), 201), "$[0].id");
 
@@ -301,7 +301,7 @@ class BloqueoIntegrationTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(rangoVarios(new String[]{LUCAS, ANDRES}, 13, 14, null)))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.errores.barberoIds").exists());
+                .andExpect(jsonPath("$.errores.profesionalIds").exists());
     }
 
     // ---------- Editar y borrar ----------
@@ -336,7 +336,7 @@ class BloqueoIntegrationTest {
     }
 
     @Test
-    void barberoNoPuedeEditarNiBorrarBloqueosDeOtro() throws Exception {
+    void profesionalNoPuedeEditarNiBorrarBloqueosDeOtro() throws Exception {
         String id = JsonPath.read(crear(admin(), rango(ANDRES, 13, 14, null), 201), "$[0].id");
         String token = lucas();
 
@@ -353,7 +353,7 @@ class BloqueoIntegrationTest {
     private ResultActions horariosLibresDeLucas() throws Exception {
         return mvc.perform(get("/api/public/disponibilidad")
                 .param("sucursal", SUCURSAL).param("servicio", SERVICIO_CORTE)
-                .param("barbero", LUCAS).param("fecha", lunes.toString()));
+                .param("profesional", LUCAS).param("fecha", lunes.toString()));
     }
 
     @Test
@@ -371,7 +371,7 @@ class BloqueoIntegrationTest {
         // Y aunque alguien intente reservar a mano un horario bloqueado, se rechaza
         mvc.perform(post("/api/public/reservas").contentType(MediaType.APPLICATION_JSON)
                         .content("""
-                                {"sucursalId":"%s","servicioId":"%s","barberoId":"%s","fecha":"%s","hora":"11:00",
+                                {"sucursalId":"%s","servicioId":"%s","profesionalId":"%s","fecha":"%s","hora":"11:00",
                                  "clienteNombre":"Cliente Test","clienteTelefono":"+5493584990013"}
                                 """.formatted(SUCURSAL, SERVICIO_CORTE, LUCAS, lunes)))
                 .andExpect(status().isConflict());
@@ -381,13 +381,13 @@ class BloqueoIntegrationTest {
     void unBloqueoDeDiaCompletoQuitaEseDiaDelCalendario() throws Exception {
         String diasLibres = "/api/public/disponibilidad/dias";
         mvc.perform(get(diasLibres).param("sucursal", SUCURSAL).param("servicio", SERVICIO_CORTE)
-                        .param("barbero", LUCAS).param("desde", lunes.toString()).param("hasta", lunes.toString()))
+                        .param("profesional", LUCAS).param("desde", lunes.toString()).param("hasta", lunes.toString()))
                 .andExpect(jsonPath("$.dias", hasItem(lunes.toString())));
 
         crear(lucas(), diaCompleto(null), 201);
 
         mvc.perform(get(diasLibres).param("sucursal", SUCURSAL).param("servicio", SERVICIO_CORTE)
-                        .param("barbero", LUCAS).param("desde", lunes.toString()).param("hasta", lunes.toString()))
+                        .param("profesional", LUCAS).param("desde", lunes.toString()).param("hasta", lunes.toString()))
                 .andExpect(jsonPath("$.dias", not(hasItem(lunes.toString()))));
     }
 

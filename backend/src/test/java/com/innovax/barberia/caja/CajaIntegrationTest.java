@@ -5,8 +5,8 @@ import com.innovax.barberia.atencion.AtencionRepository;
 import com.innovax.barberia.atencion.EstadoAtencion;
 import com.innovax.barberia.atencion.MetodoPago;
 import com.innovax.barberia.atencion.OrigenAtencion;
-import com.innovax.barberia.barberia.BarberiaRepository;
-import com.innovax.barberia.barbero.BarberoRepository;
+import com.innovax.barberia.negocio.NegocioRepository;
+import com.innovax.barberia.profesional.ProfesionalRepository;
 import com.innovax.barberia.cliente.ClienteRepository;
 import com.innovax.barberia.servicio.ServicioRepository;
 import com.innovax.barberia.sucursal.SucursalRepository;
@@ -64,9 +64,9 @@ class CajaIntegrationTest {
 
     @Autowired private WebApplicationContext context;
     @Autowired private AtencionRepository atenciones;
-    @Autowired private BarberiaRepository barberias;
+    @Autowired private NegocioRepository negocios;
     @Autowired private SucursalRepository sucursales;
-    @Autowired private BarberoRepository barberos;
+    @Autowired private ProfesionalRepository profesionales;
     @Autowired private ServicioRepository servicios;
     @Autowired private ClienteRepository clientes;
 
@@ -85,12 +85,12 @@ class CajaIntegrationTest {
         atenciones.flush();
     }
 
-    private void crear(UUID barbero, UUID servicio, LocalDate dia, int hora, int minuto, int duracion,
+    private void crear(UUID profesional, UUID servicio, LocalDate dia, int hora, int minuto, int duracion,
                        EstadoAtencion estado, long precio, MetodoPago metodo, UUID cliente) {
         Atencion a = new Atencion();
-        a.setBarberia(barberias.findById(JADE).orElseThrow());
+        a.setNegocio(negocios.findById(JADE).orElseThrow());
         a.setSucursal(sucursales.findById(SUCURSAL).orElseThrow());
-        a.setBarbero(barberos.findById(barbero).orElseThrow());
+        a.setProfesional(profesionales.findById(profesional).orElseThrow());
         a.setServicio(servicios.findById(servicio).orElseThrow());
         a.setCliente(cliente == null ? null : clientes.findById(cliente).orElseThrow());
         var inicio = ZonedDateTime.of(dia, LocalTime.of(hora, minuto), ZONA).toInstant();
@@ -129,13 +129,13 @@ class CajaIntegrationTest {
     }
 
     @Test
-    void desglosaPorBarberoServicioYMetodoOrdenadoPorTotal() throws Exception {
+    void desglosaPorProfesionalServicioYMetodoOrdenadoPorTotal() throws Exception {
         consultar(login("admin@jade.com", "admin123"), DIA_1, DIA_2)
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.porBarbero", hasSize(2)))
-                .andExpect(jsonPath("$.porBarbero[0].nombre").value("Lucas Sanchez"))
-                .andExpect(jsonPath("$.porBarbero[0].cantidad").value(2))
-                .andExpect(jsonPath("$.porBarbero[0].total").value(2700000))
+                .andExpect(jsonPath("$.porProfesional", hasSize(2)))
+                .andExpect(jsonPath("$.porProfesional[0].nombre").value("Lucas Sanchez"))
+                .andExpect(jsonPath("$.porProfesional[0].cantidad").value(2))
+                .andExpect(jsonPath("$.porProfesional[0].total").value(2700000))
                 .andExpect(jsonPath("$.porServicio[0].nombre").value("Corte"))
                 .andExpect(jsonPath("$.porServicio[0].total").value(2700000))
                 .andExpect(jsonPath("$.porMetodoPago[0].metodo").value("EFECTIVO"))
@@ -154,7 +154,7 @@ class CajaIntegrationTest {
     }
 
     @Test
-    void elDiaSeCuentaEnLaHoraDeLaBarberiaNoEnUtc() throws Exception {
+    void elDiaSeCuentaEnLaHoraDelNegocioNoEnUtc() throws Exception {
         // 23:30 en Córdoba ya es el día siguiente en UTC: tiene que contar para el día 12
         LocalDate dia3 = LocalDate.of(2020, 3, 12);
         crear(LUCAS, CORTE, dia3, 23, 30, 30, EstadoAtencion.COMPLETADA, 1000000, MetodoPago.TARJETA, null);
@@ -185,7 +185,7 @@ class CajaIntegrationTest {
     }
 
     @Test
-    void barberoNoPuedeVerLaCaja() throws Exception {
+    void profesionalNoPuedeVerLaCaja() throws Exception {
         consultar(login("lucas@jade.com", "barbero123"), DIA_1, DIA_2)
                 .andExpect(status().isForbidden());
     }

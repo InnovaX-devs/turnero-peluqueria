@@ -4,8 +4,8 @@ export function linkDelTurno(token: string, origen: string = window.location.ori
 }
 
 /** Abre WhatsApp para mandarse el link a uno mismo (o a quien quiera). */
-export function linkWhatsAppParaGuardar(link: string, barberia: string): string {
-  const texto = `Mi turno en ${barberia}. Para cancelarlo o cambiarlo: ${link}`
+export function linkWhatsAppParaGuardar(link: string, negocio: string): string {
+  const texto = `Mi turno en ${negocio}. Para cancelarlo o cambiarlo: ${link}`
   return `https://wa.me/?text=${encodeURIComponent(texto)}`
 }
 

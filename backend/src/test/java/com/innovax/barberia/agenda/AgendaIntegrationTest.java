@@ -56,7 +56,7 @@ class AgendaIntegrationTest {
     }
 
     @Test
-    void adminVeLaAgendaSinFiltrarPorBarbero() throws Exception {
+    void adminVeLaAgendaSinFiltrarPorProfesional() throws Exception {
         String token = login("admin@jade.com", "admin123");
         LocalDate hoy = LocalDate.now();
         mvc.perform(get("/api/agenda")
@@ -66,33 +66,33 @@ class AgendaIntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.turnos").isArray())
                 .andExpect(jsonPath("$.bloqueos").isArray())
-                .andExpect(jsonPath("$.barberos", org.hamcrest.Matchers.hasSize(3)));
+                .andExpect(jsonPath("$.profesionales", org.hamcrest.Matchers.hasSize(3)));
     }
 
     @Test
-    void adminPuedeFiltrarPorUnBarberoPuntual() throws Exception {
+    void adminPuedeFiltrarPorUnProfesionalPuntual() throws Exception {
         String token = login("admin@jade.com", "admin123");
         LocalDate hoy = LocalDate.now();
         mvc.perform(get("/api/agenda")
                         .param("desde", hoy.toString())
                         .param("hasta", hoy.toString())
-                        .param("barberoId", ANDRES)
+                        .param("profesionalId", ANDRES)
                         .header("Authorization", bearer(token)))
                 .andExpect(status().isOk());
     }
 
     @Test
-    void barberoVeSuAgendaAunquePidaOtroBarberoEnElFiltro() throws Exception {
+    void profesionalVeSuAgendaAunquePidaOtroProfesionalEnElFiltro() throws Exception {
         String token = login("lucas@jade.com", "barbero123");
         LocalDate hoy = LocalDate.now();
-        // Lucas pide el barberoId de Andrés: el backend lo ignora y devuelve solo lo de Lucas.
+        // Lucas pide el profesionalId de Andrés: el backend lo ignora y devuelve solo lo de Lucas.
         mvc.perform(get("/api/agenda")
                         .param("desde", hoy.toString())
                         .param("hasta", hoy.toString())
-                        .param("barberoId", ANDRES)
+                        .param("profesionalId", ANDRES)
                         .header("Authorization", bearer(token)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.turnos[*].barberoId").value(org.hamcrest.Matchers.everyItem(
+                .andExpect(jsonPath("$.turnos[*].profesionalId").value(org.hamcrest.Matchers.everyItem(
                         org.hamcrest.Matchers.equalTo(LUCAS))));
     }
 

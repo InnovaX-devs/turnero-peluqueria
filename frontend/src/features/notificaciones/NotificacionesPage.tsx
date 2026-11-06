@@ -117,7 +117,7 @@ function TarjetaNotificacion({
       </div>
       <p className="notificacion-turno">
         Turno: {fechaTurno(n.turnoInicio)}
-        {n.barberoNombre ? ` · ${n.barberoNombre}` : ''}
+        {n.profesionalNombre ? ` · ${n.profesionalNombre}` : ''}
       </p>
       <p className="notificacion-telefono">{n.destinatario}</p>
       <details>

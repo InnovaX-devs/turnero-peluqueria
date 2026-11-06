@@ -1,7 +1,7 @@
 package com.innovax.barberia.servicio;
 
-import com.innovax.barberia.barbero.Barbero;
-import com.innovax.barberia.barbero.BarberoRepository;
+import com.innovax.barberia.profesional.Profesional;
+import com.innovax.barberia.profesional.ProfesionalRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -35,7 +35,7 @@ class ServicioPublicoIntegrationTest {
     @Autowired
     private ServicioRepository servicios;
     @Autowired
-    private BarberoRepository barberos;
+    private ProfesionalRepository profesionales;
 
     private MockMvc mvc;
 
@@ -46,7 +46,7 @@ class ServicioPublicoIntegrationTest {
 
     @Test
     void devuelveLosServiciosOrdenadosSinLogin() throws Exception {
-        mvc.perform(get("/api/public/barberias/jade/servicios").param("sucursal", SUCURSAL))
+        mvc.perform(get("/api/public/negocios/jade/servicios").param("sucursal", SUCURSAL))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$", hasSize(3)))
                 .andExpect(jsonPath("$[0].nombre").value("Corte"))
@@ -58,7 +58,7 @@ class ServicioPublicoIntegrationTest {
 
     @Test
     void sinSucursalDevuelveTodosLosActivos() throws Exception {
-        mvc.perform(get("/api/public/barberias/jade/servicios"))
+        mvc.perform(get("/api/public/negocios/jade/servicios"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$", hasSize(3)));
     }
@@ -69,35 +69,35 @@ class ServicioPublicoIntegrationTest {
         barba.setActivo(false);
         servicios.saveAndFlush(barba);
 
-        mvc.perform(get("/api/public/barberias/jade/servicios").param("sucursal", SUCURSAL))
+        mvc.perform(get("/api/public/negocios/jade/servicios").param("sucursal", SUCURSAL))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$", hasSize(2)))
                 .andExpect(jsonPath("$[1].nombre").value("Corte y Barba"));
     }
 
     @Test
-    void noMuestraServiciosQueNingunBarberoHaceEnEsaSucursal() throws Exception {
-        for (Barbero b : barberos.findAll()) {
+    void noMuestraServiciosQueNingunProfesionalHaceEnEsaSucursal() throws Exception {
+        for (Profesional b : profesionales.findAll()) {
             b.getServicios().removeIf(s -> s.getId().equals(SERVICIO_BARBA));
-            barberos.save(b);
+            profesionales.save(b);
         }
-        barberos.flush();
+        profesionales.flush();
 
-        mvc.perform(get("/api/public/barberias/jade/servicios").param("sucursal", SUCURSAL))
+        mvc.perform(get("/api/public/negocios/jade/servicios").param("sucursal", SUCURSAL))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$", hasSize(2)));
     }
 
     @Test
-    void sucursalDeOtraBarberiaOInexistenteDevuelve404() throws Exception {
-        mvc.perform(get("/api/public/barberias/jade/servicios").param("sucursal", UUID.randomUUID().toString()))
+    void sucursalDeOtroNegocioOInexistenteDevuelve404() throws Exception {
+        mvc.perform(get("/api/public/negocios/jade/servicios").param("sucursal", UUID.randomUUID().toString()))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.mensaje").value("Sucursal no encontrada"));
     }
 
     @Test
     void slugInexistenteDevuelve404() throws Exception {
-        mvc.perform(get("/api/public/barberias/no-existe/servicios"))
+        mvc.perform(get("/api/public/negocios/no-existe/servicios"))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.mensaje").value("Barbería no encontrada"));
     }

@@ -4,10 +4,10 @@ import com.innovax.barberia.atencion.dto.AtencionResponse;
 import com.innovax.barberia.atencion.dto.OpcionesRegistroResponse;
 import com.innovax.barberia.atencion.dto.RegistrarCorteRequest;
 import com.innovax.barberia.auth.UsuarioActual;
-import com.innovax.barberia.barberia.Barberia;
-import com.innovax.barberia.barberia.BarberiaRepository;
-import com.innovax.barberia.barbero.Barbero;
-import com.innovax.barberia.barbero.BarberoRepository;
+import com.innovax.barberia.negocio.Negocio;
+import com.innovax.barberia.negocio.NegocioRepository;
+import com.innovax.barberia.profesional.Profesional;
+import com.innovax.barberia.profesional.ProfesionalRepository;
 import com.innovax.barberia.cliente.Cliente;
 import com.innovax.barberia.cliente.ClienteRepository;
 import com.innovax.barberia.common.ConflictoException;
@@ -49,8 +49,8 @@ public class RegistroCorteService {
     private static final DateTimeFormatter HORA = DateTimeFormatter.ofPattern("HH:mm");
 
     private final UsuarioActual usuarioActual;
-    private final BarberiaRepository barberias;
-    private final BarberoRepository barberos;
+    private final NegocioRepository negocios;
+    private final ProfesionalRepository profesionales;
     private final ServicioRepository servicios;
     private final SucursalRepository sucursales;
     private final ClienteRepository clientes;
@@ -58,45 +58,45 @@ public class RegistroCorteService {
 
     @Transactional(readOnly = true)
     public OpcionesRegistroResponse opciones() {
-        Barberia barberia = barberiaActual();
-        UUID propio = usuarioActual.barberoId().orElse(null);
+        Negocio negocio = negocioActual();
+        UUID propio = usuarioActual.profesionalId().orElse(null);
         // El admin elige entre todos; el barbero solo se ve a sí mismo
-        List<Barbero> visibles = barberos.findByBarberiaIdAndActivoTrueOrderByNombreAscApellidoAsc(barberia.getId())
+        List<Profesional> visibles = profesionales.findByNegocioIdAndActivoTrueOrderByNombreAscApellidoAsc(negocio.getId())
                 .stream()
                 .filter(b -> usuarioActual.esAdmin() || b.getId().equals(propio))
                 .toList();
-        return OpcionesRegistroResponse.de(barberia, propio,
-                servicios.findByBarberiaIdAndActivoTrueOrderByOrdenAscNombreAsc(barberia.getId()),
+        return OpcionesRegistroResponse.de(negocio, propio,
+                servicios.findByNegocioIdAndActivoTrueOrderByOrdenAscNombreAsc(negocio.getId()),
                 visibles,
-                sucursales.findByBarberiaIdAndActivaTrueOrderByNombreAsc(barberia.getId()));
+                sucursales.findByNegocioIdAndActivaTrueOrderByNombreAsc(negocio.getId()));
     }
 
     @Transactional
     public AtencionResponse registrar(RegistrarCorteRequest request) {
-        Barberia barberia = barberiaActual();
-        ZoneId zona = ZoneId.of(barberia.getZonaHoraria());
+        Negocio negocio = negocioActual();
+        ZoneId zona = ZoneId.of(negocio.getZonaHoraria());
 
-        Barbero barbero = resolverBarbero(barberia, request.barberoId());
-        Sucursal sucursal = resolverSucursal(barberia, barbero, request.sucursalId());
+        Profesional profesional = resolverProfesional(negocio, request.profesionalId());
+        Sucursal sucursal = resolverSucursal(negocio, profesional, request.sucursalId());
         Servicio servicio = servicios.findById(request.servicioId())
                 .filter(Servicio::isActivo) 
-                .filter(s -> s.getBarberia().getId().equals(barberia.getId()))
+                .filter(s -> s.getNegocio().getId().equals(negocio.getId()))
                 .orElseThrow(() -> new RecursoNoEncontradoException("Servicio no encontrado"));
         Cliente cliente = null;
         if (request.clienteId() != null) {
             cliente = clientes.findById(request.clienteId())
-                    .filter(c -> c.getBarberia().getId().equals(barberia.getId()))
+                    .filter(c -> c.getNegocio().getId().equals(negocio.getId()))
                     .orElseThrow(() -> new RecursoNoEncontradoException("Cliente no encontrado"));
         }
 
         Instant inicio = resolverInicio(zona, request.fecha(), request.hora());
-        Instant fin = acomodarSuperposiciones(barbero, zona, inicio,
+        Instant fin = acomodarSuperposiciones(profesional, zona, inicio,
                 inicio.plus(Duration.ofMinutes(servicio.getDuracionMin())));
 
         Atencion atencion = new Atencion();
-        atencion.setBarberia(barberia);
+        atencion.setNegocio(negocio);
         atencion.setSucursal(sucursal);
-        atencion.setBarbero(barbero);
+        atencion.setProfesional(profesional);
         atencion.setCliente(cliente);
         atencion.setServicio(servicio);
         atencion.setInicio(inicio);
@@ -119,38 +119,38 @@ public class RegistroCorteService {
     }
 
     /** Barbero logueado: siempre él mismo. Admin: el que elija (o él mismo si también corta). */
-    private Barbero resolverBarbero(Barberia barberia, UUID barberoPedido) {
-        UUID barberoId;
+    private Profesional resolverProfesional(Negocio negocio, UUID profesionalPedido) {
+        UUID profesionalId;
         if (!usuarioActual.esAdmin()) {
-            barberoId = usuarioActual.barberoId()
+            profesionalId = usuarioActual.profesionalId()
                     .orElseThrow(() -> new AccessDeniedException("El usuario no está vinculado a un barbero"));
-            if (barberoPedido != null) {
-                usuarioActual.verificarAccesoABarbero(barberoPedido); // 403 si pide otro
+            if (profesionalPedido != null) {
+                usuarioActual.verificarAccesoAProfesional(profesionalPedido); // 403 si pide otro
             }
-        } else if (barberoPedido != null) {
-            barberoId = barberoPedido;
+        } else if (profesionalPedido != null) {
+            profesionalId = profesionalPedido;
         } else {
-            barberoId = usuarioActual.barberoId()
-                    .orElseThrow(() -> new DatosInvalidosException("barberoId", "Elegí el barbero"));
+            profesionalId = usuarioActual.profesionalId()
+                    .orElseThrow(() -> new DatosInvalidosException("profesionalId", "Elegí el barbero"));
         }
-        return barberos.findById(barberoId)
-                .filter(b -> b.getBarberia().getId().equals(barberia.getId()))
+        return profesionales.findById(profesionalId)
+                .filter(b -> b.getNegocio().getId().equals(negocio.getId()))
                 .orElseThrow(() -> new RecursoNoEncontradoException("Barbero no encontrado"));
     }
 
     /** Si el barbero trabaja en una sola sucursal, no hace falta elegirla. */
-    private Sucursal resolverSucursal(Barberia barberia, Barbero barbero, UUID sucursalId) {
+    private Sucursal resolverSucursal(Negocio negocio, Profesional profesional, UUID sucursalId) {
         if (sucursalId == null) {
-            List<Sucursal> activas = barbero.getSucursales().stream().filter(Sucursal::isActiva).toList();
+            List<Sucursal> activas = profesional.getSucursales().stream().filter(Sucursal::isActiva).toList();
             if (activas.size() != 1) {
                 throw new DatosInvalidosException("sucursalId", "Elegí la sucursal");
             }
             return activas.get(0);
         }
         Sucursal sucursal = sucursales.findById(sucursalId)
-                .filter(s -> s.getBarberia().getId().equals(barberia.getId()))
+                .filter(s -> s.getNegocio().getId().equals(negocio.getId()))
                 .orElseThrow(() -> new RecursoNoEncontradoException("Sucursal no encontrada"));
-        if (!barbero.getSucursales().contains(sucursal)) {
+        if (!profesional.getSucursales().contains(sucursal)) {
             throw new DatosInvalidosException("sucursalId", "Ese barbero no trabaja en esa sucursal");
         }
         return sucursal;
@@ -182,9 +182,9 @@ public class RegistroCorteService {
      * - si hay una atención que empieza después, esta termina cuando empieza aquella;
      * - un turno RESERVADO que empezó antes y sigue pendiente es un conflicto real: 409.
      */
-    private Instant acomodarSuperposiciones(Barbero barbero, ZoneId zona, Instant inicio, Instant fin) {
+    private Instant acomodarSuperposiciones(Profesional profesional, ZoneId zona, Instant inicio, Instant fin) {
         Instant finAjustado = fin;
-        for (Atencion otra : atenciones.findOcupadas(barbero.getId(), ACTIVAS, inicio, fin)) {
+        for (Atencion otra : atenciones.findOcupadas(profesional.getId(), ACTIVAS, inicio, fin)) {
             if (otra.getInicio().equals(inicio)) {
                 throw new ConflictoException("horario", "Ese barbero ya tiene una atención registrada a esa misma hora");
             }
@@ -205,8 +205,8 @@ public class RegistroCorteService {
         return finAjustado;
     }
 
-    private Barberia barberiaActual() {
-        return barberias.findById(usuarioActual.barberiaId())
+    private Negocio negocioActual() {
+        return negocios.findById(usuarioActual.negocioId())
                 .orElseThrow(() -> new IllegalStateException("La barbería del token no existe"));
     }
 }

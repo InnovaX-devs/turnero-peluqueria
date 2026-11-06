@@ -1,6 +1,6 @@
 package com.innovax.barberia.horario;
 
-import com.innovax.barberia.barbero.Barbero;
+import com.innovax.barberia.profesional.Profesional;
 import com.innovax.barberia.common.DiaSemanaConverter;
 import com.innovax.barberia.sucursal.Sucursal;
 import jakarta.persistence.*;
@@ -25,8 +25,8 @@ public class HorarioLaboral {
     private UUID id;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "barbero_id", nullable = false)
-    private Barbero barbero;
+    @JoinColumn(name = "profesional_id", nullable = false)
+    private Profesional profesional;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "sucursal_id", nullable = false)

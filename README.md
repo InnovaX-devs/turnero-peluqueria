@@ -29,6 +29,6 @@ Monorepo con backend en Spring Boot y frontend en React.
    ```
 
 ## Estructura
-- `backend/`: API REST, organizada por feature (`barbero/`, `atencion/`, etc.)
+- `backend/`: API REST, organizada por feature (`profesional/`, `atencion/`, etc.)
 - `frontend/`: app React. `/b/:slug` es la reserva pública, `/panel/*` el panel interno
 - `docs/`: decisiones técnicas y modelo de datos

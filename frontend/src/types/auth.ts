@@ -1,15 +1,15 @@
-export type Rol = 'ADMIN' | 'BARBERO'
+export type Rol = 'ADMIN' | 'PROFESIONAL'
 
 export interface Usuario {
   id: string
   email: string
   rol: Rol
-  barberiaId: string
+  negocioId: string
   /** null si el usuario no está vinculado a un barbero (ej. un admin que no corta) */
-  barberoId: string | null
-  barberiaNombre: string
+  profesionalId: string | null
+  negocioNombre: string
   /** null si la barbería no cargó logo */
-  barberiaLogoUrl: string | null
+  negocioLogoUrl: string | null
 }
 
 export interface LoginResponse {

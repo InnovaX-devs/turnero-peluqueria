@@ -6,5 +6,5 @@ import java.util.UUID;
 
 public interface SucursalRepository extends JpaRepository<Sucursal, UUID> {
 
-    List<Sucursal> findByBarberiaIdAndActivaTrueOrderByNombreAsc(UUID barberiaId);
+    List<Sucursal> findByNegocioIdAndActivaTrueOrderByNombreAsc(UUID negocioId);
 }

@@ -12,7 +12,7 @@ import java.util.List;
 public record AgendaResponse(
         LocalDate desde,
         LocalDate hasta,
-        List<BarberoResumen> barberos,
+        List<ProfesionalResumen> profesionales,
         List<TurnoAgendaResponse> turnos,
         List<BloqueoAgendaResponse> bloqueos
 ) {

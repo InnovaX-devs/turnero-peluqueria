@@ -6,10 +6,10 @@ export interface TurnoPublico {
   fin: string
   clienteNombre: string | null
   precio: number
-  barberia: { nombre: string; slug: string }
+  negocio: { nombre: string; slug: string }
   sucursal: { id: string; nombre: string; direccion: string; ciudad: string; telefono: string | null }
   servicio: { id: string; nombre: string; duracionMin: number }
-  barbero: { id: string; nombre: string }
+  profesional: { id: string; nombre: string }
   anticipacionCancelacionMin: number
   /** Hasta cuándo se puede cancelar o cambiar online */
   limiteModificacion: string

@@ -4,7 +4,7 @@ import com.innovax.barberia.atencion.Atencion;
 import com.innovax.barberia.atencion.AtencionRepository;
 import com.innovax.barberia.atencion.EstadoAtencion;
 import com.innovax.barberia.atencion.OrigenAtencion;
-import com.innovax.barberia.barbero.BarberoRepository;
+import com.innovax.barberia.profesional.ProfesionalRepository;
 import com.innovax.barberia.sucursal.SucursalRepository;
 import com.jayway.jsonpath.JsonPath;
 import org.junit.jupiter.api.BeforeEach;
@@ -50,7 +50,7 @@ class ServicioAdminIntegrationTest {
     @Autowired
     private AtencionRepository atenciones;
     @Autowired
-    private BarberoRepository barberos;
+    private ProfesionalRepository profesionales;
     @Autowired
     private SucursalRepository sucursales;
 
@@ -144,7 +144,7 @@ class ServicioAdminIntegrationTest {
                 .andExpect(status().isOk()).andExpect(jsonPath("$.activo").value(false));
 
         assertThat(servicios.findById(BARBA)).isPresent();   // no se borra
-        mvc.perform(get("/api/public/barberias/jade/servicios"))
+        mvc.perform(get("/api/public/negocios/jade/servicios"))
                 .andExpect(jsonPath("$", hasSize(2)));
 
         mvc.perform(patch("/api/servicios/" + BARBA + "/activo").header(AUTH, token)
@@ -162,7 +162,7 @@ class ServicioAdminIntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].nombre").value("Corte y Barba"));
 
-        mvc.perform(get("/api/public/barberias/jade/servicios"))
+        mvc.perform(get("/api/public/negocios/jade/servicios"))
                 .andExpect(jsonPath("$[0].nombre").value("Corte y Barba"))
                 .andExpect(jsonPath("$[1].nombre").value("Barba"))
                 .andExpect(jsonPath("$[2].nombre").value("Corte"));
@@ -183,9 +183,9 @@ class ServicioAdminIntegrationTest {
     void cambiarElPrecioNoModificaAtencionesYaRegistradas() throws Exception {
         Servicio corte = servicios.findById(CORTE).orElseThrow();
         Atencion a = new Atencion();
-        a.setBarberia(corte.getBarberia());
+        a.setNegocio(corte.getNegocio());
         a.setSucursal(sucursales.findById(SUCURSAL).orElseThrow());
-        a.setBarbero(barberos.findById(LUCAS).orElseThrow());
+        a.setProfesional(profesionales.findById(LUCAS).orElseThrow());
         a.setServicio(corte);
         a.setInicio(Instant.parse("2026-01-10T13:00:00Z"));
         a.setFin(Instant.parse("2026-01-10T13:30:00Z"));
@@ -201,7 +201,7 @@ class ServicioAdminIntegrationTest {
                 .andExpect(jsonPath("$.precio").value(precioOriginal * 2));
 
         assertThat(atenciones.findById(atencionId).orElseThrow().getPrecioFinal()).isEqualTo(precioOriginal);
-        mvc.perform(get("/api/public/barberias/jade/servicios"))
+        mvc.perform(get("/api/public/negocios/jade/servicios"))
                 .andExpect(jsonPath("$[0].precio").value(precioOriginal * 2));
     }
 

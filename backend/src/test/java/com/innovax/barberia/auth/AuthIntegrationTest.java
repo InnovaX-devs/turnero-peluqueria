@@ -21,7 +21,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest
 class AuthIntegrationTest {
 
-    private static final String BARBERIA_JADE = "aaaaaaaa-0000-0000-0000-000000000001";
+    private static final String NEGOCIO_JADE = "aaaaaaaa-0000-0000-0000-000000000001";
     private static final String LUCAS = "cccccccc-0000-0000-0000-000000000001";
     private static final String ANDRES = "cccccccc-0000-0000-0000-000000000002";
 
@@ -57,12 +57,12 @@ class AuthIntegrationTest {
                         .content("{\"email\":\"LUCAS@jade.com\",\"password\":\"barbero123\"}"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.token").isNotEmpty())
-                .andExpect(jsonPath("$.usuario.rol").value("BARBERO"))
-                .andExpect(jsonPath("$.usuario.barberiaId").value(BARBERIA_JADE))
-                .andExpect(jsonPath("$.usuario.barberoId").value(LUCAS))
+                .andExpect(jsonPath("$.usuario.rol").value("PROFESIONAL"))
+                .andExpect(jsonPath("$.usuario.negocioId").value(NEGOCIO_JADE))
+                .andExpect(jsonPath("$.usuario.profesionalId").value(LUCAS))
                 // Para la barra del panel: el barbero ve el nombre y el logo de su barbería
-                .andExpect(jsonPath("$.usuario.barberiaNombre").value("Jade"))
-                .andExpect(jsonPath("$.usuario.barberiaLogoUrl").hasJsonPath());
+                .andExpect(jsonPath("$.usuario.negocioNombre").value("Jade"))
+                .andExpect(jsonPath("$.usuario.negocioLogoUrl").hasJsonPath());
     }
 
     @Test
@@ -113,7 +113,7 @@ class AuthIntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.email").value("admin@jade.com"))
                 .andExpect(jsonPath("$.rol").value("ADMIN"))
-                .andExpect(jsonPath("$.barberiaNombre").value("Jade"));
+                .andExpect(jsonPath("$.negocioNombre").value("Jade"));
     }
 
     // ---------- Roles ----------
@@ -126,7 +126,7 @@ class AuthIntegrationTest {
     }
 
     @Test
-    void barberoNoPuedeEntrarAEndpointDeAdmin() throws Exception {
+    void profesionalNoPuedeEntrarAEndpointDeAdmin() throws Exception {
         String token = login("lucas@jade.com", "barbero123");
         mvc.perform(get("/api/test-permisos/solo-admin").header("Authorization", bearer(token)))
                 .andExpect(status().isForbidden());
@@ -135,33 +135,33 @@ class AuthIntegrationTest {
     // ---------- Barbero: solo lo suyo ----------
 
     @Test
-    void barberoPuedeOperarSobreSiMismo() throws Exception {
+    void profesionalPuedeOperarSobreSiMismo() throws Exception {
         String token = login("lucas@jade.com", "barbero123");
-        mvc.perform(get("/api/test-permisos/barbero/" + LUCAS).header("Authorization", bearer(token)))
+        mvc.perform(get("/api/test-permisos/profesional/" + LUCAS).header("Authorization", bearer(token)))
                 .andExpect(status().isOk());
     }
 
     @Test
-    void barberoNoPuedeOperarSobreOtroBarbero() throws Exception {
+    void profesionalNoPuedeOperarSobreOtroProfesional() throws Exception {
         String token = login("lucas@jade.com", "barbero123");
-        mvc.perform(get("/api/test-permisos/barbero/" + ANDRES).header("Authorization", bearer(token)))
+        mvc.perform(get("/api/test-permisos/profesional/" + ANDRES).header("Authorization", bearer(token)))
                 .andExpect(status().isForbidden());
     }
 
     @Test
-    void adminPuedeOperarSobreCualquierBarbero() throws Exception {
+    void adminPuedeOperarSobreCualquierProfesional() throws Exception {
         String token = login("admin@jade.com", "admin123");
-        mvc.perform(get("/api/test-permisos/barbero/" + ANDRES).header("Authorization", bearer(token)))
+        mvc.perform(get("/api/test-permisos/profesional/" + ANDRES).header("Authorization", bearer(token)))
                 .andExpect(status().isOk());
     }
 
     // ---------- Aislamiento por barbería ----------
 
     @Test
-    void laBarberiaSaleDelToken() throws Exception {
+    void elNegocioSaleDelToken() throws Exception {
         String token = login("lucas@jade.com", "barbero123");
-        mvc.perform(get("/api/test-permisos/mi-barberia").header("Authorization", bearer(token)))
+        mvc.perform(get("/api/test-permisos/mi-negocio").header("Authorization", bearer(token)))
                 .andExpect(status().isOk())
-                .andExpect(content().string(BARBERIA_JADE));
+                .andExpect(content().string(NEGOCIO_JADE));
     }
 }

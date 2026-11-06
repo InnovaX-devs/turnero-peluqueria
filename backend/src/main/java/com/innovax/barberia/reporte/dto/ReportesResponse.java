@@ -8,13 +8,13 @@ import java.util.UUID;
 public record ReportesResponse(
         LocalDate desde,
         LocalDate hasta,
-        List<Barbero> porBarbero,
+        List<Profesional> porProfesional,
         List<ClienteFrecuente> clientesFrecuentes,
         Ausentismo ausentismo,
         List<Demanda> demanda) {
 
     /** facturado: suma (en centavos) de lo cobrado en los cortes atendidos del período. */
-    public record Barbero(UUID id, String nombre, int atendidos, int ausentes, int cancelados, long facturado) {
+    public record Profesional(UUID id, String nombre, int atendidos, int ausentes, int cancelados, long facturado) {
     }
 
     public record ClienteFrecuente(UUID id, String nombre, String telefono, int visitas, long total,

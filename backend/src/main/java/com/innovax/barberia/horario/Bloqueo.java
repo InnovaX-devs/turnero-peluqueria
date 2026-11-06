@@ -1,6 +1,6 @@
 package com.innovax.barberia.horario;
 
-import com.innovax.barberia.barbero.Barbero;
+import com.innovax.barberia.profesional.Profesional;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -22,8 +22,8 @@ public class Bloqueo {
     private UUID id;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "barbero_id", nullable = false)
-    private Barbero barbero;
+    @JoinColumn(name = "profesional_id", nullable = false)
+    private Profesional profesional;
 
     @Column(nullable = false)
     private Instant inicio;

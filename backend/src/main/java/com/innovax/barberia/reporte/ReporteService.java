@@ -4,8 +4,8 @@ import com.innovax.barberia.atencion.EstadoAtencion;
 import com.innovax.barberia.atencion.OrigenAtencion;
 import com.innovax.barberia.auth.Rol;
 import com.innovax.barberia.auth.UsuarioActual;
-import com.innovax.barberia.barberia.Barberia;
-import com.innovax.barberia.barberia.BarberiaRepository;
+import com.innovax.barberia.negocio.Negocio;
+import com.innovax.barberia.negocio.NegocioRepository;
 import com.innovax.barberia.common.DatosInvalidosException;
 import com.innovax.barberia.common.RecursoNoEncontradoException;
 import com.innovax.barberia.reporte.dto.ClientesInactivosResponse;
@@ -40,7 +40,7 @@ public class ReporteService {
     private static final int MAX_INACTIVOS = 100;
 
     private final UsuarioActual usuarioActual;
-    private final BarberiaRepository barberias;
+    private final NegocioRepository negocios;
     private final SucursalRepository sucursales;
     private final ReporteRepository reportes;
 
@@ -53,22 +53,22 @@ public class ReporteService {
             throw new DatosInvalidosException("hasta", "El período no puede superar un año");
         }
 
-        Barberia barberia = barberiaActual();
+        Negocio negocio = negocioActual();
         if (sucursalId != null) {
             sucursales.findById(sucursalId)
-                    .filter(s -> s.getBarberia().getId().equals(barberia.getId()))
+                    .filter(s -> s.getNegocio().getId().equals(negocio.getId()))
                     .orElseThrow(() -> new RecursoNoEncontradoException("Sucursal no encontrada"));
         }
 
-        ZoneId zona = ZoneId.of(barberia.getZonaHoraria());
-        List<FilaReporte> filas = reportes.buscar(barberia.getId(),
+        ZoneId zona = ZoneId.of(negocio.getZonaHoraria());
+        List<FilaReporte> filas = reportes.buscar(negocio.getId(),
                 desde.atStartOfDay(zona).toInstant(),
                 hasta.plusDays(1).atStartOfDay(zona).toInstant(),
                 sucursalId,
-                barberoAcotado());
+                profesionalAcotado());
 
         return new ReportesResponse(desde, hasta,
-                porBarbero(filas),
+                porProfesional(filas),
                 clientesFrecuentes(filas, zona),
                 ausentismo(filas, Instant.now()),
                 demanda(filas, zona));
@@ -79,17 +79,17 @@ public class ReporteService {
         if (dias < 7 || dias > 365) {
             throw new DatosInvalidosException("dias", "Elegí entre 7 y 365 días");
         }
-        Barberia barberia = barberiaActual();
-        ZoneId zona = ZoneId.of(barberia.getZonaHoraria());
+        Negocio negocio = negocioActual();
+        ZoneId zona = ZoneId.of(negocio.getZonaHoraria());
         Instant ahora = Instant.now();
         LocalDate hoy = LocalDate.now(Clock.system(zona));
 
-        UUID barberoId = barberoAcotado();
+        UUID profesionalId = profesionalAcotado();
         Set<UUID> vuelven = new HashSet<>(
-                reportes.clientesConTurnoFuturo(barberia.getId(), EstadoAtencion.RESERVADA, ahora, barberoId));
+                reportes.clientesConTurnoFuturo(negocio.getId(), EstadoAtencion.RESERVADA, ahora, profesionalId));
 
         List<ClientesInactivosResponse.Cliente> clientes = reportes
-                .ultimasVisitasAntesDe(barberia.getId(), EstadoAtencion.COMPLETADA, ahora.minus(Duration.ofDays(dias)), barberoId)
+                .ultimasVisitasAntesDe(negocio.getId(), EstadoAtencion.COMPLETADA, ahora.minus(Duration.ofDays(dias)), profesionalId)
                 .stream()
                 .filter(v -> !vuelven.contains(v.clienteId()))
                 .limit(MAX_INACTIVOS)
@@ -100,38 +100,38 @@ public class ReporteService {
                 })
                 .toList();
 
-        return new ClientesInactivosResponse(barberia.getNombre(), dias, clientes);
+        return new ClientesInactivosResponse(negocio.getNombre(), dias, clientes);
     }
 
     /**
      * Un barbero ve solo sus propios números: el id sale siempre del token, nunca del request.
      * El admin ve toda la barbería (null = sin filtro).
      */
-    private UUID barberoAcotado() {
-        if (usuarioActual.rol() != Rol.BARBERO) {
+    private UUID profesionalAcotado() {
+        if (usuarioActual.rol() != Rol.PROFESIONAL) {
             return null;
         }
-        return usuarioActual.barberoId()
+        return usuarioActual.profesionalId()
                 .orElseThrow(() -> new AccessDeniedException("Tu usuario no está vinculado a un barbero"));
     }
 
-    private Barberia barberiaActual() {
+    private Negocio negocioActual() {
         // Aislamiento: la barbería sale siempre del token
-        return barberias.findById(usuarioActual.barberiaId())
+        return negocios.findById(usuarioActual.negocioId())
                 .orElseThrow(() -> new IllegalStateException("La barbería del token no existe"));
     }
 
-    private static List<ReportesResponse.Barbero> porBarbero(List<FilaReporte> filas) {
+    private static List<ReportesResponse.Profesional> porProfesional(List<FilaReporte> filas) {
         Map<UUID, int[]> cuentas = new LinkedHashMap<>();
         Map<UUID, Long> facturado = new LinkedHashMap<>();
         Map<UUID, String> nombres = new LinkedHashMap<>();
         for (FilaReporte f : filas) {
-            nombres.putIfAbsent(f.barberoId(), f.barberoNombre() + " " + f.barberoApellido());
-            int[] c = cuentas.computeIfAbsent(f.barberoId(), k -> new int[3]);
+            nombres.putIfAbsent(f.profesionalId(), f.profesionalNombre() + " " + f.profesionalApellido());
+            int[] c = cuentas.computeIfAbsent(f.profesionalId(), k -> new int[3]);
             switch (f.estado()) {
                 case COMPLETADA -> {
                     c[0]++;
-                    facturado.merge(f.barberoId(), f.precioFinal(), Long::sum);
+                    facturado.merge(f.profesionalId(), f.precioFinal(), Long::sum);
                 }
                 case AUSENTE -> c[1]++;
                 case CANCELADA -> c[2]++;
@@ -139,10 +139,10 @@ public class ReporteService {
             }
         }
         return cuentas.entrySet().stream()
-                .map(e -> new ReportesResponse.Barbero(e.getKey(), nombres.get(e.getKey()),
+                .map(e -> new ReportesResponse.Profesional(e.getKey(), nombres.get(e.getKey()),
                         e.getValue()[0], e.getValue()[1], e.getValue()[2],
                         facturado.getOrDefault(e.getKey(), 0L)))
-                .sorted(Comparator.comparingInt(ReportesResponse.Barbero::atendidos).reversed())
+                .sorted(Comparator.comparingInt(ReportesResponse.Profesional::atendidos).reversed())
                 .toList();
     }
 

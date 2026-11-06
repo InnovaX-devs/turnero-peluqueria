@@ -20,8 +20,8 @@ const ITEM_INACTIVO = 'text-barra-texto/75 hover:bg-barra-texto/[0.08] hover:tex
 const claseLink = ({ isActive }: { isActive: boolean }) => `${ITEM_BASE} ${isActive ? ITEM_ACTIVO : ITEM_INACTIVO}`
 
 /** Logo de la barbería si cargó uno; si no (o si la imagen no carga), lo que se pase como alternativa. */
-function ImagenBarberia({ usuario, className, alternativa }: { usuario: Usuario | null; className: string; alternativa: ReactNode }) {
-  const url = usuario?.barberiaLogoUrl ?? null
+function ImagenNegocio({ usuario, className, alternativa }: { usuario: Usuario | null; className: string; alternativa: ReactNode }) {
+  const url = usuario?.negocioLogoUrl ?? null
   const [rota, setRota] = useState<string | null>(null)
   if (url === null || rota === url) return <>{alternativa}</>
   return <img src={url} alt="" className={className} onError={() => setRota(url)} />
@@ -30,7 +30,7 @@ function ImagenBarberia({ usuario, className, alternativa }: { usuario: Usuario 
 function Logo({ usuario }: { usuario: Usuario | null }) {
   return (
     <NavLink to="/panel" className="flex shrink-0 items-center gap-2.5" aria-label="Turnea, ir al inicio">
-      <ImagenBarberia
+      <ImagenNegocio
         usuario={usuario}
         className="size-8 rounded-[9px] bg-white object-cover"
         alternativa={
@@ -161,7 +161,7 @@ export function TopBar({ usuario, onRegistrar, onCerrarSesion }: Props) {
           alineado="derecha"
           etiqueta=""
           icono={
-            <ImagenBarberia
+            <ImagenNegocio
               usuario={usuario}
               className="size-9 rounded-full bg-white object-cover"
               alternativa={
@@ -176,8 +176,8 @@ export function TopBar({ usuario, onRegistrar, onCerrarSesion }: Props) {
           {(cerrar) => (
             <>
               <div className="border-b border-barra-texto/15 px-3 pb-2.5 pt-2">
-                {usuario?.barberiaNombre && (
-                  <p className="m-0 truncate text-[13px] font-semibold text-barra-texto">{usuario.barberiaNombre}</p>
+                {usuario?.negocioNombre && (
+                  <p className="m-0 truncate text-[13px] font-semibold text-barra-texto">{usuario.negocioNombre}</p>
                 )}
                 <p className="m-0 truncate text-[13px] font-medium text-barra-texto">{usuario?.email}</p>
                 <p className="etiqueta-mono m-0 mt-0.5 text-barra-texto/60">{esAdmin ? 'Admin' : 'Barbero'}</p>

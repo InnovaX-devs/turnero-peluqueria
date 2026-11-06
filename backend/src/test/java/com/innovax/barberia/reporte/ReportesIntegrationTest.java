@@ -5,8 +5,8 @@ import com.innovax.barberia.atencion.AtencionRepository;
 import com.innovax.barberia.atencion.EstadoAtencion;
 import com.innovax.barberia.atencion.MetodoPago;
 import com.innovax.barberia.atencion.OrigenAtencion;
-import com.innovax.barberia.barberia.BarberiaRepository;
-import com.innovax.barberia.barbero.BarberoRepository;
+import com.innovax.barberia.negocio.NegocioRepository;
+import com.innovax.barberia.profesional.ProfesionalRepository;
 import com.innovax.barberia.cliente.ClienteRepository;
 import com.innovax.barberia.servicio.ServicioRepository;
 import com.innovax.barberia.sucursal.SucursalRepository;
@@ -67,9 +67,9 @@ class ReportesIntegrationTest {
 
     @Autowired private WebApplicationContext context;
     @Autowired private AtencionRepository atenciones;
-    @Autowired private BarberiaRepository barberias;
+    @Autowired private NegocioRepository negocios;
     @Autowired private SucursalRepository sucursales;
-    @Autowired private BarberoRepository barberos;
+    @Autowired private ProfesionalRepository profesionales;
     @Autowired private ServicioRepository servicios;
     @Autowired private ClienteRepository clientes;
 
@@ -97,12 +97,12 @@ class ReportesIntegrationTest {
         return ZonedDateTime.of(dia, LocalTime.of(hora, 0), ZONA).toInstant();
     }
 
-    private void crear(UUID barbero, Instant inicio, EstadoAtencion estado, OrigenAtencion origen,
+    private void crear(UUID profesional, Instant inicio, EstadoAtencion estado, OrigenAtencion origen,
                        String cliente, long precio) {
         Atencion a = new Atencion();
-        a.setBarberia(barberias.findById(JADE).orElseThrow());
+        a.setNegocio(negocios.findById(JADE).orElseThrow());
         a.setSucursal(sucursales.findById(SUCURSAL).orElseThrow());
-        a.setBarbero(barberos.findById(barbero).orElseThrow());
+        a.setProfesional(profesionales.findById(profesional).orElseThrow());
         a.setServicio(servicios.findById(CORTE).orElseThrow());
         a.setCliente(cliente == null ? null : clientes.findById(UUID.fromString(cliente)).orElseThrow());
         a.setInicio(inicio);
@@ -135,20 +135,20 @@ class ReportesIntegrationTest {
     }
 
     @Test
-    void cuentaLosCortesDeCadaBarberoPorEstado() throws Exception {
+    void cuentaLosCortesDeCadaProfesionalPorEstado() throws Exception {
         reportes(admin())
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.porBarbero", hasSize(3)))
-                .andExpect(jsonPath("$.porBarbero[0].nombre").value("Lucas Sanchez"))
-                .andExpect(jsonPath("$.porBarbero[0].atendidos").value(2))
-                .andExpect(jsonPath("$.porBarbero[0].facturado").value(3000000))
+                .andExpect(jsonPath("$.porProfesional", hasSize(3)))
+                .andExpect(jsonPath("$.porProfesional[0].nombre").value("Lucas Sanchez"))
+                .andExpect(jsonPath("$.porProfesional[0].atendidos").value(2))
+                .andExpect(jsonPath("$.porProfesional[0].facturado").value(3000000))
                 // Solo suma lo cobrado en cortes atendidos: el cancelado de Chapa no cuenta
-                .andExpect(jsonPath("$.porBarbero[?(@.nombre == 'Chapa Perez')].facturado").value(hasItem(1500000)))
+                .andExpect(jsonPath("$.porProfesional[?(@.nombre == 'Chapa Perez')].facturado").value(hasItem(1500000)))
                 // Andrés no atendió a nadie: su turno ausente y el sin marcar no suman plata
-                .andExpect(jsonPath("$.porBarbero[?(@.nombre == 'Andres Biassi')].facturado").value(hasItem(0)))
-                .andExpect(jsonPath("$.porBarbero[?(@.nombre == 'Chapa Perez')].atendidos").value(hasItem(1)))
-                .andExpect(jsonPath("$.porBarbero[?(@.nombre == 'Chapa Perez')].cancelados").value(hasItem(1)))
-                .andExpect(jsonPath("$.porBarbero[?(@.nombre == 'Andres Biassi')].ausentes").value(hasItem(1)));
+                .andExpect(jsonPath("$.porProfesional[?(@.nombre == 'Andres Biassi')].facturado").value(hasItem(0)))
+                .andExpect(jsonPath("$.porProfesional[?(@.nombre == 'Chapa Perez')].atendidos").value(hasItem(1)))
+                .andExpect(jsonPath("$.porProfesional[?(@.nombre == 'Chapa Perez')].cancelados").value(hasItem(1)))
+                .andExpect(jsonPath("$.porProfesional[?(@.nombre == 'Andres Biassi')].ausentes").value(hasItem(1)));
     }
 
     @Test
@@ -191,7 +191,7 @@ class ReportesIntegrationTest {
     void listaLosClientesQueNoVuelvenHaceTiempo() throws Exception {
         mvc.perform(get("/api/reportes/clientes-inactivos").param("dias", "30").header("Authorization", admin()))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.barberiaNombre").value("Jade"))
+                .andExpect(jsonPath("$.negocioNombre").value("Jade"))
                 .andExpect(jsonPath("$.clientes[?(@.nombre == 'Juan Gomez')].visitas").value(hasItem(2)))
                 .andExpect(jsonPath("$.clientes[?(@.nombre == 'Juan Gomez')].ultimaVisita").value(hasItem("2020-03-17")))
                 // Martín nunca fue atendido: no es un cliente "que dejó de venir"
@@ -225,15 +225,15 @@ class ReportesIntegrationTest {
     }
 
     @Test
-    void elBarberoVeSoloSusPropiosReportes() throws Exception {
+    void elProfesionalVeSoloSusPropiosReportes() throws Exception {
         reportes(login("lucas@jade.com", "barbero123"))
                 .andExpect(status().isOk())
                 // Solo Lucas: nada de Andrés ni Chapa
-                .andExpect(jsonPath("$.porBarbero", hasSize(1)))
-                .andExpect(jsonPath("$.porBarbero[0].nombre").value("Lucas Sanchez"))
-                .andExpect(jsonPath("$.porBarbero[0].atendidos").value(2))
+                .andExpect(jsonPath("$.porProfesional", hasSize(1)))
+                .andExpect(jsonPath("$.porProfesional[0].nombre").value("Lucas Sanchez"))
+                .andExpect(jsonPath("$.porProfesional[0].atendidos").value(2))
                 // Lo que juntó Lucas: dos cortes de $15.000
-                .andExpect(jsonPath("$.porBarbero[0].facturado").value(3000000))
+                .andExpect(jsonPath("$.porProfesional[0].facturado").value(3000000))
                 .andExpect(jsonPath("$.clientesFrecuentes", hasSize(1)))
                 .andExpect(jsonPath("$.clientesFrecuentes[0].nombre").value("Juan Gomez"))
                 // El ausente, el cancelado y el turno sin marcar son de otros barberos
@@ -247,20 +247,20 @@ class ReportesIntegrationTest {
     }
 
     @Test
-    void elBarberoNoPuedeElegirOtroBarberoDesdeElRequest() throws Exception {
+    void elProfesionalNoPuedeElegirOtroProfesionalDesdeElRequest() throws Exception {
         // No existe un parámetro para elegir barbero: aunque lo manden, se ignora.
         mvc.perform(get("/api/reportes")
                         .param("desde", DESDE.toString())
                         .param("hasta", HASTA.toString())
-                        .param("barberoId", ANDRES.toString())
+                        .param("profesionalId", ANDRES.toString())
                         .header("Authorization", login("lucas@jade.com", "barbero123")))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.porBarbero", hasSize(1)))
-                .andExpect(jsonPath("$.porBarbero[0].nombre").value("Lucas Sanchez"));
+                .andExpect(jsonPath("$.porProfesional", hasSize(1)))
+                .andExpect(jsonPath("$.porProfesional[0].nombre").value("Lucas Sanchez"));
     }
 
     @Test
-    void losClientesQueNoVuelvenDelBarberoSonSoloLosSuyos() throws Exception {
+    void losClientesQueNoVuelvenDelProfesionalSonSoloLosSuyos() throws Exception {
         // Martín se hizo un corte con Andrés: es cliente de Andrés, no de Lucas
         crear(ANDRES, en(MARTES_17, 11), EstadoAtencion.COMPLETADA, OrigenAtencion.ONLINE, MARTIN, 1500000);
         atenciones.flush();

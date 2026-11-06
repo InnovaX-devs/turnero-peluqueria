@@ -17,7 +17,7 @@ public record NotificacionResponse(
         EstadoNotificacion estado,
         String clienteNombre,
         String destinatario,
-        String barberoNombre,
+        String profesionalNombre,
         Instant turnoInicio,
         String mensaje,
         /** Link wa.me con el mensaje ya escrito. Null si el canal no es WhatsApp. */
@@ -37,7 +37,7 @@ public record NotificacionResponse(
                 n.getEstado(),
                 turno.getCliente() != null ? turno.getCliente().getNombre() : null,
                 n.getDestinatario(),
-                turno.getBarbero().getNombre() + " " + turno.getBarbero().getApellido(),
+                turno.getProfesional().getNombre() + " " + turno.getProfesional().getApellido(),
                 turno.getInicio(),
                 n.getMensaje(),
                 linkWhatsApp,

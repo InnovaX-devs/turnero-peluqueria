@@ -91,12 +91,12 @@ public class NotificacionService {
     /** Mensajes en el estado dado. El admin ve los de toda la barbería; un barbero, solo los de sus turnos. */
     @Transactional(readOnly = true)
     public List<NotificacionResponse> listar(EstadoNotificacion estado) {
-        UUID barberoId = null;
+        UUID profesionalId = null;
         if (!usuarioActual.esAdmin()) {
-            barberoId = usuarioActual.barberoId()
+            profesionalId = usuarioActual.profesionalId()
                     .orElseThrow(() -> new AccessDeniedException("Tu usuario no está vinculado a un barbero"));
         }
-        return notificaciones.findParaPanel(usuarioActual.barberiaId(), estado, barberoId).stream()
+        return notificaciones.findParaPanel(usuarioActual.negocioId(), estado, profesionalId).stream()
                 .map(this::respuesta)
                 .toList();
     }
@@ -108,10 +108,10 @@ public class NotificacionService {
                 .orElseThrow(() -> new RecursoNoEncontradoException("Mensaje no encontrado"));
 
         // Aislamiento entre barberías: se responde igual que si no existiera.
-        if (!n.getBarberia().getId().equals(usuarioActual.barberiaId())) {
+        if (!n.getNegocio().getId().equals(usuarioActual.negocioId())) {
             throw new RecursoNoEncontradoException("Mensaje no encontrado");
         }
-        usuarioActual.verificarAccesoABarbero(n.getAtencion().getBarbero().getId());
+        usuarioActual.verificarAccesoAProfesional(n.getAtencion().getProfesional().getId());
 
         if (n.getEstado() != EstadoNotificacion.PENDIENTE) {
             throw new ConflictoException("estado", "Este mensaje ya no está pendiente");
@@ -134,7 +134,7 @@ public class NotificacionService {
                 EstadoAtencion.RESERVADA, TipoNotificacion.RECORDATORIO, ahora, limite);
 
         for (Atencion a : candidatos) {
-            Instant cuando = a.getInicio().minus(Duration.ofHours(a.getBarberia().getRecordatorioHorasAntes()));
+            Instant cuando = a.getInicio().minus(Duration.ofHours(a.getNegocio().getRecordatorioHorasAntes()));
             if (cuando.isAfter(ahora)) {
                 continue; // todavía no toca
             }
@@ -195,7 +195,7 @@ public class NotificacionService {
 
     private Notificacion nueva(Atencion a, TipoNotificacion tipo, String mensaje, Instant programadaPara) {
         Notificacion n = new Notificacion();
-        n.setBarberia(a.getBarberia());
+        n.setNegocio(a.getNegocio());
         n.setAtencion(a);
         n.setTipo(tipo);
         n.setCanal(canal.tipo());

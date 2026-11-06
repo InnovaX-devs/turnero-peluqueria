@@ -1,15 +1,15 @@
 package com.innovax.barberia.agenda;
 
 import com.innovax.barberia.agenda.dto.AgendaResponse;
-import com.innovax.barberia.agenda.dto.BarberoResumen;
+import com.innovax.barberia.agenda.dto.ProfesionalResumen;
 import com.innovax.barberia.agenda.dto.BloqueoAgendaResponse;
 import com.innovax.barberia.agenda.dto.TurnoAgendaResponse;
 import com.innovax.barberia.atencion.AtencionRepository;
 import com.innovax.barberia.auth.Rol;
 import com.innovax.barberia.auth.UsuarioActual;
-import com.innovax.barberia.barberia.Barberia;
-import com.innovax.barberia.barberia.BarberiaRepository;
-import com.innovax.barberia.barbero.BarberoRepository;
+import com.innovax.barberia.negocio.Negocio;
+import com.innovax.barberia.negocio.NegocioRepository;
+import com.innovax.barberia.profesional.ProfesionalRepository;
 import com.innovax.barberia.common.DatosInvalidosException;
 import com.innovax.barberia.horario.BloqueoRepository;
 import lombok.RequiredArgsConstructor;
@@ -28,8 +28,8 @@ import java.util.UUID;
 /**
  * Agenda del panel (turnos + bloqueos), para la vista día/semana.
  *
- * <p>REGLA DE PERMISOS: un usuario con rol BARBERO ve siempre y solo su propia agenda, sin
- * importar qué {@code barberoId} venga en el request (ver {@link UsuarioActual}). Un ADMIN puede
+ * <p>REGLA DE PERMISOS: un usuario con rol PROFESIONAL ve siempre y solo su propia agenda, sin
+ * importar qué {@code profesionalId} venga en el request (ver {@link UsuarioActual}). Un ADMIN puede
  * pedir un barbero puntual o dejar el filtro vacío para ver la agenda completa de la barbería.
  */
 @Service
@@ -40,13 +40,13 @@ public class AgendaService {
     private static final int RANGO_MAXIMO_DIAS = 31;
 
     private final UsuarioActual usuarioActual;
-    private final BarberiaRepository barberias;
-    private final BarberoRepository barberos;
+    private final NegocioRepository negocios;
+    private final ProfesionalRepository profesionales;
     private final AtencionRepository atenciones;
     private final BloqueoRepository bloqueos;
 
     @Transactional(readOnly = true)
-    public AgendaResponse consultar(LocalDate desde, LocalDate hasta, UUID barberoIdPedido) {
+    public AgendaResponse consultar(LocalDate desde, LocalDate hasta, UUID profesionalIdPedido) {
         if (hasta.isBefore(desde)) {
             throw new DatosInvalidosException("hasta", "No puede ser anterior a «desde»");
         }
@@ -54,38 +54,38 @@ public class AgendaService {
             throw new DatosInvalidosException("hasta", "El rango no puede superar los " + RANGO_MAXIMO_DIAS + " días");
         }
 
-        UUID barberiaId = usuarioActual.barberiaId();
-        Barberia barberia = barberias.findById(barberiaId)
+        UUID negocioId = usuarioActual.negocioId();
+        Negocio negocio = negocios.findById(negocioId)
                 .orElseThrow(() -> new IllegalStateException("La barbería del token no existe"));
 
-        UUID barberoId = usuarioActual.rol() == Rol.BARBERO
-                ? barberoPropio()
-                : barberoIdPedido;
+        UUID profesionalId = usuarioActual.rol() == Rol.PROFESIONAL
+                ? profesionalPropio()
+                : profesionalIdPedido;
 
-        ZoneId zonaHoraria = ZoneId.of(barberia.getZonaHoraria());
+        ZoneId zonaHoraria = ZoneId.of(negocio.getZonaHoraria());
         Instant inicioRango = ZonedDateTime.of(desde, LocalTime.MIN, zonaHoraria).toInstant();
         Instant finRango = ZonedDateTime.of(hasta.plusDays(1), LocalTime.MIN, zonaHoraria).toInstant();
 
-        List<TurnoAgendaResponse> turnos = atenciones.findParaAgenda(barberiaId, barberoId, inicioRango, finRango)
+        List<TurnoAgendaResponse> turnos = atenciones.findParaAgenda(negocioId, profesionalId, inicioRango, finRango)
                 .stream()
                 .map(TurnoAgendaResponse::de)
                 .toList();
 
-        List<BloqueoAgendaResponse> bloqueosDelRango = bloqueos.findParaAgenda(barberiaId, barberoId, inicioRango, finRango)
+        List<BloqueoAgendaResponse> bloqueosDelRango = bloqueos.findParaAgenda(negocioId, profesionalId, inicioRango, finRango)
                 .stream()
                 .map(BloqueoAgendaResponse::de)
                 .toList();
 
-        List<BarberoResumen> barberosParaFiltro = barberos.findByBarberiaIdAndActivoTrueOrderByNombreAscApellidoAsc(barberiaId)
+        List<ProfesionalResumen> profesionalesParaFiltro = profesionales.findByNegocioIdAndActivoTrueOrderByNombreAscApellidoAsc(negocioId)
                 .stream()
-                .map(BarberoResumen::de)
+                .map(ProfesionalResumen::de)
                 .toList();
 
-        return new AgendaResponse(desde, hasta, barberosParaFiltro, turnos, bloqueosDelRango);
+        return new AgendaResponse(desde, hasta, profesionalesParaFiltro, turnos, bloqueosDelRango);
     }
 
-    private UUID barberoPropio() {
-        return usuarioActual.barberoId()
+    private UUID profesionalPropio() {
+        return usuarioActual.profesionalId()
                 .orElseThrow(() -> new IllegalStateException("El usuario barbero no está vinculado a un barbero"));
     }
 }

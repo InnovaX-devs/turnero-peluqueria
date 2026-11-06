@@ -19,7 +19,7 @@ public record BloqueoRequest(
          * Barberos a bloquear (se crea un bloqueo por cada uno). null o vacío = el barbero logueado.
          * Al editar un bloqueo: máximo uno (null o vacío = no cambiar de barbero).
          */
-        List<UUID> barberoIds,
+        List<UUID> profesionalIds,
 
         @NotNull(message = "La fecha es obligatoria")
         LocalDate fecha,

@@ -13,12 +13,12 @@ public interface BloqueoRepository extends JpaRepository<Bloqueo, UUID> {
     /** Bloqueos del barbero que se solapan con [inicioRango, finRango). */
     @Query("""
             select b from Bloqueo b
-            where b.barbero.id = :barberoId
+            where b.profesional.id = :profesionalId
               and b.inicio < :finRango
               and b.fin > :inicioRango
             """)
     List<Bloqueo> findSolapados(
-            @Param("barberoId") UUID barberoId,
+            @Param("profesionalId") UUID profesionalId,
             @Param("inicioRango") Instant inicioRango,
             @Param("finRango") Instant finRango);
 
@@ -28,15 +28,15 @@ public interface BloqueoRepository extends JpaRepository<Bloqueo, UUID> {
      */
     @Query("""
             select b from Bloqueo b
-            where b.barbero.barberia.id = :barberiaId
-              and (:barberoId is null or b.barbero.id = :barberoId)
+            where b.profesional.negocio.id = :negocioId
+              and (:profesionalId is null or b.profesional.id = :profesionalId)
               and b.inicio < :finRango
               and b.fin > :inicioRango
             order by b.inicio asc
             """)
     List<Bloqueo> findParaAgenda(
-            @Param("barberiaId") UUID barberiaId,
-            @Param("barberoId") UUID barberoId,
+            @Param("negocioId") UUID negocioId,
+            @Param("profesionalId") UUID profesionalId,
             @Param("inicioRango") Instant inicioRango,
             @Param("finRango") Instant finRango);
 }

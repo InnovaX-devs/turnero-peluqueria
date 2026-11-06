@@ -13,11 +13,11 @@ import './bloqueo.css'
 interface Props {
   bloqueo: Bloqueo | null
   fechaInicial: string
-  barberoInicialId?: string | null
+  profesionalInicialId?: string | null
   onCerrar: () => void
 }
 
-export function BloqueoForm({ bloqueo, fechaInicial, barberoInicialId, onCerrar }: Props) {
+export function BloqueoForm({ bloqueo, fechaInicial, profesionalInicialId, onCerrar }: Props) {
   const ref = useRef<HTMLDialogElement>(null)
   const { data, isPending, error, refetch } = useOpcionesRegistro()
 
@@ -60,7 +60,7 @@ export function BloqueoForm({ bloqueo, fechaInicial, barberoInicialId, onCerrar 
           <Formulario
             bloqueo={bloqueo}
             fechaInicial={fechaInicial}
-            barberoInicialId={barberoInicialId}
+            profesionalInicialId={profesionalInicialId}
             opciones={data}
             onCerrar={onCerrar}
           />
@@ -79,16 +79,16 @@ function textoDeError(error: unknown): string {
 interface FormularioProps {
   bloqueo: Bloqueo | null
   fechaInicial: string
-  barberoInicialId?: string | null
+  profesionalInicialId?: string | null
   opciones: OpcionesRegistro
   onCerrar: () => void
 }
 
-function Formulario({ bloqueo, fechaInicial, barberoInicialId, opciones, onCerrar }: FormularioProps) {
+function Formulario({ bloqueo, fechaInicial, profesionalInicialId, opciones, onCerrar }: FormularioProps) {
   const queryClient = useQueryClient()
-  const [inicial] = useState(() => valoresIniciales(bloqueo, fechaInicial, opciones, barberoInicialId))
+  const [inicial] = useState(() => valoresIniciales(bloqueo, fechaInicial, opciones, profesionalInicialId))
 
- const [barberoIds, setBarberoIds] = useState<string[]>(inicial.barberoIds)
+ const [profesionalIds, setProfesionalIds] = useState<string[]>(inicial.profesionalIds)
   const [diaCompleto, setDiaCompleto] = useState(inicial.diaCompleto)
   const [fecha, setFecha] = useState(inicial.fecha)
   const [desde, setDesde] = useState(inicial.desde)
@@ -99,21 +99,21 @@ function Formulario({ bloqueo, fechaInicial, barberoInicialId, opciones, onCerra
 
   const horasInvalidas = !diaCompleto && desde !== '' && hasta !== '' && hasta <= desde
   const listo =
-    barberoIds.length > 0 && fecha !== '' && (diaCompleto || (desde !== '' && hasta !== '' && !horasInvalidas))
+    profesionalIds.length > 0 && fecha !== '' && (diaCompleto || (desde !== '' && hasta !== '' && !horasInvalidas))
 
-  const todosMarcados = opciones.barberos.length > 0 && barberoIds.length === opciones.barberos.length
-  function elegirBarbero(id: string) {
-    setBarberoIds((actual) => {
+  const todosMarcados = opciones.profesionales.length > 0 && profesionalIds.length === opciones.profesionales.length
+  function elegirProfesional(id: string) {
+    setProfesionalIds((actual) => {
       if (bloqueo) return [id]
       return actual.includes(id) ? actual.filter((x) => x !== id) : [...actual, id]
     })
   }
   function marcarTodos() {
-    setBarberoIds(todosMarcados ? [] : opciones.barberos.map((b) => b.id))
+    setProfesionalIds(todosMarcados ? [] : opciones.profesionales.map((b) => b.id))
   }
 
   const datos: BloqueoDatos = {
-    barberoIds,
+    profesionalIds,
     fecha,
     horaDesde: diaCompleto ? null : desde,
     horaHasta: diaCompleto ? null : hasta,
@@ -154,7 +154,7 @@ function Formulario({ bloqueo, fechaInicial, barberoInicialId, opciones, onCerra
 
   // ---------- Aviso: el bloqueo se superpone con turnos reservados ----------
   if (conflictos) {
-    const mostrarBarbero = opciones.barberos.length > 1
+    const mostrarProfesional = opciones.profesionales.length > 1
     return (
       <div className="registro-form">
         <div className="bloqueo-aviso" role="alert">
@@ -174,7 +174,7 @@ function Formulario({ bloqueo, fechaInicial, barberoInicialId, opciones, onCerra
               </strong>
               <small>
                 {t.servicioNombre}
-                {mostrarBarbero ? ' · ' + t.barberoNombre : ''}
+                {mostrarProfesional ? ' · ' + t.profesionalNombre : ''}
               </small>
               {t.clienteTelefono && (
                 <a href={linkWhatsApp(t.clienteTelefono)} target="_blank" rel="noreferrer">
@@ -212,7 +212,7 @@ function Formulario({ bloqueo, fechaInicial, barberoInicialId, opciones, onCerra
   // ---------- Formulario ----------
   return (
     <form className="registro-form" onSubmit={enviar}>
-            {opciones.barberos.length > 1 && (
+            {opciones.profesionales.length > 1 && (
         <fieldset className="registro-grupo">
           <legend>{bloqueo ? 'Barbero' : 'Barberos (podés marcar varios)'}</legend>
           <div className="registro-opciones">
@@ -226,13 +226,13 @@ function Formulario({ bloqueo, fechaInicial, barberoInicialId, opciones, onCerra
                 Todos
               </button>
             )}
-            {opciones.barberos.map((b) => (
+            {opciones.profesionales.map((b) => (
               <button
                 key={b.id}
                 type="button"
                 className="registro-opcion"
-                aria-pressed={barberoIds.includes(b.id)}
-                onClick={() => elegirBarbero(b.id)}
+                aria-pressed={profesionalIds.includes(b.id)}
+                onClick={() => elegirProfesional(b.id)}
               >
                 {b.nombre}
               </button>
@@ -348,8 +348,8 @@ function Formulario({ bloqueo, fechaInicial, barberoInicialId, opciones, onCerra
             ? 'Guardando…'
             : bloqueo
               ? 'Guardar cambios'
-              : barberoIds.length > 1
-                ? 'Bloquear (' + barberoIds.length + ' barberos)'
+              : profesionalIds.length > 1
+                ? 'Bloquear (' + profesionalIds.length + ' barberos)'
                 : 'Bloquear'}
         </button>
       </div>

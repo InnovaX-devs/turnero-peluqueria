@@ -4,8 +4,8 @@ import com.innovax.barberia.atencion.Atencion;
 import com.innovax.barberia.atencion.AtencionRepository;
 import com.innovax.barberia.atencion.EstadoAtencion;
 import com.innovax.barberia.atencion.OrigenAtencion;
-import com.innovax.barberia.barberia.BarberiaRepository;
-import com.innovax.barberia.barbero.BarberoRepository;
+import com.innovax.barberia.negocio.NegocioRepository;
+import com.innovax.barberia.profesional.ProfesionalRepository;
 import com.innovax.barberia.cliente.ClienteRepository;
 import com.innovax.barberia.servicio.ServicioRepository;
 import com.innovax.barberia.sucursal.SucursalRepository;
@@ -36,7 +36,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 /**
  * Los mensajes pendientes en el panel: listarlos con su link de WhatsApp y marcarlos como enviados.
- * Usa los datos del seed: admin@jade.com (ADMIN) y lucas@jade.com (BARBERO, vinculado a Lucas).
+ * Usa los datos del seed: admin@jade.com (ADMIN) y lucas@jade.com (PROFESIONAL, vinculado a Lucas).
  */
 @SpringBootTest
 class NotificacionPanelIntegrationTest {
@@ -50,9 +50,9 @@ class NotificacionPanelIntegrationTest {
 
     @Autowired private WebApplicationContext context;
     @Autowired private AtencionRepository atenciones;
-    @Autowired private BarberiaRepository barberias;
+    @Autowired private NegocioRepository negocios;
     @Autowired private SucursalRepository sucursales;
-    @Autowired private BarberoRepository barberos;
+    @Autowired private ProfesionalRepository profesionales;
     @Autowired private ServicioRepository servicios;
     @Autowired private ClienteRepository clientes;
     @Autowired private NotificacionRepository notificaciones;
@@ -80,12 +80,12 @@ class NotificacionPanelIntegrationTest {
     }
 
     /** Un turno de dentro de 3 días con un mensaje de confirmación pendiente, para el barbero dado. */
-    private Notificacion mensajePendiente(UUID barbero, EstadoAtencion estadoTurno) {
+    private Notificacion mensajePendiente(UUID profesional, EstadoAtencion estadoTurno) {
         Instant inicio = Instant.now().plus(3, ChronoUnit.DAYS);
         Atencion a = new Atencion();
-        a.setBarberia(barberias.findById(JADE).orElseThrow());
+        a.setNegocio(negocios.findById(JADE).orElseThrow());
         a.setSucursal(sucursales.findById(SUCURSAL).orElseThrow());
-        a.setBarbero(barberos.findById(barbero).orElseThrow());
+        a.setProfesional(profesionales.findById(profesional).orElseThrow());
         a.setServicio(servicios.findById(CORTE).orElseThrow());
         a.setCliente(clientes.findById(JUAN).orElseThrow());
         a.setInicio(inicio);
@@ -97,7 +97,7 @@ class NotificacionPanelIntegrationTest {
         creadas.add(turno.getId());
 
         Notificacion n = new Notificacion();
-        n.setBarberia(a.getBarberia());
+        n.setNegocio(a.getNegocio());
         n.setAtencion(turno);
         n.setTipo(TipoNotificacion.CONFIRMACION);
         n.setCanal(TipoCanal.WHATSAPP_LINK);
@@ -161,7 +161,7 @@ class NotificacionPanelIntegrationTest {
     }
 
     @Test
-    void unBarberoVeSoloLosMensajesDeSusTurnos() throws Exception {
+    void unProfesionalVeSoloLosMensajesDeSusTurnos() throws Exception {
         Notificacion deLucas = mensajePendiente(LUCAS, EstadoAtencion.RESERVADA);
         Notificacion deAndres = mensajePendiente(ANDRES, EstadoAtencion.RESERVADA);
         String lucas = login("lucas@jade.com", "barbero123");
@@ -173,7 +173,7 @@ class NotificacionPanelIntegrationTest {
     }
 
     @Test
-    void unBarberoNoPuedeMarcarElMensajeDeOtroBarbero() throws Exception {
+    void unProfesionalNoPuedeMarcarElMensajeDeOtroProfesional() throws Exception {
         Notificacion deAndres = mensajePendiente(ANDRES, EstadoAtencion.RESERVADA);
         String lucas = login("lucas@jade.com", "barbero123");
 

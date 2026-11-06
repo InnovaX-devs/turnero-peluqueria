@@ -81,27 +81,27 @@ function FormularioCorte({ opciones, onRegistrado }: FormularioProps) {
   const [servicioId, setServicioId] = useState<string | null>(inicial.servicioId)
   const [precio, setPrecio] = useState(inicial.precio)
   const [metodoPago, setMetodoPago] = useState<MetodoPago>(inicial.metodoPago)
-  const [barberoId, setBarberoId] = useState<string | null>(inicial.barberoId)
+  const [profesionalId, setProfesionalId] = useState<string | null>(inicial.profesionalId)
   const [sucursalId, setSucursalId] = useState<string | null>(null)
   const [cliente, setCliente] = useState<ClienteResumen | null>(null)
   const [notas, setNotas] = useState('')
   const [fechaHora, setFechaHora] = useState(() => ahoraEnZona(opciones.zonaHoraria))
   const [fechaEditada, setFechaEditada] = useState(false)
 
-  const barbero = opciones.barberos.find((b) => b.id === barberoId)
-  const sucursalesDelBarbero = opciones.sucursales.filter(
-    (s) => barbero !== undefined && barbero.sucursalIds.includes(s.id),
+  const profesional = opciones.profesionales.find((b) => b.id === profesionalId)
+  const sucursalesDelProfesional = opciones.sucursales.filter(
+    (s) => profesional !== undefined && profesional.sucursalIds.includes(s.id),
   )
   // Con una sola sucursal no se pregunta
-  const sucursalFinal = sucursalesDelBarbero.length === 1 ? sucursalesDelBarbero[0].id : sucursalId
+  const sucursalFinal = sucursalesDelProfesional.length === 1 ? sucursalesDelProfesional[0].id : sucursalId
   const precioCentavos = pesosACentavos(precio)
 
   const listo =
     servicioId !== null &&
-    barberoId !== null &&
+    profesionalId !== null &&
     precioCentavos !== null &&
     fechaHora !== '' &&
-    (sucursalesDelBarbero.length <= 1 || sucursalId !== null)
+    (sucursalesDelProfesional.length <= 1 || sucursalId !== null)
 
   const registro = useMutation({
     mutationFn: registrarCorte,
@@ -109,7 +109,7 @@ function FormularioCorte({ opciones, onRegistrado }: FormularioProps) {
       guardarPreferencias({
         servicioId: servicioId ?? undefined,
         metodoPago,
-        barberoId: barberoId ?? undefined,
+        profesionalId: profesionalId ?? undefined,
       })
       void queryClient.invalidateQueries({ queryKey: ['agenda'] }) // si la agenda está abierta, se actualiza
       onRegistrado()
@@ -118,12 +118,12 @@ function FormularioCorte({ opciones, onRegistrado }: FormularioProps) {
 
   function enviar(e: FormEvent<HTMLFormElement>) {
     e.preventDefault()
-    if (servicioId === null || barberoId === null || precioCentavos === null || fechaHora === '') return
+    if (servicioId === null || profesionalId === null || precioCentavos === null || fechaHora === '') return
     const [fecha, hora] = fechaHora.split('T')
     registro.mutate({
       clienteId: cliente ? cliente.id : null,
       servicioId,
-      barberoId,
+      profesionalId,
       sucursalId: sucursalFinal,
       precioFinal: precioCentavos,
       metodoPago,
@@ -187,18 +187,18 @@ function FormularioCorte({ opciones, onRegistrado }: FormularioProps) {
         </div>
       </fieldset>
 
-      {opciones.barberos.length > 1 && (
+      {opciones.profesionales.length > 1 && (
         <fieldset className="registro-grupo">
           <legend>Barbero</legend>
           <div className="registro-opciones">
-            {opciones.barberos.map((b) => (
+            {opciones.profesionales.map((b) => (
               <button
                 key={b.id}
                 type="button"
                 className="registro-opcion"
-                aria-pressed={b.id === barberoId}
+                aria-pressed={b.id === profesionalId}
                 onClick={() => {
-                  setBarberoId(b.id)
+                  setProfesionalId(b.id)
                   setSucursalId(null)
                 }}
               >
@@ -209,11 +209,11 @@ function FormularioCorte({ opciones, onRegistrado }: FormularioProps) {
         </fieldset>
       )}
 
-      {sucursalesDelBarbero.length > 1 && (
+      {sucursalesDelProfesional.length > 1 && (
         <fieldset className="registro-grupo">
           <legend>Sucursal</legend>
           <div className="registro-opciones">
-            {sucursalesDelBarbero.map((s) => (
+            {sucursalesDelProfesional.map((s) => (
               <button
                 key={s.id}
                 type="button"

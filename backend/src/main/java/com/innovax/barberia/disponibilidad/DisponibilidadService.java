@@ -2,9 +2,9 @@ package com.innovax.barberia.disponibilidad;
 
 import com.innovax.barberia.atencion.AtencionRepository;
 import com.innovax.barberia.atencion.EstadoAtencion;
-import com.innovax.barberia.barberia.Barberia;
-import com.innovax.barberia.barbero.Barbero;
-import com.innovax.barberia.barbero.BarberoRepository;
+import com.innovax.barberia.negocio.Negocio;
+import com.innovax.barberia.profesional.Profesional;
+import com.innovax.barberia.profesional.ProfesionalRepository;
 import com.innovax.barberia.common.DatosInvalidosException;
 import com.innovax.barberia.common.RecursoNoEncontradoException;
 import com.innovax.barberia.disponibilidad.dto.DiasDisponiblesResponse;
@@ -49,24 +49,24 @@ public class DisponibilidadService {
 
     private final SucursalRepository sucursalRepository;
     private final ServicioRepository servicioRepository;
-    private final BarberoRepository barberoRepository;
+    private final ProfesionalRepository profesionalRepository;
     private final HorarioLaboralRepository horarioLaboralRepository;
     private final AtencionRepository atencionRepository;
     private final BloqueoRepository bloqueoRepository;
 
     @Transactional(readOnly = true)
-    public DisponibilidadResponse consultar(UUID sucursalId, UUID servicioId, UUID barberoId, LocalDate fecha) {
-        Contexto ctx = cargarContexto(sucursalId, servicioId, barberoId);
+    public DisponibilidadResponse consultar(UUID sucursalId, UUID servicioId, UUID profesionalId, LocalDate fecha) {
+        Contexto ctx = cargarContexto(sucursalId, servicioId, profesionalId);
         return new DisponibilidadResponse(fecha, slotsDelDia(ctx, fecha));
     }
 
     @Transactional(readOnly = true)
-    public DiasDisponiblesResponse consultarDias(UUID sucursalId, UUID servicioId, UUID barberoId, LocalDate desde, LocalDate hasta) {
+    public DiasDisponiblesResponse consultarDias(UUID sucursalId, UUID servicioId, UUID profesionalId, LocalDate desde, LocalDate hasta) {
         if (hasta.isBefore(desde)) {
             throw new DatosInvalidosException("hasta", "No puede ser anterior a «desde»");
         }
 
-        Contexto ctx = cargarContexto(sucursalId, servicioId, barberoId);
+        Contexto ctx = cargarContexto(sucursalId, servicioId, profesionalId);
 
         // Tope fijo solo para no hacer consultas enormes. Los días más allá de la anticipación
         // máxima de la barbería no fallan: vuelven sin disponibilidad (ver slotsDelDia).
@@ -95,16 +95,16 @@ public class DisponibilidadService {
      * de la base de datos, que se valida al guardar (ver AtencionService).
      */
     @Transactional(readOnly = true)
-    public boolean estaDisponible(UUID sucursalId, UUID servicioId, UUID barberoId, LocalDate fecha, LocalTime hora) {
-        if (barberoId == null) {
+    public boolean estaDisponible(UUID sucursalId, UUID servicioId, UUID profesionalId, LocalDate fecha, LocalTime hora) {
+        if (profesionalId == null) {
             return false;
         }
-        Contexto ctx = cargarContexto(sucursalId, servicioId, barberoId);
-        if (ctx.barberos().isEmpty()) {
+        Contexto ctx = cargarContexto(sucursalId, servicioId, profesionalId);
+        if (ctx.profesionales().isEmpty()) {
             return false;
         }
         return slotsDelDia(ctx, fecha).stream()
-                .anyMatch(slot -> slot.hora().equals(hora) && slot.barberos().contains(barberoId));
+                .anyMatch(slot -> slot.hora().equals(hora) && slot.profesionales().contains(profesionalId));
     }
 
     /**
@@ -113,13 +113,13 @@ public class DisponibilidadService {
      * común (hoy o mañana) hace muy pocas consultas.
      */
     @Transactional(readOnly = true)
-    public Optional<LocalDate> proximoDiaDisponible(UUID sucursalId, UUID servicioId, UUID barberoId) {
-        Contexto ctx = cargarContexto(sucursalId, servicioId, barberoId);
-        if (ctx.barberos().isEmpty()) {
+    public Optional<LocalDate> proximoDiaDisponible(UUID sucursalId, UUID servicioId, UUID profesionalId) {
+        Contexto ctx = cargarContexto(sucursalId, servicioId, profesionalId);
+        if (ctx.profesionales().isEmpty()) {
             return Optional.empty();
         }
         LocalDate hoy = LocalDate.now(ctx.zonaHoraria());
-        LocalDate limite = hoy.plusDays(ctx.barberia().getAnticipacionMaximaDias());
+        LocalDate limite = hoy.plusDays(ctx.negocio().getAnticipacionMaximaDias());
         for (LocalDate fecha = hoy; !fecha.isAfter(limite); fecha = fecha.plusDays(1)) {
             if (!slotsDelDia(ctx, fecha).isEmpty()) {
                 return Optional.of(fecha);
@@ -133,7 +133,7 @@ public class DisponibilidadService {
 
         // Más allá de la anticipación máxima no se ofrece nada (ej. hoy + 30 días)
         LocalDate hoy = ahora.atZone(ctx.zonaHoraria()).toLocalDate();
-        if (fecha.isAfter(hoy.plusDays(ctx.barberia().getAnticipacionMaximaDias()))) {
+        if (fecha.isAfter(hoy.plusDays(ctx.negocio().getAnticipacionMaximaDias()))) {
             return List.of();
         }
 
@@ -141,40 +141,40 @@ public class DisponibilidadService {
         Instant inicioDia = ZonedDateTime.of(fecha, LocalTime.MIN, ctx.zonaHoraria()).toInstant();
         Instant finDia = ZonedDateTime.of(fecha.plusDays(1), LocalTime.MIN, ctx.zonaHoraria()).toInstant();
 
-        Map<UUID, List<LocalTime>> slotsPorBarbero = new LinkedHashMap<>();
+        Map<UUID, List<LocalTime>> slotsPorProfesional = new LinkedHashMap<>();
 
-        for (Barbero barbero : ctx.barberos()) {
+        for (Profesional profesional : ctx.profesionales()) {
             List<HorarioLaboral> horarios = horarioLaboralRepository
-                    .findByBarberoIdAndSucursalIdAndDiaSemana(barbero.getId(), ctx.sucursal().getId(), diaSemana);
+                    .findByProfesionalIdAndSucursalIdAndDiaSemana(profesional.getId(), ctx.sucursal().getId(), diaSemana);
             if (horarios.isEmpty()) {
                 continue;
             }
 
             List<Intervalo> ocupados = new ArrayList<>();
-            atencionRepository.findOcupadas(barbero.getId(), ESTADOS_QUE_OCUPAN, inicioDia, finDia)
+            atencionRepository.findOcupadas(profesional.getId(), ESTADOS_QUE_OCUPAN, inicioDia, finDia)
                     .forEach(a -> ocupados.add(new Intervalo(a.getInicio(), a.getFin())));
-            bloqueoRepository.findSolapados(barbero.getId(), inicioDia, finDia)
+            bloqueoRepository.findSolapados(profesional.getId(), inicioDia, finDia)
                     .forEach(b -> ocupados.add(new Intervalo(b.getInicio(), b.getFin())));
 
-            List<LocalTime> libres = CalculadoraDisponibilidad.slotsLibresDeUnBarbero(
+            List<LocalTime> libres = CalculadoraDisponibilidad.slotsLibresDeUnProfesional(
                     horarios,
                     ocupados,
                     ctx.servicio().getDuracionMin(),
-                    ctx.barberia().getIntervaloSlotsMin(),
+                    ctx.negocio().getIntervaloSlotsMin(),
                     fecha,
                     ctx.zonaHoraria(),
                     ahora,
-                    ctx.barberia().getAnticipacionMinimaMin());
+                    ctx.negocio().getAnticipacionMinimaMin());
 
             if (!libres.isEmpty()) {
-                slotsPorBarbero.put(barbero.getId(), libres);
+                slotsPorProfesional.put(profesional.getId(), libres);
             }
         }
 
-        return CalculadoraDisponibilidad.combinarPorBarbero(slotsPorBarbero);
+        return CalculadoraDisponibilidad.combinarPorProfesional(slotsPorProfesional);
     }
 
-    private Contexto cargarContexto(UUID sucursalId, UUID servicioId, UUID barberoId) {
+    private Contexto cargarContexto(UUID sucursalId, UUID servicioId, UUID profesionalId) {
         // Desactivados cuentan como inexistentes: no se pueden consultar ni reservar
         Sucursal sucursal = sucursalRepository.findById(sucursalId)
                 .filter(Sucursal::isActiva)
@@ -183,33 +183,33 @@ public class DisponibilidadService {
                 .filter(Servicio::isActivo)
                 .orElseThrow(() -> new RecursoNoEncontradoException("Servicio no encontrado"));
 
-        if (!sucursal.getBarberia().isReservasOnline()) {
-            throw new DatosInvalidosException("barberia", "Esta barbería no acepta reservas online por ahora");
+        if (!sucursal.getNegocio().isReservasOnline()) {
+            throw new DatosInvalidosException("negocio", "Esta barbería no acepta reservas online por ahora");
         }
 
-        if (!servicio.getBarberia().getId().equals(sucursal.getBarberia().getId())) {
+        if (!servicio.getNegocio().getId().equals(sucursal.getNegocio().getId())) {
             throw new DatosInvalidosException("servicio", "No pertenece a la barbería de la sucursal");
         }
 
-        List<Barbero> barberos = barberoId != null
-                ? barberosParaUnoPuntual(barberoId, sucursal, servicio)
-                : barberoRepository.findByActivoTrueAndSucursalesContainingAndServiciosContaining(sucursal, servicio);
+        List<Profesional> profesionales = profesionalId != null
+                ? profesionalesParaUnoPuntual(profesionalId, sucursal, servicio)
+                : profesionalRepository.findByActivoTrueAndSucursalesContainingAndServiciosContaining(sucursal, servicio);
 
-        return new Contexto(sucursal, servicio, barberos, sucursal.getBarberia(), ZoneId.of(sucursal.getBarberia().getZonaHoraria()));
+        return new Contexto(sucursal, servicio, profesionales, sucursal.getNegocio(), ZoneId.of(sucursal.getNegocio().getZonaHoraria()));
     }
 
     /** Si piden un barbero puntual que no atiende ahí o no hace ese servicio, no hay error: simplemente no hay disponibilidad. */
-    private List<Barbero> barberosParaUnoPuntual(UUID barberoId, Sucursal sucursal, Servicio servicio) {
-        Barbero barbero = barberoRepository.findById(barberoId)
+    private List<Profesional> profesionalesParaUnoPuntual(UUID profesionalId, Sucursal sucursal, Servicio servicio) {
+        Profesional profesional = profesionalRepository.findById(profesionalId)
                 .orElseThrow(() -> new RecursoNoEncontradoException("Barbero no encontrado"));
 
-        boolean atiendeAca = barbero.isActivo()
-                && barbero.getSucursales().contains(sucursal)
-                && barbero.getServicios().contains(servicio);
+        boolean atiendeAca = profesional.isActivo()
+                && profesional.getSucursales().contains(sucursal)
+                && profesional.getServicios().contains(servicio);
 
-        return atiendeAca ? List.of(barbero) : List.of();
+        return atiendeAca ? List.of(profesional) : List.of();
     }
 
-    private record Contexto(Sucursal sucursal, Servicio servicio, List<Barbero> barberos, Barberia barberia, ZoneId zonaHoraria) {
+    private record Contexto(Sucursal sucursal, Servicio servicio, List<Profesional> profesionales, Negocio negocio, ZoneId zonaHoraria) {
     }
 }

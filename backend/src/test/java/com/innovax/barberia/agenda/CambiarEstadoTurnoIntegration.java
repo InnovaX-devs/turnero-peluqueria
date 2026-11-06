@@ -4,8 +4,8 @@ import com.innovax.barberia.atencion.Atencion;
 import com.innovax.barberia.atencion.AtencionRepository;
 import com.innovax.barberia.atencion.EstadoAtencion;
 import com.innovax.barberia.atencion.OrigenAtencion;
-import com.innovax.barberia.barberia.BarberiaRepository;
-import com.innovax.barberia.barbero.BarberoRepository;
+import com.innovax.barberia.negocio.NegocioRepository;
+import com.innovax.barberia.profesional.ProfesionalRepository;
 import com.innovax.barberia.servicio.ServicioRepository;
 import com.innovax.barberia.sucursal.SucursalRepository;
 import org.junit.jupiter.api.AfterEach;
@@ -34,10 +34,10 @@ import com.jayway.jsonpath.JsonPath;
 @SpringBootTest
 class CambiarEstadoTurnoIntegrationTest {
 
-    private static final String BARBERIA = "aaaaaaaa-0000-0000-0000-000000000001";
+    private static final String NEGOCIO = "aaaaaaaa-0000-0000-0000-000000000001";
     private static final String SUCURSAL = "bbbbbbbb-0000-0000-0000-000000000001";
-    private static final String BARBERO_LUCAS = "cccccccc-0000-0000-0000-000000000001";
-    private static final String BARBERO_ANDRES = "cccccccc-0000-0000-0000-000000000002";
+    private static final String PROFESIONAL_LUCAS = "cccccccc-0000-0000-0000-000000000001";
+    private static final String PROFESIONAL_ANDRES = "cccccccc-0000-0000-0000-000000000002";
     private static final String SERVICIO_CORTE = "dddddddd-0000-0000-0000-000000000001"; // precio 1500000
 
     @Autowired
@@ -45,13 +45,13 @@ class CambiarEstadoTurnoIntegrationTest {
     @Autowired
     private AtencionRepository atenciones;
     @Autowired
-    private BarberiaRepository barberias;
+    private NegocioRepository negocios;
     @Autowired
     private SucursalRepository sucursales;
     @Autowired
     private ServicioRepository servicios;
     @Autowired
-    private BarberoRepository barberos;
+    private ProfesionalRepository profesionales;
 
     private MockMvc mvc;
     private UUID turnoId;
@@ -68,11 +68,11 @@ class CambiarEstadoTurnoIntegrationTest {
         }
     }
 
-    private UUID crearTurnoReservado(String barberoId) {
+    private UUID crearTurnoReservado(String profesionalId) {
         Atencion atencion = new Atencion();
-        atencion.setBarberia(barberias.getReferenceById(UUID.fromString(BARBERIA)));
+        atencion.setNegocio(negocios.getReferenceById(UUID.fromString(NEGOCIO)));
         atencion.setSucursal(sucursales.getReferenceById(UUID.fromString(SUCURSAL)));
-        atencion.setBarbero(barberos.getReferenceById(UUID.fromString(barberoId)));
+        atencion.setProfesional(profesionales.getReferenceById(UUID.fromString(profesionalId)));
         atencion.setServicio(servicios.getReferenceById(UUID.fromString(SERVICIO_CORTE)));
         Instant inicio = Instant.now().plus(2, ChronoUnit.DAYS);
         atencion.setInicio(inicio);
@@ -100,7 +100,7 @@ class CambiarEstadoTurnoIntegrationTest {
 
     @Test
     void sinTokenDevuelve401() throws Exception {
-        UUID id = crearTurnoReservado(BARBERO_LUCAS);
+        UUID id = crearTurnoReservado(PROFESIONAL_LUCAS);
         mvc.perform(patch("/api/agenda/turnos/{id}/estado", id)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"estado\":\"CANCELADA\"}"))
@@ -109,7 +109,7 @@ class CambiarEstadoTurnoIntegrationTest {
 
     @Test
     void adminPuedeCompletarYAjustarPrecioYMetodoPago() throws Exception {
-        UUID id = crearTurnoReservado(BARBERO_LUCAS);
+        UUID id = crearTurnoReservado(PROFESIONAL_LUCAS);
         String token = login("admin@jade.com", "admin123");
 
         mvc.perform(patch("/api/agenda/turnos/{id}/estado", id)
@@ -126,7 +126,7 @@ class CambiarEstadoTurnoIntegrationTest {
 
     @Test
     void completarSinMetodoPagoDevuelve400() throws Exception {
-        UUID id = crearTurnoReservado(BARBERO_LUCAS);
+        UUID id = crearTurnoReservado(PROFESIONAL_LUCAS);
         String token = login("admin@jade.com", "admin123");
 
         mvc.perform(patch("/api/agenda/turnos/{id}/estado", id)
@@ -139,7 +139,7 @@ class CambiarEstadoTurnoIntegrationTest {
 
     @Test
     void marcarAusenteNoRequiereMetodoPago() throws Exception {
-        UUID id = crearTurnoReservado(BARBERO_LUCAS);
+        UUID id = crearTurnoReservado(PROFESIONAL_LUCAS);
         String token = login("admin@jade.com", "admin123");
 
         mvc.perform(patch("/api/agenda/turnos/{id}/estado", id)
@@ -152,7 +152,7 @@ class CambiarEstadoTurnoIntegrationTest {
 
     @Test
     void turnoYaActualizadoDevuelve409() throws Exception {
-        UUID id = crearTurnoReservado(BARBERO_LUCAS);
+        UUID id = crearTurnoReservado(PROFESIONAL_LUCAS);
         String token = login("admin@jade.com", "admin123");
 
         mvc.perform(patch("/api/agenda/turnos/{id}/estado", id)
@@ -169,8 +169,8 @@ class CambiarEstadoTurnoIntegrationTest {
     }
 
     @Test
-    void barberoNoPuedeCambiarEstadoDeOtroBarbero() throws Exception {
-        UUID id = crearTurnoReservado(BARBERO_ANDRES);
+    void profesionalNoPuedeCambiarEstadoDeOtroProfesional() throws Exception {
+        UUID id = crearTurnoReservado(PROFESIONAL_ANDRES);
         String token = login("lucas@jade.com", "barbero123");
 
         mvc.perform(patch("/api/agenda/turnos/{id}/estado", id)
@@ -181,8 +181,8 @@ class CambiarEstadoTurnoIntegrationTest {
     }
 
     @Test
-    void barberoPuedeCambiarEstadoDeSuPropioTurno() throws Exception {
-        UUID id = crearTurnoReservado(BARBERO_LUCAS);
+    void profesionalPuedeCambiarEstadoDeSuPropioTurno() throws Exception {
+        UUID id = crearTurnoReservado(PROFESIONAL_LUCAS);
         String token = login("lucas@jade.com", "barbero123");
 
         mvc.perform(patch("/api/agenda/turnos/{id}/estado", id)

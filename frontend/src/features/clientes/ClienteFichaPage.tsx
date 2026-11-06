@@ -106,7 +106,7 @@ export function ClienteFichaPage() {
                 </div>
                 <div className="ficha-historial-detalle">
                   <span>{formatearFecha(a.inicio)}</span>
-                  <span>{a.barberoNombre}</span>
+                  <span>{a.profesionalNombre}</span>
                   <span className={`ficha-estado ficha-estado-${a.estado.toLowerCase()}`}>
                     {ETIQUETAS_ESTADO[a.estado]}
                   </span>

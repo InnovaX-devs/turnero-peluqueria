@@ -3,7 +3,7 @@ package com.innovax.barberia.cliente;
 import com.innovax.barberia.atencion.AtencionRepository;
 import com.innovax.barberia.atencion.EstadoAtencion;
 import com.innovax.barberia.auth.UsuarioActual;
-import com.innovax.barberia.barberia.BarberiaRepository;
+import com.innovax.barberia.negocio.NegocioRepository;
 import com.innovax.barberia.cliente.dto.ActualizarNotasRequest;
 import com.innovax.barberia.cliente.dto.ClienteListadoResponse;
 import com.innovax.barberia.cliente.dto.ClienteResponse;
@@ -35,7 +35,7 @@ public class ClienteService {
     static final String ORDEN_ULTIMA_VISITA = "ultimaVisita";
 
     private final ClienteRepository clientes;
-    private final BarberiaRepository barberias;
+    private final NegocioRepository negocios;
     private final AtencionRepository atenciones;
     private final UsuarioActual usuarioActual;
 
@@ -45,23 +45,23 @@ public class ClienteService {
         if (texto.length() < 2) {
             return List.of();
         }
-        UUID barberiaId = usuarioActual.barberiaId();
+        UUID negocioId = usuarioActual.negocioId();
         String digitos = texto.replaceAll("\\D", "");
         List<Cliente> encontrados = digitos.length() >= 3
-                ? clientes.buscarPorNombreOTelefono(barberiaId, texto, digitos, PageRequest.of(0, MAXIMO_RESULTADOS))
-                : clientes.findTop10ByBarberiaIdAndNombreContainingIgnoreCaseOrderByNombreAsc(barberiaId, texto);
+                ? clientes.buscarPorNombreOTelefono(negocioId, texto, digitos, PageRequest.of(0, MAXIMO_RESULTADOS))
+                : clientes.findTop10ByNegocioIdAndNombreContainingIgnoreCaseOrderByNombreAsc(negocioId, texto);
         return encontrados.stream().map(ClienteResponse::de).toList();
     }
 
     @Transactional
     public ClienteResponse crear(CrearClienteRequest request) {
-        UUID barberiaId = usuarioActual.barberiaId();
-        clientes.findByBarberiaIdAndTelefono(barberiaId, request.telefono()).ifPresent(existente -> {
+        UUID negocioId = usuarioActual.negocioId();
+        clientes.findByNegocioIdAndTelefono(negocioId, request.telefono()).ifPresent(existente -> {
             throw new ConflictoException("telefono", "Ya existe un cliente con ese teléfono: " + existente.getNombre());
         });
 
         Cliente cliente = new Cliente();
-        cliente.setBarberia(barberias.getReferenceById(barberiaId));
+        cliente.setNegocio(negocios.getReferenceById(negocioId));
         cliente.setNombre(request.nombre().trim());
         cliente.setTelefono(request.telefono());
         try {
@@ -89,13 +89,13 @@ public class ClienteService {
         String digitos = texto.replaceAll("\\D", "");
         // Con 1 o 2 dígitos buscar por teléfono trae casi todo: ahí se busca solo por nombre
         String digitosParaTelefono = digitos.length() >= 3 ? digitos : "";
-        UUID barberiaId = usuarioActual.barberiaId();
+        UUID negocioId = usuarioActual.negocioId();
 
-        long total = clientes.contarListado(barberiaId, texto, digitosParaTelefono);
+        long total = clientes.contarListado(negocioId, texto, digitosParaTelefono);
         long desde = (long) paginaPedida * porPagina;
         List<Cliente> encontrados = ORDEN_ULTIMA_VISITA.equals(orden)
-                ? clientes.listarPorUltimaVisita(barberiaId, texto, digitosParaTelefono, porPagina, desde)
-                : clientes.listarPorNombre(barberiaId, texto, digitosParaTelefono, porPagina, desde);
+                ? clientes.listarPorUltimaVisita(negocioId, texto, digitosParaTelefono, porPagina, desde)
+                : clientes.listarPorNombre(negocioId, texto, digitosParaTelefono, porPagina, desde);
 
         Map<UUID, Instant> ultimas = new HashMap<>();
         if (!encontrados.isEmpty()) {
@@ -112,27 +112,27 @@ public class ClienteService {
 
     @Transactional(readOnly = true)
     public FichaClienteResponse ficha(UUID id) {
-        UUID barberiaId = usuarioActual.barberiaId();
-        return armarFicha(buscarDeMiBarberia(id, barberiaId), barberiaId);
+        UUID negocioId = usuarioActual.negocioId();
+        return armarFicha(buscarDeMiNegocio(id, negocioId), negocioId);
     }
 
     @Transactional
     public FichaClienteResponse actualizarNotas(UUID id, ActualizarNotasRequest request) {
-        UUID barberiaId = usuarioActual.barberiaId();
-        Cliente cliente = buscarDeMiBarberia(id, barberiaId);
+        UUID negocioId = usuarioActual.negocioId();
+        Cliente cliente = buscarDeMiNegocio(id, negocioId);
         String notas = request.notas() == null ? "" : request.notas().strip();
         cliente.setNotas(notas.isEmpty() ? null : notas);
         clientes.save(cliente);
-        return armarFicha(cliente, barberiaId);
+        return armarFicha(cliente, negocioId);
     }
 
     /** Si el cliente es de otra barbería se responde igual que si no existiera. */
-    private Cliente buscarDeMiBarberia(UUID id, UUID barberiaId) {
-        return clientes.findByIdAndBarberiaId(id, barberiaId)
+    private Cliente buscarDeMiNegocio(UUID id, UUID negocioId) {
+        return clientes.findByIdAndNegocioId(id, negocioId)
                 .orElseThrow(() -> new RecursoNoEncontradoException("Cliente no encontrado"));
     }
 
-    private FichaClienteResponse armarFicha(Cliente cliente, UUID barberiaId) {
-        return FichaClienteResponse.de(cliente, atenciones.findHistorialDeCliente(barberiaId, cliente.getId()));
+    private FichaClienteResponse armarFicha(Cliente cliente, UUID negocioId) {
+        return FichaClienteResponse.de(cliente, atenciones.findHistorialDeCliente(negocioId, cliente.getId()));
     }
 }

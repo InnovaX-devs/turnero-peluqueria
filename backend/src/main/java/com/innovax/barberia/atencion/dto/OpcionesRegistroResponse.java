@@ -1,7 +1,7 @@
 package com.innovax.barberia.atencion.dto;
 
-import com.innovax.barberia.barberia.Barberia;
-import com.innovax.barberia.barbero.Barbero;
+import com.innovax.barberia.negocio.Negocio;
+import com.innovax.barberia.profesional.Profesional;
 import com.innovax.barberia.servicio.Servicio;
 import com.innovax.barberia.sucursal.Sucursal;
 
@@ -12,31 +12,31 @@ import java.util.UUID;
 public record OpcionesRegistroResponse(
         String zonaHoraria,
         /** null si el usuario no está vinculado a un barbero */
-        UUID barberoPropioId,
+        UUID profesionalPropioId,
         List<ServicioOpcion> servicios,
-        List<BarberoOpcion> barberos,
+        List<ProfesionalOpcion> profesionales,
         List<SucursalOpcion> sucursales
 ) {
 
     public record ServicioOpcion(UUID id, String nombre, int duracionMin, long precio) {
     }
 
-    public record BarberoOpcion(UUID id, String nombre, List<UUID> sucursalIds) {
+    public record ProfesionalOpcion(UUID id, String nombre, List<UUID> sucursalIds) {
     }
 
     public record SucursalOpcion(UUID id, String nombre) {
     }
 
-    public static OpcionesRegistroResponse de(Barberia barberia, UUID barberoPropioId, List<Servicio> servicios,
-                                              List<Barbero> barberos, List<Sucursal> sucursales) {
+    public static OpcionesRegistroResponse de(Negocio negocio, UUID profesionalPropioId, List<Servicio> servicios,
+                                              List<Profesional> profesionales, List<Sucursal> sucursales) {
         return new OpcionesRegistroResponse(
-                barberia.getZonaHoraria(),
-                barberoPropioId,
+                negocio.getZonaHoraria(),
+                profesionalPropioId,
                 servicios.stream()
                         .map(s -> new ServicioOpcion(s.getId(), s.getNombre(), s.getDuracionMin(), s.getPrecio()))
                         .toList(),
-                barberos.stream()
-                        .map(b -> new BarberoOpcion(b.getId(), b.getNombre() + " " + b.getApellido(),
+                profesionales.stream()
+                        .map(b -> new ProfesionalOpcion(b.getId(), b.getNombre() + " " + b.getApellido(),
                                 b.getSucursales().stream().filter(Sucursal::isActiva).map(Sucursal::getId).toList()))
                         .toList(),
                 sucursales.stream().map(s -> new SucursalOpcion(s.getId(), s.getNombre())).toList());
