@@ -31,6 +31,16 @@ export interface ClienteResumen {
   id: string
   nombre: string
   telefono: string
+  /** Solo en salud; null en los demás rubros. */
+  dni: string | null
+}
+
+export interface DatosNuevoCliente {
+  nombre: string
+  /** E.164, ej. +5493584111111 */
+  telefono: string
+  /** Obligatorio en salud. */
+  dni?: string
 }
 
 export interface RegistrarCorteDatos {

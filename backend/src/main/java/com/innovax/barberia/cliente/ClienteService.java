@@ -3,7 +3,9 @@ package com.innovax.barberia.cliente;
 import com.innovax.barberia.atencion.AtencionRepository;
 import com.innovax.barberia.atencion.EstadoAtencion;
 import com.innovax.barberia.auth.UsuarioActual;
+import com.innovax.barberia.negocio.Negocio;
 import com.innovax.barberia.negocio.NegocioRepository;
+import com.innovax.barberia.negocio.Rubro;
 import com.innovax.barberia.cliente.dto.ActualizarNotasRequest;
 import com.innovax.barberia.cliente.dto.ClienteListadoResponse;
 import com.innovax.barberia.cliente.dto.ClienteResponse;
@@ -48,33 +50,61 @@ public class ClienteService {
         UUID negocioId = usuarioActual.negocioId();
         String digitos = texto.replaceAll("\\D", "");
         List<Cliente> encontrados = digitos.length() >= 3
-                ? clientes.buscarPorNombreOTelefono(negocioId, texto, digitos, PageRequest.of(0, MAXIMO_RESULTADOS))
+                ? clientes.buscarPorNombreTelefonoODni(negocioId, texto, digitos, PageRequest.of(0, MAXIMO_RESULTADOS))
                 : clientes.findTop10ByNegocioIdAndNombreContainingIgnoreCaseOrderByNombreAsc(negocioId, texto);
         return encontrados.stream().map(ClienteResponse::de).toList();
     }
 
+    /**
+     * Alta manual. En salud el paciente se identifica por DNI (obligatorio): dos pacientes pueden
+     * compartir teléfono si tienen distinto DNI. En los demás rubros se identifica por teléfono y
+     * el DNI, la fecha de nacimiento y el sexo se ignoran.
+     */
     @Transactional
     public ClienteResponse crear(CrearClienteRequest request) {
         UUID negocioId = usuarioActual.negocioId();
-        clientes.findByNegocioIdAndTelefono(negocioId, request.telefono()).ifPresent(existente -> {
-            throw new ConflictoException("telefono", "Ya existe un cliente con ese teléfono: " + existente.getNombre());
-        });
+        Negocio negocio = negocios.getReferenceById(negocioId);
+        Rubro rubro = negocio.getRubro();
 
         Cliente cliente = new Cliente();
-        cliente.setNegocio(negocios.getReferenceById(negocioId));
+        cliente.setNegocio(negocio);
         cliente.setNombre(request.nombre().trim());
         cliente.setTelefono(request.telefono());
+
+        String campoConflicto;
+        if (rubro.identificaPorDni()) {
+            String dni = Dni.normalizar(request.dni());
+            if (dni == null) {
+                throw new DatosInvalidosException("dni", "El DNI es obligatorio");
+            }
+            clientes.findByNegocioIdAndDni(negocioId, dni).ifPresent(existente -> {
+                throw new ConflictoException("dni",
+                        "Ya existe " + rubro.cliente().un() + " con ese DNI: " + existente.getNombre());
+            });
+            cliente.setDni(dni);
+            cliente.setFechaNacimiento(request.fechaNacimiento());
+            cliente.setSexo(request.sexo());
+            campoConflicto = "dni";
+        } else {
+            clientes.findByNegocioIdAndTelefono(negocioId, request.telefono()).ifPresent(existente -> {
+                throw new ConflictoException("telefono",
+                        "Ya existe " + rubro.cliente().un() + " con ese teléfono: " + existente.getNombre());
+            });
+            campoConflicto = "telefono";
+        }
+
         try {
             clientes.saveAndFlush(cliente);
         } catch (DataIntegrityViolationException e) {
-            // Otro usuario lo creó justo en el medio (la base tiene UNIQUE barberia + teléfono)
-            throw new ConflictoException("telefono", "Ya existe un cliente con ese teléfono");
+            // Otro usuario lo creó justo en el medio (la base tiene UNIQUE negocio + DNI, o negocio + teléfono si no hay DNI)
+            throw new ConflictoException(campoConflicto,
+                    "Ya existe " + rubro.cliente().un() + " con ese " + ("dni".equals(campoConflicto) ? "DNI" : "teléfono"));
         }
         return ClienteResponse.de(cliente);
     }
 
     /**
-     * Listado del panel, paginado. Sin texto trae todos; con texto filtra por nombre o teléfono.
+     * Listado del panel, paginado. Sin texto trae todos; con texto filtra por nombre, teléfono o DNI.
      * {@code orden}: "nombre" (A-Z) o "ultimaVisita" (los que vinieron más recientemente primero).
      */
     @Transactional(readOnly = true)

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { keepPreviousData, useInfiniteQuery } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
 import { listarClientes } from '../../api/clientes'
+import { formatearDni } from '../../lib/dni'
 import { mensajeDeError } from '../../lib/errores'
 import type { OrdenClientes } from '../../types/cliente'
 import { textoUltimaVisita } from './ultimaVisita'
@@ -40,8 +41,8 @@ export function ClientesPage() {
         <input
           className="clientes-buscador"
           type="search"
-          placeholder="Buscar por nombre o teléfono"
-          aria-label={`Buscar ${t.cliente.s} por nombre o teléfono`}
+          placeholder={t.pideDni ? 'Buscar por nombre o DNI' : 'Buscar por nombre o teléfono'}
+          aria-label={`Buscar ${t.cliente.s} por nombre o ${t.pideDni ? 'DNI' : 'teléfono'}`}
           value={texto}
           onChange={(e) => setTexto(e.target.value)}
         />
@@ -82,7 +83,7 @@ export function ClientesPage() {
                 <Link to={`/panel/clientes/${c.id}`} className="clientes-fila">
                   <span className="clientes-fila-datos">
                     <strong>{c.nombre}</strong>
-                    <small>{c.telefono}</small>
+                    <small>{c.dni ? `DNI ${formatearDni(c.dni)} · ${c.telefono}` : c.telefono}</small>
                     <small className="clientes-fila-visita">{textoUltimaVisita(c.ultimaVisita)}</small>
                   </span>
                   {c.tieneNotas && <span className="clientes-etiqueta-nota">Con nota</span>}

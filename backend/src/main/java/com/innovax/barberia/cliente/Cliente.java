@@ -8,6 +8,7 @@ import lombok.Setter;
 import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.Instant;
+import java.time.LocalDate;
 import java.util.UUID;
 
 @Entity
@@ -31,6 +32,17 @@ public class Cliente {
     /** Formato E.164, ej. +5493584111111. */
     @Column(nullable = false, length = 20)
     private String telefono;
+
+    /** 7 u 8 dígitos, sin puntos. Obligatorio en salud (ahí identifica al paciente); en el resto no se usa. */
+    @Column(length = 8)
+    private String dni;
+
+    @Column
+    private LocalDate fechaNacimiento;
+
+    @Enumerated(EnumType.STRING)
+    @Column(length = 10)
+    private Sexo sexo;
 
     @Column(length = 2000)
     private String notas;

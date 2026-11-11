@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
 import { cambiarEstadoTurno, marcarLlegadaTurno } from '../../api/agenda'
+import { formatearDni } from '../../lib/dni'
 import { mensajeDeError } from '../../lib/errores'
 import { Selector } from '../../components/Selector'
 import type { CambiarEstadoTurno, MetodoPago, Turno } from '../../types/agenda'
@@ -143,6 +144,12 @@ export function TurnoDetalle({ turno, onCerrar }: { turno: Turno; onCerrar: () =
         )}
 
         <dl className="agenda-modal-detalle">
+          {turnoActual.clienteDni && (
+            <div>
+              <dt>DNI</dt>
+              <dd>{formatearDni(turnoActual.clienteDni)}</dd>
+            </div>
+          )}
           <div>
             <dt>{t.servicio.S}</dt>
             <dd>{turnoActual.servicioNombre}</dd>

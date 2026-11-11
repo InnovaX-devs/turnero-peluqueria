@@ -1,4 +1,5 @@
 import type { Rubro } from '../lib/terminos'
+import type { Sexo } from './cliente'
 
 export interface SucursalPublica {
   id: string
@@ -57,6 +58,12 @@ export interface CrearReservaRequest {
   clienteNombre: string
   /** E.164, ej. +5493584111111 */
   clienteTelefono: string
+  /** Obligatorio en salud (solo números). En los demás rubros no se manda. */
+  clienteDni?: string
+  /** "AAAA-MM-DD". Solo salud, opcional. */
+  clienteFechaNacimiento?: string
+  /** Solo salud, opcional. */
+  clienteSexo?: Sexo
   notas: string | null
 }
 

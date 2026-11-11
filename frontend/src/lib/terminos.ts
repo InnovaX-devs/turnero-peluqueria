@@ -68,6 +68,11 @@ export interface Terminos {
   ejemploNota: string
   /** Ejemplo para las notas internas de un cliente / paciente. */
   ejemploNotaFicha: string
+  /**
+   * true en salud: al paciente se lo identifica por DNI (obligatorio, y dos pacientes pueden compartir
+   * teléfono). En los demás rubros el cliente se identifica por teléfono y el DNI no se pide.
+   */
+  pideDni: boolean
 }
 
 type Diccionario = Record<'negocio' | 'profesional' | 'cliente' | 'servicio' | 'atencion', Palabra> & { ejemploNota: string; ejemploNotaFicha: string }
@@ -152,6 +157,7 @@ export function terminosDe(rubro: Rubro | null | undefined): Terminos {
       atencion: declinar(d.atencion),
       ejemploNota: d.ejemploNota,
       ejemploNotaFicha: d.ejemploNotaFicha,
+      pideDni: clave === 'SALUD',
     }
     CACHE.set(clave, terminos)
   }

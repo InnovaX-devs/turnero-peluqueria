@@ -6,7 +6,9 @@ import { erroresDeCampos, mensajeDeError } from '../../lib/errores'
 import { Selector } from '../../components/Selector'
 import { fechaLarga } from '../../lib/fechas'
 import { formatearDuracion, formatearPrecio } from '../../lib/formato'
+import { errorDeDni, soloDigitosDni } from '../../lib/dni'
 import { armarTelefono, PAISES } from '../../lib/telefono'
+import { ETIQUETA_SEXO, type Sexo } from '../../types/cliente'
 import type { ReservaCreada, SucursalPublica } from '../../types/reserva'
 import { useTerminos } from '../terminos/useTerminos'
 
@@ -21,6 +23,8 @@ interface Props {
   onElegirOtroHorario: () => void
 }
 
+const CAMPOS_DEL_FORMULARIO = ['clienteNombre', 'clienteTelefono', 'clienteDni', 'clienteFechaNacimiento']
+
 const esHorarioOcupado = (e: unknown) => axios.isAxiosError(e) && e.response?.status === 409
 
 export function PasoDatos({ slug, sucursal, servicioId, profesionalId, fecha, hora, onConfirmada, onElegirOtroHorario }: Props) {
@@ -29,8 +33,11 @@ export function PasoDatos({ slug, sucursal, servicioId, profesionalId, fecha, ho
   const [nombre, setNombre] = useState('')
   const [codigoPais, setCodigoPais] = useState('AR')
   const [telefono, setTelefono] = useState('')
+  const [dni, setDni] = useState('')
+  const [fechaNacimiento, setFechaNacimiento] = useState('')
+  const [sexo, setSexo] = useState<Sexo | ''>('')
   const [notas, setNotas] = useState('')
-  const [errores, setErrores] = useState<{ nombre?: string; telefono?: string }>({})
+  const [errores, setErrores] = useState<{ nombre?: string; telefono?: string; dni?: string; fechaNacimiento?: string }>({})
 
   const pais = PAISES.find((p) => p.codigo === codigoPais) ?? PAISES[0]
 
@@ -58,7 +65,12 @@ export function PasoDatos({ slug, sucursal, servicioId, profesionalId, fecha, ho
         return
       }
       const campos = erroresDeCampos(error)
-      setErrores({ nombre: campos.clienteNombre, telefono: campos.clienteTelefono })
+      setErrores({
+        nombre: campos.clienteNombre,
+        telefono: campos.clienteTelefono,
+        dni: campos.clienteDni,
+        fechaNacimiento: campos.clienteFechaNacimiento,
+      })
     },
   })
 
@@ -77,9 +89,11 @@ export function PasoDatos({ slug, sucursal, servicioId, profesionalId, fecha, ho
     const nuevosErrores = {
       nombre: nombreLimpio.length < 2 ? 'Ingresá tu nombre y apellido.' : undefined,
       telefono: tel.ok ? undefined : tel.error,
+      dni: t.pideDni ? errorDeDni(dni) : undefined,
+      fechaNacimiento: undefined,
     }
     setErrores(nuevosErrores)
-    if (nuevosErrores.nombre || !tel.ok) return
+    if (nuevosErrores.nombre || nuevosErrores.dni || !tel.ok) return
 
     mutacion.mutate({
       sucursalId: sucursal.id,
@@ -89,6 +103,12 @@ export function PasoDatos({ slug, sucursal, servicioId, profesionalId, fecha, ho
       hora,
       clienteNombre: nombreLimpio,
       clienteTelefono: tel.e164,
+      // El DNI, la fecha de nacimiento y el sexo se piden solo en salud
+      ...(t.pideDni && {
+        clienteDni: soloDigitosDni(dni),
+        clienteFechaNacimiento: fechaNacimiento || undefined,
+        clienteSexo: sexo || undefined,
+      }),
       notas: notas.trim() || null,
     })
   }
@@ -97,7 +117,7 @@ export function PasoDatos({ slug, sucursal, servicioId, profesionalId, fecha, ho
   // Errores que no son de un campo del formulario (ej. la barbería apagó las reservas en el medio)
   const campos = mutacion.isError ? erroresDeCampos(mutacion.error) : {}
   const otros = Object.entries(campos)
-    .filter(([campo]) => campo !== 'clienteNombre' && campo !== 'clienteTelefono')
+    .filter(([campo]) => !CAMPOS_DEL_FORMULARIO.includes(campo))
     .map(([, mensaje]) => mensaje)
   const errorGeneral =
     mutacion.isError && !ocupado && (otros.length > 0 || Object.keys(campos).length === 0)
@@ -183,6 +203,52 @@ export function PasoDatos({ slug, sucursal, servicioId, profesionalId, fecha, ho
             )}
           </div>
 
+          {t.pideDni && (
+            <>
+              <label className="reserva-campo">
+                <span>DNI</span>
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  autoComplete="off"
+                  maxLength={10}
+                  placeholder="Sin puntos, ej: 30123456"
+                  value={dni}
+                  onChange={(e) => setDni(e.target.value)}
+                  aria-invalid={errores.dni ? true : undefined}
+                />
+                {errores.dni ? (
+                  <small className="reserva-campo-error">{errores.dni}</small>
+                ) : (
+                  <small>Con el DNI te identificamos: si compartís teléfono con un familiar, cada uno pone el suyo.</small>
+                )}
+              </label>
+
+              <label className="reserva-campo">
+                <span>Fecha de nacimiento (opcional)</span>
+                <input
+                  type="date"
+                  autoComplete="bday"
+                  max={new Date().toISOString().slice(0, 10)}
+                  value={fechaNacimiento}
+                  onChange={(e) => setFechaNacimiento(e.target.value)}
+                  aria-invalid={errores.fechaNacimiento ? true : undefined}
+                />
+                {errores.fechaNacimiento && <small className="reserva-campo-error">{errores.fechaNacimiento}</small>}
+              </label>
+
+              <label className="reserva-campo">
+                <span>Sexo (opcional)</span>
+                <select value={sexo} onChange={(e) => setSexo(e.target.value as Sexo | '')}>
+                  <option value="">Prefiero no decirlo</option>
+                  {(Object.keys(ETIQUETA_SEXO) as Sexo[]).map((s) => (
+                    <option key={s} value={s}>{ETIQUETA_SEXO[s]}</option>
+                  ))}
+                </select>
+              </label>
+            </>
+          )}
+
           <label className="reserva-campo">
             <span>Notas para {t.profesional.el} (opcional)</span>
             <textarea
@@ -205,7 +271,7 @@ export function PasoDatos({ slug, sucursal, servicioId, profesionalId, fecha, ho
           </button>
 
           <p className="reserva-legal">
-            Al confirmar, aceptás que {t.negocio.el} use tu nombre y teléfono para gestionar este turno.
+            Al confirmar, aceptás que {t.negocio.el} use tus datos para gestionar este turno.
           </p>
         </form>
       )}

@@ -2,12 +2,20 @@ import { useQuery } from '@tanstack/react-query'
 import { Link, useParams } from 'react-router-dom'
 import axios from 'axios'
 import { obtenerFichaCliente } from '../../api/clientes'
+import { formatearDni } from '../../lib/dni'
 import { mensajeDeError } from '../../lib/errores'
 import { formatearPrecio } from '../../lib/formato'
 import { ETIQUETAS_ESTADO, linkWhatsApp } from '../agenda/agenda'
+import { ETIQUETA_SEXO } from '../../types/cliente'
 import { NotasCliente } from './NotasCliente'
 import './clientes.css'
 import { useTerminos } from '../terminos/useTerminos'
+
+/** "1990-05-17" → "17/05/1990" (sin pasar por Date, para que la zona horaria no corra el día). */
+function fechaNacimientoLegible(iso: string): string {
+  const [anio, mes, dia] = iso.split('-')
+  return `${dia}/${mes}/${anio}`
+}
 
 function formatearFecha(iso: string): string {
   return new Date(iso).toLocaleString('es-AR', {
@@ -67,6 +75,17 @@ export function ClienteFichaPage() {
       <header className="ficha-encabezado">
         <h1 className="clientes-titulo">{cliente.nombre}</h1>
         <p className="ficha-telefono">{cliente.telefono}</p>
+        {cliente.dni && <p className="ficha-dato">DNI {formatearDni(cliente.dni)}</p>}
+        {(cliente.fechaNacimiento || cliente.sexo) && (
+          <p className="ficha-dato">
+            {[
+              cliente.fechaNacimiento && `Nació el ${fechaNacimientoLegible(cliente.fechaNacimiento)}`,
+              cliente.sexo && ETIQUETA_SEXO[cliente.sexo],
+            ]
+              .filter(Boolean)
+              .join(' · ')}
+          </p>
+        )}
         <p className="ficha-dato">
           {t.cliente.S} desde{' '}
           {new Date(cliente.creadoEn).toLocaleDateString('es-AR', { month: 'long', year: 'numeric' })}

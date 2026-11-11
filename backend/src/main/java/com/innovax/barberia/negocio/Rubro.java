@@ -77,6 +77,14 @@ public enum Rubro {
     }
 
     /** Una palabra con su plural y su género, para armar frases con el artículo correcto. */
+    /**
+     * En salud al paciente se lo identifica por DNI (y puede haber dos con el mismo teléfono, ej.
+     * madre e hijo). En los demás rubros el cliente se identifica por teléfono.
+     */
+    public boolean identificaPorDni() {
+        return this == SALUD;
+    }
+
     public record Termino(String singular, String plural, boolean femenino) {
 
         /** "barbero" → "Barbero". */
@@ -101,6 +109,11 @@ public enum Rubro {
         /** "a la barbería" / "al barbero". */
         public String al() {
             return (femenino ? "a la " : "al ") + singular;
+        }
+
+        /** "una barbería" / "un barbero". */
+        public String un() {
+            return (femenino ? "una " : "un ") + singular;
         }
 
         /** "esta barbería" / "este barbero". */

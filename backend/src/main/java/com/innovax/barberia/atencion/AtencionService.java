@@ -12,6 +12,7 @@ import com.innovax.barberia.negocio.Negocio;
 import com.innovax.barberia.profesional.Profesional;
 import com.innovax.barberia.profesional.ProfesionalRepository;
 import com.innovax.barberia.cliente.Cliente;
+import com.innovax.barberia.cliente.Dni;
 import com.innovax.barberia.cliente.ClienteRepository;
 import com.innovax.barberia.common.ConflictoException;
 import com.innovax.barberia.common.DatosInvalidosException;
@@ -99,7 +100,7 @@ public class AtencionService {
         Instant inicio = ZonedDateTime.of(request.fecha(), request.hora(), zonaHoraria).toInstant();
         Instant fin = inicio.plus(Duration.ofMinutes(servicio.getDuracionMin()));
 
-        Cliente cliente = obtenerOCrearCliente(negocio, request.clienteNombre(), request.clienteTelefono());
+        Cliente cliente = obtenerOCrearCliente(negocio, request);
 
         Atencion atencion = new Atencion();
         atencion.setNegocio(negocio);
@@ -216,15 +217,42 @@ public class AtencionService {
         return TurnoAgendaResponse.de(atenciones.save(atencion));
     }
 
-    private Cliente obtenerOCrearCliente(Negocio negocio, String nombre, String telefono) {
-        Cliente cliente = clientes.findByNegocioIdAndTelefono(negocio.getId(), telefono)
-                .orElseGet(() -> {
-                    Cliente nuevo = new Cliente();
-                    nuevo.setNegocio(negocio);
-                    nuevo.setTelefono(telefono);
-                    return nuevo;
-                });
-        cliente.setNombre(nombre.trim());
+    /**
+     * En salud el paciente se busca por DNI (obligatorio): el teléfono es solo un dato de contacto y
+     * puede repetirse entre pacientes. En los demás rubros se busca por teléfono, como siempre.
+     */
+    private Cliente obtenerOCrearCliente(Negocio negocio, CrearReservaRequest request) {
+        String telefono = request.clienteTelefono();
+        Cliente cliente;
+        if (negocio.getRubro().identificaPorDni()) {
+            String dni = Dni.normalizar(request.clienteDni());
+            if (dni == null) {
+                throw new DatosInvalidosException("clienteDni", "El DNI es obligatorio");
+            }
+            cliente = clientes.findByNegocioIdAndDni(negocio.getId(), dni)
+                    .orElseGet(() -> {
+                        Cliente nuevo = new Cliente();
+                        nuevo.setNegocio(negocio);
+                        nuevo.setDni(dni);
+                        return nuevo;
+                    });
+            cliente.setTelefono(telefono);
+            if (request.clienteFechaNacimiento() != null) {
+                cliente.setFechaNacimiento(request.clienteFechaNacimiento());
+            }
+            if (request.clienteSexo() != null) {
+                cliente.setSexo(request.clienteSexo());
+            }
+        } else {
+            cliente = clientes.findByNegocioIdAndTelefono(negocio.getId(), telefono)
+                    .orElseGet(() -> {
+                        Cliente nuevo = new Cliente();
+                        nuevo.setNegocio(negocio);
+                        nuevo.setTelefono(telefono);
+                        return nuevo;
+                    });
+        }
+        cliente.setNombre(request.clienteNombre().trim());
         return clientes.save(cliente);
     }
 
