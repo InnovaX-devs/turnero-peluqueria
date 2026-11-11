@@ -29,8 +29,10 @@ import {
 } from './agenda'
 import { esDiaCompleto } from './bloqueos'
 import './agenda.css'
+import { useTerminos } from '../terminos/useTerminos'
 
 export function AgendaPage() {
+  const t = useTerminos()
   const { usuario } = useAuth()
   const esAdmin = usuario?.rol === 'ADMIN'
   // Admin y recepción ven la agenda de todos y pueden filtrar; el barbero, solo la suya.
@@ -115,11 +117,11 @@ export function AgendaPage() {
             <Selector
               variante="pill"
               alinear="derecha"
-              etiqueta="Filtrar por barbero"
+              etiqueta={`Filtrar por ${t.profesional.s}`}
               valor={profesionalId ?? ''}
               onChange={(v) => setProfesionalId(v === '' ? null : v)}
               opciones={[
-                { valor: '', etiqueta: 'Todos los barberos' },
+                { valor: '', etiqueta: `Todos los ${t.profesional.p}` },
                 ...data.profesionales.map((b) => ({ valor: b.id, etiqueta: b.nombre })),
               ]}
             />
@@ -205,6 +207,7 @@ export function AgendaPage() {
 }
 
 function TarjetaTurno({ turno, mostrarProfesional }: { turno: Turno; mostrarProfesional: boolean }) {
+  const t = useTerminos()
   return (
     <>
       <div className="agenda-item-hora">
@@ -212,7 +215,7 @@ function TarjetaTurno({ turno, mostrarProfesional }: { turno: Turno; mostrarProf
         <span className="agenda-item-hora-fin">–{formatearHora(turno.fin)}</span>
       </div>
       <div className="agenda-item-cuerpo">
-        <strong>{turno.clienteNombre ?? 'Sin cliente'}</strong>
+        <strong>{turno.clienteNombre ?? `Sin ${t.cliente.s}`}</strong>
         <span className="agenda-item-servicio">{turno.servicioNombre}</span>
         {mostrarProfesional && <span className="agenda-item-profesional">{turno.profesionalNombre}</span>}
       </div>

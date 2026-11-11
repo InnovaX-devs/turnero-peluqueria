@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
 import { cambiarEstadoTurno, marcarLlegadaTurno } from '../../api/agenda'
+import { formatearDni } from '../../lib/dni'
 import { mensajeDeError } from '../../lib/errores'
 import { Selector } from '../../components/Selector'
 import type { CambiarEstadoTurno, MetodoPago, Turno } from '../../types/agenda'
@@ -16,6 +17,7 @@ import {
   formatearPrecio,
   linkWhatsApp,
 } from './agenda'
+import { useTerminos } from '../terminos/useTerminos'
 
 /** Estados a los que se puede pasar un turno desde el detalle (RESERVADA no es un destino). */
 type AccionEstado = 'COMPLETADA' | 'AUSENTE' | 'CANCELADA'
@@ -23,6 +25,7 @@ type AccionEstado = 'COMPLETADA' | 'AUSENTE' | 'CANCELADA'
 const METODOS_PAGO: MetodoPago[] = ['EFECTIVO', 'TRANSFERENCIA', 'MERCADOPAGO', 'TARJETA']
 
 export function TurnoDetalle({ turno, onCerrar }: { turno: Turno; onCerrar: () => void }) {
+  const t = useTerminos()
   const queryClient = useQueryClient()
 
   // Arranca con lo que vino del listado y se actualiza al confirmar un cambio de estado,
@@ -92,7 +95,7 @@ export function TurnoDetalle({ turno, onCerrar }: { turno: Turno; onCerrar: () =
   }
 
   function generarMensajeWhatsApp() {
-    const nombre = turnoActual.clienteNombre ?? 'cliente'
+    const nombre = turnoActual.clienteNombre ?? t.cliente.s
     const fecha = formatearFechaLarga(fechaISO)
     const horaInicio = formatearHora(turnoActual.inicio)
     const horaFin = formatearHora(turnoActual.fin)
@@ -102,10 +105,10 @@ export function TurnoDetalle({ turno, onCerrar }: { turno: Turno; onCerrar: () =
 
     *Detalle del turno*
 
-    Servicio: ${turnoActual.servicioNombre}
+    ${t.servicio.S}: ${turnoActual.servicioNombre}
     Fecha: ${fecha}
     Horario: ${horaInicio} a ${horaFin}
-    Profesional: ${turnoActual.profesionalNombre}
+    ${t.profesional.S}: ${turnoActual.profesionalNombre}
     Precio: ${precio}
 
     ¡Muchas gracias por elegirnos!`
@@ -127,7 +130,7 @@ export function TurnoDetalle({ turno, onCerrar }: { turno: Turno; onCerrar: () =
         </button>
 
         <h2 id="agenda-modal-titulo" className="agenda-modal-titulo">
-          {turnoActual.clienteNombre ?? 'Sin cliente'}
+          {turnoActual.clienteNombre ?? `Sin ${t.cliente.s}`}
         </h2>
         <p className="agenda-modal-fecha">
           {formatearFechaLarga(fechaISO)} · {formatearHora(turnoActual.inicio)}–{formatearHora(turnoActual.fin)}
@@ -141,12 +144,18 @@ export function TurnoDetalle({ turno, onCerrar }: { turno: Turno; onCerrar: () =
         )}
 
         <dl className="agenda-modal-detalle">
+          {turnoActual.clienteDni && (
+            <div>
+              <dt>DNI</dt>
+              <dd>{formatearDni(turnoActual.clienteDni)}</dd>
+            </div>
+          )}
           <div>
-            <dt>Servicio</dt>
+            <dt>{t.servicio.S}</dt>
             <dd>{turnoActual.servicioNombre}</dd>
           </div>
           <div>
-            <dt>Barbero</dt>
+            <dt>{t.profesional.S}</dt>
             <dd>{turnoActual.profesionalNombre}</dd>
           </div>
           <div>
@@ -317,7 +326,7 @@ export function TurnoDetalle({ turno, onCerrar }: { turno: Turno; onCerrar: () =
 
         {turnoActual.clienteId && (
           <Link className="boton-secundario agenda-modal-ficha" to={`/panel/clientes/${turnoActual.clienteId}`}>
-            Ver ficha del cliente
+            Ver ficha {t.cliente.del}
           </Link>
         )}
 

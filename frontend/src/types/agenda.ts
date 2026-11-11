@@ -20,6 +20,8 @@ export interface Turno {
   clienteId: string | null
   clienteNombre: string | null
   clienteTelefono: string | null
+  /** Solo salud; null en los demás rubros. */
+  clienteDni: string | null
   /** Nota de la ficha del cliente (ej. "degradé en 2, arriba tijera"). */
   clienteNotas: string | null
   /** Nota de este turno en particular (la que dejó quien reservó). */

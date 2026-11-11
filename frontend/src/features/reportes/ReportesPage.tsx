@@ -12,6 +12,7 @@ import { periodoDe, type Periodo, type Preset } from '../caja/periodos'
 import { DIAS_CORTOS, DIAS_SEMANA, fechaCorta, linkWhatsApp, tasaAusentismo } from './formatos'
 import '../caja/caja.css'
 import './reportes.css'
+import { useTerminos } from '../terminos/useTerminos'
 
 const PRESETS: { valor: Exclude<Preset, 'hoy'>; etiqueta: string }[] = [
   { valor: 'semana', etiqueta: 'Esta semana' },
@@ -122,6 +123,7 @@ export function ReportesPage() {
 
 /** Plata cobrada en el período. Para el barbero llega solo lo suyo; para el admin, todos los barberos sumados. */
 function TarjetaCobrado({ profesionales, propio }: { profesionales: ProfesionalReporte[]; propio: boolean }) {
+  const t = useTerminos()
   const cobrado = profesionales.reduce((suma, b) => suma + b.facturado, 0)
   const cortes = profesionales.reduce((suma, b) => suma + b.atendidos, 0)
   const ticketPromedio = cortes === 0 ? 0 : Math.round(cobrado / cortes)
@@ -129,12 +131,12 @@ function TarjetaCobrado({ profesionales, propio }: { profesionales: ProfesionalR
     <div className="reporte-tarjeta reporte-cobrado">
       <h2>{propio ? 'Lo que cobraste' : 'Total facturado'}</h2>
       {cortes === 0 ? (
-        <p className="reporte-cobrado-vacio">Todavía no hay cortes cobrados en este período.</p>
+        <p className="reporte-cobrado-vacio">Todavía no hay {t.atencion.p} cobrad{t.atencion.o}s en este período.</p>
       ) : (
         <>
           <p className="reporte-numero">{formatearPrecio(cobrado)}</p>
           <p className="reporte-cobrado-detalle">
-            {cortes} {cortes === 1 ? 'corte' : 'cortes'} · ticket promedio {formatearPrecio(ticketPromedio)}
+            {cortes} {t.atencion.cantidad(cortes)} · ticket promedio {formatearPrecio(ticketPromedio)}
           </p>
         </>
       )}
@@ -171,9 +173,10 @@ function TarjetaAusentismo({ ausentismo }: { ausentismo: Ausentismo }) {
 }
 
 function TarjetaProfesionales({ profesionales, propio }: { profesionales: ProfesionalReporte[]; propio: boolean }) {
+  const t = useTerminos()
   return (
     <div className="reporte-tarjeta">
-      <h2>{propio ? 'Mis cortes' : 'Cortes por barbero'}</h2>
+      <h2>{propio ? `Mis ${t.atencion.p}` : `${t.atencion.P} por ${t.profesional.s}`}</h2>
       {profesionales.length === 0 ? (
         <p className="caja-estado">Sin turnos en este período.</p>
       ) : (
@@ -181,7 +184,7 @@ function TarjetaProfesionales({ profesionales, propio }: { profesionales: Profes
           <table className="reporte-tabla">
             <thead>
               <tr>
-                {!propio && <th>Barbero</th>}
+                {!propio && <th>{t.profesional.S}</th>}
                 <th>Atendidos</th>
                 {!propio && <th>Cobrado</th>}
                 <th>Ausentes</th>
@@ -272,11 +275,12 @@ function TarjetaDemanda({ demanda }: { demanda: Demanda[] }) {
 }
 
 function TarjetaFrecuentes({ clientes, propio }: { clientes: ClienteFrecuente[]; propio: boolean }) {
+  const t = useTerminos()
   return (
     <div className="reporte-tarjeta">
-      <h2>{propio ? 'Mis clientes más frecuentes' : 'Clientes más frecuentes'}</h2>
+      <h2>{propio ? `Mis ${t.cliente.p} más frecuentes` : `${t.cliente.P} más frecuentes`}</h2>
       {clientes.length === 0 ? (
-        <p className="caja-estado">Todavía no hay clientes con visitas registradas en este período.</p>
+        <p className="caja-estado">Todavía no hay {t.cliente.p} con visitas registradas en este período.</p>
       ) : (
         <ul className="reporte-lista">
           {clientes.map((c, i) => (
@@ -298,6 +302,7 @@ function TarjetaFrecuentes({ clientes, propio }: { clientes: ClienteFrecuente[];
 }
 
 function ClientesQueNoVuelven({ propio }: { propio: boolean }) {
+  const t = useTerminos()
   const [dias, setDias] = useState(45)
   const { data, isPending, error } = useQuery({
     queryKey: ['reportes', 'clientes-inactivos', dias],
@@ -308,7 +313,7 @@ function ClientesQueNoVuelven({ propio }: { propio: boolean }) {
   return (
     <div className="reporte-tarjeta reporte-inactivos">
       <div className="reporte-cabecera">
-        <h2>{propio ? 'Mis clientes que no vuelven' : 'Clientes que no vuelven'}</h2>
+        <h2>{propio ? `Mis ${t.cliente.p} que no vuelven` : `${t.cliente.P} que no vuelven`}</h2>
         <label>
           Sin venir hace más de
           <Selector

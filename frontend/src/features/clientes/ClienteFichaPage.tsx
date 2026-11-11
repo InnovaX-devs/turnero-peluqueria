@@ -2,11 +2,20 @@ import { useQuery } from '@tanstack/react-query'
 import { Link, useParams } from 'react-router-dom'
 import axios from 'axios'
 import { obtenerFichaCliente } from '../../api/clientes'
+import { formatearDni } from '../../lib/dni'
 import { mensajeDeError } from '../../lib/errores'
 import { formatearPrecio } from '../../lib/formato'
 import { ETIQUETAS_ESTADO, linkWhatsApp } from '../agenda/agenda'
+import { ETIQUETA_SEXO } from '../../types/cliente'
 import { NotasCliente } from './NotasCliente'
 import './clientes.css'
+import { useTerminos } from '../terminos/useTerminos'
+
+/** "1990-05-17" → "17/05/1990" (sin pasar por Date, para que la zona horaria no corra el día). */
+function fechaNacimientoLegible(iso: string): string {
+  const [anio, mes, dia] = iso.split('-')
+  return `${dia}/${mes}/${anio}`
+}
 
 function formatearFecha(iso: string): string {
   return new Date(iso).toLocaleString('es-AR', {
@@ -19,6 +28,7 @@ function formatearFecha(iso: string): string {
 }
 
 export function ClienteFichaPage() {
+  const t = useTerminos()
   const { id = '' } = useParams()
 
   const ficha = useQuery({
@@ -31,7 +41,7 @@ export function ClienteFichaPage() {
 
   const volver = (
     <Link to="/panel/clientes" className="ficha-volver">
-      ← Clientes
+      ← {t.cliente.P}
     </Link>
   )
 
@@ -50,7 +60,7 @@ export function ClienteFichaPage() {
       <section className="clientes">
         {volver}
         <p className="clientes-estado clientes-error" role="alert">
-          {noExiste ? 'No encontramos a ese cliente.' : mensajeDeError(ficha.error)}
+          {noExiste ? `No encontramos a ese ${t.cliente.s}.` : mensajeDeError(ficha.error)}
         </p>
       </section>
     )
@@ -65,8 +75,19 @@ export function ClienteFichaPage() {
       <header className="ficha-encabezado">
         <h1 className="clientes-titulo">{cliente.nombre}</h1>
         <p className="ficha-telefono">{cliente.telefono}</p>
+        {cliente.dni && <p className="ficha-dato">DNI {formatearDni(cliente.dni)}</p>}
+        {(cliente.fechaNacimiento || cliente.sexo) && (
+          <p className="ficha-dato">
+            {[
+              cliente.fechaNacimiento && `Nació el ${fechaNacimientoLegible(cliente.fechaNacimiento)}`,
+              cliente.sexo && ETIQUETA_SEXO[cliente.sexo],
+            ]
+              .filter(Boolean)
+              .join(' · ')}
+          </p>
+        )}
         <p className="ficha-dato">
-          Cliente desde{' '}
+          {t.cliente.S} desde{' '}
           {new Date(cliente.creadoEn).toLocaleDateString('es-AR', { month: 'long', year: 'numeric' })}
         </p>
         <a
@@ -82,7 +103,7 @@ export function ClienteFichaPage() {
       <div className="ficha-resumen">
         <div>
           <strong>{cliente.historial.filter((a) => a.estado === 'COMPLETADA').length}</strong>
-          <span>Atenciones</span>
+          <span>{t.atencion.P}</span>
         </div>
         <div className={cliente.ausencias > 0 ? 'ficha-resumen-alerta' : undefined}>
           <strong>{cliente.ausencias}</strong>

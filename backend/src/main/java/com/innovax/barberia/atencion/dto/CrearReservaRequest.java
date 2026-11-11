@@ -1,8 +1,10 @@
 package com.innovax.barberia.atencion.dto;
 
 import com.fasterxml.jackson.annotation.JsonAlias;
+import com.innovax.barberia.cliente.Sexo;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Past;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 
@@ -24,7 +26,7 @@ public record CrearReservaRequest(
         UUID servicioId,
 
         // "barberoId": nombre del campo antes del issue #64 (páginas de reserva viejas abiertas)
-        @NotNull(message = "El barbero es obligatorio")
+        @NotNull(message = "El profesional es obligatorio")
         @JsonAlias("barberoId")
         UUID profesionalId,
 
@@ -42,6 +44,17 @@ public record CrearReservaRequest(
         @Pattern(regexp = "^\\+[1-9][0-9]{7,14}$",
                 message = "Formato inválido: tiene que incluir el código de país, ej: +5493584111111")
         String clienteTelefono,
+
+        /** Obligatorio en salud (7 u 8 números; se aceptan puntos): ahí el paciente se identifica por DNI. */
+        @Size(max = 15, message = "El DNI tiene que tener 7 u 8 números, sin puntos")
+        String clienteDni,
+
+        /** Solo salud, opcional. */
+        @Past(message = "La fecha de nacimiento tiene que ser anterior a hoy")
+        LocalDate clienteFechaNacimiento,
+
+        /** Solo salud, opcional. */
+        Sexo clienteSexo,
 
         @Size(max = 2000, message = "Las notas pueden tener hasta 2000 caracteres")
         String notas

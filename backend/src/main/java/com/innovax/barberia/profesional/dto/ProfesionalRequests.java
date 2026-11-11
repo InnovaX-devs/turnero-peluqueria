@@ -64,7 +64,7 @@ public final class ProfesionalRequests {
     }
 
     public record CambiarActivo(
-            @NotNull(message = "Indicá si el barbero queda activo")
+            @NotNull(message = "Indicá si el profesional queda activo")
             Boolean activo) {
     }
 

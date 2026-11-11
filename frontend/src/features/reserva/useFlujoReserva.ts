@@ -1,12 +1,14 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import type { SucursalPublica } from '../../types/reserva'
+import { useTerminos } from '../terminos/useTerminos'
 import { SELECCIONES_VACIAS, aplicarEleccion, esPaso, pasoAlcanzable, pasosDelFlujo, type Selecciones } from './flujo'
 
 export function useFlujoReserva(slug: string, sucursales: SucursalPublica[]) {
   const [searchParams, setSearchParams] = useSearchParams()
   const navigate = useNavigate()
   const location = useLocation()
+  const terminos = useTerminos()
   const clave = `reserva.${slug}`
 
   const [selecciones, setSelecciones] = useState<Selecciones>(() => normalizar(leerGuardadas(clave), sucursales))
@@ -20,7 +22,8 @@ export function useFlujoReserva(slug: string, sucursales: SucursalPublica[]) {
   }, [clave, selecciones])
 
   const pasos = useMemo(() => pasosDelFlujo(sucursales.length), [sucursales.length])
-  const pasoEnUrl = searchParams.get('paso')
+  // Los links viejos decían ?paso=barbero
+  const pasoEnUrl = searchParams.get('paso') === 'barbero' ? 'profesional' : searchParams.get('paso')
   const indice = pasoAlcanzable(pasos, esPaso(pasoEnUrl) ? pasoEnUrl : null, selecciones)
   const actual = pasos[indice]
 
@@ -55,7 +58,7 @@ export function useFlujoReserva(slug: string, sucursales: SucursalPublica[]) {
     setSelecciones(normalizar({}, sucursales))
   }, [sucursales])
 
-  return { pasos, indice, paso: actual.paso, titulo: actual.titulo, selecciones, avanzar, volver, reiniciar }
+  return { pasos, indice, paso: actual.paso, titulo: actual.titulo(terminos), selecciones, avanzar, volver, reiniciar }
 }
 
 function leerGuardadas(clave: string): Partial<Selecciones> {

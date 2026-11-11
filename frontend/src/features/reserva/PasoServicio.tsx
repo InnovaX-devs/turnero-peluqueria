@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query'
 import { obtenerServiciosPublicos } from '../../api/reservaPublica'
 import { mensajeDeError } from '../../lib/errores'
 import { formatearDuracion, formatearPrecio } from '../../lib/formato'
+import { useTerminos } from '../terminos/useTerminos'
 
 interface Props {
   slug: string
@@ -11,6 +12,7 @@ interface Props {
 }
 
 export function PasoServicio({ slug, sucursalId, elegido, onElegir }: Props) {
+  const t = useTerminos()
   const { data: servicios, isPending, error, refetch } = useQuery({
     queryKey: ['servicios-publicos', slug, sucursalId],
     queryFn: () => obtenerServiciosPublicos(slug, sucursalId),
@@ -33,7 +35,7 @@ export function PasoServicio({ slug, sucursalId, elegido, onElegir }: Props) {
   }
 
   if (servicios.length === 0) {
-    return <p className="reserva-vacio">Por ahora no hay servicios para reservar en esta sucursal.</p>
+    return <p className="reserva-vacio">Por ahora no hay {t.servicio.p} para reservar en esta sucursal.</p>
   }
 
   return (

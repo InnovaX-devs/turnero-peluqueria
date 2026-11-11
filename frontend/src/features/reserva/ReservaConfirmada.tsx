@@ -3,6 +3,7 @@ import { formatearPrecio } from '../../lib/formato'
 import { linkDelTurno, linkWhatsAppParaGuardar } from '../turno/linkTurno'
 import '../turno/turno.css'
 import type { ReservaCreada, SucursalPublica } from '../../types/reserva'
+import { useTerminos } from '../terminos/useTerminos'
 
 interface Props {
   reserva: ReservaCreada
@@ -12,6 +13,7 @@ interface Props {
 }
 
 export function ReservaConfirmada({ reserva, sucursal, negocioNombre, onOtroTurno }: Props) {
+  const t = useTerminos()
   const [copiado, setCopiado] = useState(false)
   const link = linkDelTurno(reserva.tokenGestion)
 
@@ -37,11 +39,11 @@ export function ReservaConfirmada({ reserva, sucursal, negocioNombre, onOtroTurn
 
       <dl className="reserva-resumen">
         <div>
-          <dt>Servicio</dt>
+          <dt>{t.servicio.S}</dt>
           <dd>{reserva.servicioNombre}</dd>
         </div>
         <div>
-          <dt>Barbero</dt>
+          <dt>{t.profesional.S}</dt>
           <dd>{reserva.profesionalNombre}</dd>
         </div>
         <div>
@@ -55,7 +57,7 @@ export function ReservaConfirmada({ reserva, sucursal, negocioNombre, onOtroTurn
           </div>
         )}
         <div className="reserva-resumen-total">
-          <dt>Total (se paga en la barbería)</dt>
+          <dt>Total (se paga en {t.negocio.el})</dt>
           <dd>{formatearPrecio(reserva.precioFinal)}</dd>
         </div>
       </dl>

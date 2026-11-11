@@ -4,6 +4,7 @@ import com.innovax.barberia.atencion.EstadoAtencion;
 import com.innovax.barberia.auth.UsuarioActual;
 import com.innovax.barberia.negocio.Negocio;
 import com.innovax.barberia.negocio.NegocioRepository;
+import com.innovax.barberia.negocio.Rubro;
 import com.innovax.barberia.caja.dto.CajaResponse;
 import com.innovax.barberia.common.DatosInvalidosException;
 import com.innovax.barberia.common.RecursoNoEncontradoException;
@@ -37,7 +38,7 @@ public class CajaService {
     private final SucursalRepository sucursales;
     private final CajaRepository caja;
 
-    private record Periodo(ZoneId zona, List<FilaCaja> filas) {
+    private record Periodo(ZoneId zona, Rubro rubro, List<FilaCaja> filas) {
     }
 
     @Transactional(readOnly = true)
@@ -82,19 +83,21 @@ public class CajaService {
                 porProfesional, porServicio, porMetodo, porDia);
     }
 
-    /** Detalle de cada corte del período, para abrir en Excel (separador ";" y montos con coma). */
+    /** Detalle de cada atención cobrada del período, para abrir en Excel (separador ";" y montos con coma). */
     @Transactional(readOnly = true)
     public String exportarCsv(LocalDate desde, LocalDate hasta, UUID sucursalId) {
         Periodo p = cargar(desde, hasta, sucursalId);
         StringBuilder csv = new StringBuilder("\uFEFF"); // BOM: Excel lo abre con tildes y ñ bien
-        csv.append("Fecha;Hora;Barbero;Servicio;Cliente;Método de pago;Precio\n");
+        csv.append("Fecha;Hora;").append(p.rubro().profesional().capitalizado()).append(';')
+                .append(p.rubro().servicio().capitalizado()).append(';')
+                .append(p.rubro().cliente().capitalizado()).append(";Método de pago;Precio\n");
         for (FilaCaja f : p.filas()) {
             var inicio = f.inicio().atZone(p.zona());
             csv.append(FECHA_CSV.format(inicio)).append(';')
                     .append(HORA_CSV.format(inicio)).append(';')
                     .append(celda(f.profesionalNombre() + " " + f.profesionalApellido())).append(';')
                     .append(celda(f.servicioNombre())).append(';')
-                    .append(celda(f.clienteNombre() == null ? "Sin cliente" : f.clienteNombre())).append(';')
+                    .append(celda(f.clienteNombre() == null ? "Sin " + p.rubro().cliente().singular() : f.clienteNombre())).append(';')
                     .append(f.metodoPago() == null ? "" : f.metodoPago().name()).append(';')
                     .append(pesos(f.precioFinal())).append('\n');
         }
@@ -112,7 +115,7 @@ public class CajaService {
         // Aislamiento: la barbería sale siempre del token
         UUID negocioId = usuarioActual.negocioId();
         Negocio negocio = negocios.findById(negocioId)
-                .orElseThrow(() -> new IllegalStateException("La barbería del token no existe"));
+                .orElseThrow(() -> new IllegalStateException("El negocio del token no existe"));
         if (sucursalId != null) {
             sucursales.findById(sucursalId)
                     .filter(s -> s.getNegocio().getId().equals(negocioId))
@@ -124,7 +127,7 @@ public class CajaService {
         var inicio = desde.atStartOfDay(zona).toInstant();
         var fin = hasta.plusDays(1).atStartOfDay(zona).toInstant();
 
-        return new Periodo(zona, caja.buscar(negocioId, EstadoAtencion.COMPLETADA, inicio, fin, sucursalId));
+        return new Periodo(zona, negocio.getRubro(), caja.buscar(negocioId, EstadoAtencion.COMPLETADA, inicio, fin, sucursalId));
     }
 
     private static List<CajaResponse.Grupo> agrupar(

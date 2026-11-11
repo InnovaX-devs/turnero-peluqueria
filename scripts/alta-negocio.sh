@@ -1,16 +1,17 @@
 #!/usr/bin/env bash
-# Da de alta una barbería nueva: la barbería, su primera sucursal y su usuario admin.
+# Da de alta un negocio nuevo (barbería, peluquería, centro de estética o consultorio):
+# el negocio, su primera sucursal y su usuario admin.
 # Uso (desde la raíz del repo):  ./scripts/alta-negocio.sh
 #
-# Todo lo demás (barberos, servicios, horarios, logo) lo carga el admin desde el panel.
-# La barbería arranca con la reserva online apagada; el admin la prende cuando termina.
+# Todo lo demás (profesionales, servicios, horarios, logo) lo carga el admin desde el panel.
+# El negocio arranca con la reserva online apagada; el admin la prende cuando termina.
 # La contraseña la elegís vos; el admin la cambia después desde "Mi cuenta".
 set -euo pipefail
 
 cd "$(dirname "$0")/../backend"
 
-echo "Alta de una barbería nueva"
-echo "--------------------------"
+echo "Alta de un negocio nuevo"
+echo "------------------------"
 echo "¿En qué base la creo?"
 echo "  1) Local (Docker)"
 echo "  2) Supabase (perfil dev)"
@@ -22,9 +23,24 @@ case "$BASE" in
 esac
 
 echo
-read -rp "Nombre de la barbería: " ALTA_NOMBRE
+echo "¿Qué rubro es? (define cómo se nombran las cosas: barbero, cliente, corte / profesional, paciente, atención...)"
+echo "  1) Barbería"
+echo "  2) Peluquería"
+echo "  3) Centro de estética"
+echo "  4) Salud (consultorio)"
+read -rp "Elegí 1, 2, 3 o 4 (Enter para barbería): " RUBRO_OPCION
+case "$RUBRO_OPCION" in
+  1|"") ALTA_RUBRO=BARBERIA ;;
+  2) ALTA_RUBRO=PELUQUERIA ;;
+  3) ALTA_RUBRO=ESTETICA ;;
+  4) ALTA_RUBRO=SALUD ;;
+  *) echo "Opción inválida"; exit 1 ;;
+esac
+
+echo
+read -rp "Nombre del negocio: " ALTA_NOMBRE
 read -rp "Slug para el link (Enter para armarlo con el nombre): " ALTA_SLUG
-read -rp "Nombre de la sucursal (Enter para usar el de la barbería): " ALTA_SUCURSAL
+read -rp "Nombre de la sucursal (Enter para usar el del negocio): " ALTA_SUCURSAL
 read -rp "Dirección de la sucursal: " ALTA_DIRECCION
 read -rp "Ciudad: " ALTA_CIUDAD
 read -rp "Teléfono o WhatsApp de la sucursal (opcional, ej. +5493584123456): " ALTA_TELEFONO
@@ -48,11 +64,11 @@ done
 unset REPETIDA
 
 echo
-echo "Voy a crear \"$ALTA_NOMBRE\" con el admin $ALTA_EMAIL en la base $( [ "$BASE" = 1 ] && echo local || echo Supabase )."
+echo "Voy a crear \"$ALTA_NOMBRE\" ($ALTA_RUBRO) con el admin $ALTA_EMAIL en la base $( [ "$BASE" = 1 ] && echo local || echo Supabase )."
 read -rp "¿Confirmás? (s/n): " OK
 [ "$OK" = "s" ] || { echo "Cancelado."; exit 0; }
 
-export ALTA_EJECUTAR=true ALTA_NOMBRE ALTA_SLUG ALTA_SUCURSAL ALTA_DIRECCION ALTA_CIUDAD \
+export ALTA_EJECUTAR=true ALTA_RUBRO ALTA_NOMBRE ALTA_SLUG ALTA_SUCURSAL ALTA_DIRECCION ALTA_CIUDAD \
        ALTA_TELEFONO ALTA_ZONA_HORARIA ALTA_EMAIL ALTA_PASSWORD
 
 echo "Arrancando (tarda unos segundos)..."

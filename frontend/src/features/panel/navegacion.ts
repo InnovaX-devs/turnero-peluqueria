@@ -10,11 +10,13 @@ import {
   Wallet,
   type LucideIcon,
 } from 'lucide-react'
+import type { Terminos } from '../../lib/terminos'
 import type { Rol } from '../../types/auth'
 
 export interface ItemNav {
   to: string
-  etiqueta: string
+  /** Recibe los términos del rubro: "Clientes" / "Pacientes", "Barberos" / "Profesionales". */
+  etiqueta: (t: Terminos) => string
   icono: LucideIcon
   /** true = solo lo ve un admin */
   soloAdmin?: boolean
@@ -26,25 +28,25 @@ export interface ItemNav {
 
 /** Secciones de uso diario: van directo en la top bar y en la barra inferior. */
 export const ITEMS_PRINCIPALES: ItemNav[] = [
-  { to: '/panel', etiqueta: 'Inicio', icono: CalendarDays, exacto: true },
-  { to: '/panel/clientes', etiqueta: 'Clientes', icono: Users },
-  { to: '/panel/mensajes', etiqueta: 'Mensajes', icono: MessageSquare },
+  { to: '/panel', etiqueta: () => 'Inicio', icono: CalendarDays, exacto: true },
+  { to: '/panel/clientes', etiqueta: (t) => t.cliente.P, icono: Users },
+  { to: '/panel/mensajes', etiqueta: () => 'Mensajes', icono: MessageSquare },
 ]
 
-/** Caja es solo admin; Reportes lo ven admin y barbero (el barbero ve únicamente los suyos), no recepción. En desktop van en la top bar; en el celu, dentro de "Más". */
+/** Caja es solo admin; Reportes lo ven admin y profesional (el profesional ve únicamente los suyos), no recepción. En desktop van en la top bar; en el celu, dentro de "Más". */
 export const ITEMS_NEGOCIO: ItemNav[] = [
-  { to: '/panel/caja', etiqueta: 'Caja', icono: Wallet, soloAdmin: true },
-  { to: '/panel/reportes', etiqueta: 'Reportes', icono: ChartColumn, sinRecepcion: true },
+  { to: '/panel/caja', etiqueta: () => 'Caja', icono: Wallet, soloAdmin: true },
+  { to: '/panel/reportes', etiqueta: () => 'Reportes', icono: ChartColumn, sinRecepcion: true },
 ]
 
 /** Configuración del negocio: desplegable "Gestión" en desktop. */
 export const ITEMS_GESTION: ItemNav[] = [
-  { to: '/panel/profesionales', etiqueta: 'Barberos', icono: Scissors, soloAdmin: true },
-  { to: '/panel/servicios', etiqueta: 'Servicios', icono: Tag, soloAdmin: true },
-  { to: '/panel/configuracion', etiqueta: 'Configuración', icono: Settings, soloAdmin: true },
+  { to: '/panel/profesionales', etiqueta: (t) => t.profesional.P, icono: Scissors, soloAdmin: true },
+  { to: '/panel/servicios', etiqueta: (t) => t.servicio.P, icono: Tag, soloAdmin: true },
+  { to: '/panel/configuracion', etiqueta: () => 'Configuración', icono: Settings, soloAdmin: true },
 ]
 
-export const ITEM_CUENTA: ItemNav = { to: '/panel/cuenta', etiqueta: 'Mi cuenta', icono: CircleUser }
+export const ITEM_CUENTA: ItemNav = { to: '/panel/cuenta', etiqueta: () => 'Mi cuenta', icono: CircleUser }
 
 export function visibles(items: ItemNav[], rol: Rol | undefined) {
   return items

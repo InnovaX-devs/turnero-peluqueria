@@ -3,8 +3,10 @@ package com.innovax.barberia.cliente.dto;
 import com.innovax.barberia.atencion.Atencion;
 import com.innovax.barberia.atencion.EstadoAtencion;
 import com.innovax.barberia.cliente.Cliente;
+import com.innovax.barberia.cliente.Sexo;
 
 import java.time.Instant;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
 
@@ -16,6 +18,9 @@ public record FichaClienteResponse(
         UUID id,
         String nombre,
         String telefono,
+        String dni,
+        LocalDate fechaNacimiento,
+        Sexo sexo,
         String notas,
         Instant creadoEn,
         long ausencias,
@@ -48,6 +53,9 @@ public record FichaClienteResponse(
                 cliente.getId(),
                 cliente.getNombre(),
                 cliente.getTelefono(),
+                cliente.getDni(),
+                cliente.getFechaNacimiento(),
+                cliente.getSexo(),
                 cliente.getNotas(),
                 cliente.getCreatedAt(),
                 ausencias,

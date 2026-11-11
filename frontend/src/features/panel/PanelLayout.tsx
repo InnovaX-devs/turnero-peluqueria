@@ -8,8 +8,10 @@ import '../cuenta/cuenta.css'
 import { BottomBar } from './BottomBar'
 import { TopBar } from './TopBar'
 import './panel.css'
+import { useTerminos } from '../terminos/useTerminos'
 
 export function PanelLayout() {
+  const t = useTerminos()
   const { usuario, cerrarSesion } = useAuth()
   const [registrando, setRegistrando] = useState(false)
   const [aviso, setAviso] = useState<string | null>(null)
@@ -38,7 +40,7 @@ export function PanelLayout() {
           onCerrar={() => setRegistrando(false)}
           onRegistrado={() => {
             setRegistrando(false)
-            setAviso('Corte registrado')
+            setAviso(`${t.atencion.S} registrad${t.atencion.o}`)
           }}
         />
       )}

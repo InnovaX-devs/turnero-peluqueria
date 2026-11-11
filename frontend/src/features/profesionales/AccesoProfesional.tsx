@@ -3,8 +3,10 @@ import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { crearUsuarioProfesional, reenviarInvitacionProfesional } from '../../api/profesionales'
 import { erroresDeCampos, mensajeDeError } from '../../lib/errores'
 import type { Profesional } from '../../types/profesional'
+import { useTerminos } from '../terminos/useTerminos'
 
 export function AccesoProfesional({ profesional }: { profesional: Profesional }) {
+  const t = useTerminos()
   const queryClient = useQueryClient()
   const [email, setEmail] = useState('')
   const [errores, setErrores] = useState<Record<string, string>>({})
@@ -19,7 +21,7 @@ export function AccesoProfesional({ profesional }: { profesional: Profesional })
       setAviso(
         b.activo
           ? `Le mandamos la invitación a ${b.usuarioEmail}.`
-          : 'Usuario creado. Como el barbero está inactivo no se mandó la invitación: reactivalo y reenviála.',
+          : `Usuario creado. Como ${t.profesional.el} está inactivo no se mandó la invitación: reactivalo y reenviála.`,
       )
     },
     onError: (err) => {
@@ -46,7 +48,7 @@ export function AccesoProfesional({ profesional }: { profesional: Profesional })
       <div className="config-form">
         <p>
           Puede entrar al panel con <strong>{profesional.usuarioEmail}</strong>.
-          {!profesional.activo && ' Mientras el barbero esté inactivo, no puede iniciar sesión.'}
+          {!profesional.activo && ` Mientras ${t.profesional.el} esté inactivo, no puede iniciar sesión.`}
         </p>
         <p className="config-ayuda">
           Si todavía no eligió su contraseña, o la olvidó, podés mandarle un link nuevo. El link vence en 3 días.
@@ -83,7 +85,7 @@ export function AccesoProfesional({ profesional }: { profesional: Profesional })
   return (
     <form className="config-form" onSubmit={handleSubmit} noValidate>
       <p className="config-ayuda">
-        Este barbero todavía no tiene usuario para entrar al panel. Al crearlo le llega un email para que elija su
+        {t.profesional.Este} todavía no tiene usuario para entrar al panel. Al crearlo le llega un email para que elija su
         contraseña.
       </p>
       <div className="config-fila">

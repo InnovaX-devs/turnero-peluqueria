@@ -94,7 +94,7 @@ public class ProfesionalService {
     @Transactional
     public ProfesionalResponse crear(ProfesionalRequests.Crear request) {
         Negocio negocio = negocios.findById(usuarioActual.negocioId())
-                .orElseThrow(() -> new IllegalStateException("La barbería del token no existe"));
+                .orElseThrow(() -> new IllegalStateException("El negocio del token no existe"));
         Profesional profesional = new Profesional();
         profesional.setNegocio(negocio);
         aplicarDatos(profesional, request.nombre(), request.apellido(), request.sucursalIds(), request.servicioIds());
@@ -153,7 +153,7 @@ public class ProfesionalService {
     public ProfesionalResponse crearUsuario(UUID id, ProfesionalRequests.CrearUsuario request) {
         Profesional profesional = buscar(id);
         if (profesional.getUsuario() != null) {
-            throw new ConflictoException("email", "Este barbero ya tiene un usuario");
+            throw new ConflictoException("email", "Este profesional ya tiene un usuario");
         }
         Usuario usuario = nuevoUsuario(profesional.getNegocio(), profesional.isActivo(), request);
         profesional.setUsuario(usuario);
@@ -169,11 +169,11 @@ public class ProfesionalService {
         Profesional profesional = buscar(id);
         Usuario usuario = profesional.getUsuario();
         if (usuario == null || usuario.getRol() != Rol.PROFESIONAL) {
-            throw new DatosInvalidosException("usuario", "Este barbero no tiene usuario para entrar al panel");
+            throw new DatosInvalidosException("usuario", "Este profesional no tiene usuario para entrar al panel");
         }
         if (!usuario.isActivo()) {
             throw new DatosInvalidosException("usuario",
-                    "El barbero está inactivo. Reactivalo para reenviar la invitación");
+                    "El profesional está inactivo. Reactivalo para reenviar la invitación");
         }
         recuperacion.invitar(usuario);
     }
@@ -239,7 +239,7 @@ public class ProfesionalService {
         for (ProfesionalRequests.Horario h : tramos) {
             if (!sucursalesDelProfesional.contains(h.sucursalId())) {
                 throw new DatosInvalidosException("horarios",
-                        "Hay horarios en una sucursal donde el barbero no trabaja. Asignale la sucursal primero.");
+                        "Hay horarios en una sucursal donde el profesional no trabaja. Asignale la sucursal primero.");
             }
             if (!h.horaFin().isAfter(h.horaInicio())) {
                 throw new DatosInvalidosException("horarios", "La hora de fin tiene que ser posterior a la de inicio");
@@ -266,7 +266,7 @@ public class ProfesionalService {
 
     private Profesional buscar(UUID id) {
         return profesionales.findByIdAndNegocioId(id, usuarioActual.negocioId())
-                .orElseThrow(() -> new RecursoNoEncontradoException("Barbero no encontrado"));
+                .orElseThrow(() -> new RecursoNoEncontradoException("Profesional no encontrado"));
     }
 
     private void aplicarDatos(Profesional profesional, String nombre, String apellido,

@@ -184,11 +184,13 @@ public class DisponibilidadService {
                 .orElseThrow(() -> new RecursoNoEncontradoException("Servicio no encontrado"));
 
         if (!sucursal.getNegocio().isReservasOnline()) {
-            throw new DatosInvalidosException("negocio", "Esta barbería no acepta reservas online por ahora");
+            throw new DatosInvalidosException("negocio",
+                    sucursal.getNegocio().getRubro().negocio().esteCapitalizado() + " no acepta reservas online por ahora");
         }
 
         if (!servicio.getNegocio().getId().equals(sucursal.getNegocio().getId())) {
-            throw new DatosInvalidosException("servicio", "No pertenece a la barbería de la sucursal");
+            throw new DatosInvalidosException("servicio",
+                    "No pertenece " + sucursal.getNegocio().getRubro().negocio().al() + " de la sucursal");
         }
 
         List<Profesional> profesionales = profesionalId != null
@@ -201,7 +203,7 @@ public class DisponibilidadService {
     /** Si piden un barbero puntual que no atiende ahí o no hace ese servicio, no hay error: simplemente no hay disponibilidad. */
     private List<Profesional> profesionalesParaUnoPuntual(UUID profesionalId, Sucursal sucursal, Servicio servicio) {
         Profesional profesional = profesionalRepository.findById(profesionalId)
-                .orElseThrow(() -> new RecursoNoEncontradoException("Barbero no encontrado"));
+                .orElseThrow(() -> new RecursoNoEncontradoException("Profesional no encontrado"));
 
         boolean atiendeAca = profesional.isActivo()
                 && profesional.getSucursales().contains(sucursal)

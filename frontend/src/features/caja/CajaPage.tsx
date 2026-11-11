@@ -9,6 +9,7 @@ import type { Caja, DiaCaja } from '../../types/caja'
 import { useOpcionesRegistro } from '../atenciones/useOpcionesRegistro'
 import { nombreMetodo, periodoDe, type Periodo, type Preset } from './periodos'
 import './caja.css'
+import { useTerminos } from '../terminos/useTerminos'
 
 const PRESETS: { valor: Preset; etiqueta: string }[] = [
   { valor: 'hoy', etiqueta: 'Hoy' },
@@ -132,8 +133,9 @@ export function CajaPage() {
 }
 
 function ResumenCaja({ caja, actualizando }: { caja: Caja; actualizando: boolean }) {
+  const t = useTerminos()
   if (caja.cantidad === 0) {
-    return <p className="caja-estado">No hay cortes cobrados en este período.</p>
+    return <p className="caja-estado">No hay {t.atencion.p} cobrad{t.atencion.o}s en este período.</p>
   }
 
   return (
@@ -144,7 +146,7 @@ function ResumenCaja({ caja, actualizando }: { caja: Caja; actualizando: boolean
           <strong>{formatearPrecio(caja.total)}</strong>
         </div>
         <div>
-          <span>Cortes</span>
+          <span>{t.atencion.P}</span>
           <strong>{caja.cantidad}</strong>
         </div>
         <div>
@@ -157,7 +159,7 @@ function ResumenCaja({ caja, actualizando }: { caja: Caja; actualizando: boolean
 
       <div className="caja-desgloses">
         <Desglose
-          titulo="Por barbero"
+          titulo={`Por ${t.profesional.s}`}
           total={caja.total}
           filas={caja.porProfesional.map((g) => ({ clave: g.id, nombre: g.nombre, cantidad: g.cantidad, total: g.total }))}
         />
@@ -172,7 +174,7 @@ function ResumenCaja({ caja, actualizando }: { caja: Caja; actualizando: boolean
           }))}
         />
         <Desglose
-          titulo="Por servicio"
+          titulo={`Por ${t.servicio.s}`}
           total={caja.total}
           filas={caja.porServicio.map((g) => ({ clave: g.id, nombre: g.nombre, cantidad: g.cantidad, total: g.total }))}
         />
@@ -189,6 +191,7 @@ interface FilaDesglose {
 }
 
 function Desglose({ titulo, filas, total }: { titulo: string; filas: FilaDesglose[]; total: number }) {
+  const t = useTerminos()
   return (
     <div className="caja-desglose">
       <h2>{titulo}</h2>
@@ -199,7 +202,7 @@ function Desglose({ titulo, filas, total }: { titulo: string; filas: FilaDesglos
             <li key={f.clave}>
               <div className="caja-fila">
                 <span>
-                  {f.nombre} <small>· {f.cantidad} {f.cantidad === 1 ? 'corte' : 'cortes'}</small>
+                  {f.nombre} <small>· {f.cantidad} {t.atencion.cantidad(f.cantidad)}</small>
                 </span>
                 <strong>{formatearPrecio(f.total)}</strong>
               </div>
@@ -215,6 +218,7 @@ function Desglose({ titulo, filas, total }: { titulo: string; filas: FilaDesglos
 }
 
 function GraficoDias({ dias }: { dias: DiaCaja[] }) {
+  const t = useTerminos()
   const maximo = Math.max(...dias.map((d) => d.total), 1)
   return (
     <div className="caja-grafico">
@@ -227,7 +231,7 @@ function GraficoDias({ dias }: { dias: DiaCaja[] }) {
             <div
               key={d.fecha}
               className="caja-grafico-dia"
-              title={`${etiqueta}: ${formatearPrecio(d.total)} (${d.cantidad} ${d.cantidad === 1 ? 'corte' : 'cortes'})`}
+              title={`${etiqueta}: ${formatearPrecio(d.total)} (${d.cantidad} ${t.atencion.cantidad(d.cantidad)})`}
             >
               <div className="caja-grafico-columna">
                 <div style={{ height: `${(d.total / maximo) * 100}%` }} />

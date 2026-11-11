@@ -1,14 +1,15 @@
 import type { Rol } from '../types/auth'
+import type { Terminos } from './terminos'
 
 /** Cómo se muestra el rol en el panel (barra, menú, Mi cuenta). */
-export function etiquetaRol(rol: Rol | undefined): string {
+export function etiquetaRol(rol: Rol | undefined, t: Terminos): string {
   switch (rol) {
     case 'ADMIN':
       return 'Admin'
     case 'RECEPCION':
       return 'Recepción'
     default:
-      return 'Barbero'
+      return t.profesional.S
   }
 }
 

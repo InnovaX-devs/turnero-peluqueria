@@ -84,7 +84,7 @@ public class BloqueoService {
         Bloqueo bloqueo = bloqueoPropio(negocio, id);
         List<UUID> pedidos = request.profesionalIds() == null ? List.of() : request.profesionalIds();
         if (pedidos.size() > 1) {
-            throw new DatosInvalidosException("profesionalIds", "Al editar un bloqueo se puede elegir un solo barbero");
+            throw new DatosInvalidosException("profesionalIds", "Al editar un bloqueo se puede elegir un solo profesional");
         }
         UUID profesionalId = pedidos.isEmpty() ? bloqueo.getProfesional().getId() : pedidos.get(0);
         Profesional profesional = resolverProfesional(negocio, profesionalId);
@@ -151,7 +151,7 @@ public class BloqueoService {
         UUID profesionalId;
         if (!usuarioActual.veTodoElNegocio()) {
             profesionalId = usuarioActual.profesionalId()
-                    .orElseThrow(() -> new AccessDeniedException("El usuario no está vinculado a un barbero"));
+                    .orElseThrow(() -> new AccessDeniedException("El usuario no está vinculado a un profesional"));
             if (profesionalPedido != null) {
                 usuarioActual.verificarAccesoAProfesional(profesionalPedido); // 403 si pide otro
             }
@@ -159,16 +159,16 @@ public class BloqueoService {
             profesionalId = profesionalPedido;
         } else {
             profesionalId = usuarioActual.profesionalId()
-                    .orElseThrow(() -> new DatosInvalidosException("profesionalId", "Elegí el barbero"));
+                    .orElseThrow(() -> new DatosInvalidosException("profesionalId", "Elegí el profesional"));
         }
         return profesionales.findById(profesionalId)
                 .filter(b -> b.getNegocio().getId().equals(negocio.getId()))
-                .orElseThrow(() -> new RecursoNoEncontradoException("Barbero no encontrado"));
+                .orElseThrow(() -> new RecursoNoEncontradoException("Profesional no encontrado"));
     }
 
     private Negocio negocioActual() {
         return negocios.findById(usuarioActual.negocioId())
-                .orElseThrow(() -> new IllegalStateException("La barbería del token no existe"));
+                .orElseThrow(() -> new IllegalStateException("El negocio del token no existe"));
     }
 
     private record Rango(Instant inicio, Instant fin) {

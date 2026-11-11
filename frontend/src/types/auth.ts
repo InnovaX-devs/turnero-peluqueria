@@ -1,3 +1,5 @@
+import type { Rubro } from '../lib/terminos'
+
 /** RECEPCION: secretaría, da turnos para todos los profesionales (issue #70). */
 export type Rol = 'ADMIN' | 'PROFESIONAL' | 'RECEPCION'
 
@@ -6,11 +8,13 @@ export interface Usuario {
   email: string
   rol: Rol
   negocioId: string
-  /** null si el usuario no está vinculado a un barbero (ej. un admin que no corta, o recepción) */
+  /** null si el usuario no está vinculado a un profesional (ej. un admin que no atiende, o recepción) */
   profesionalId: string | null
   negocioNombre: string
-  /** null si la barbería no cargó logo */
+  /** null si el negocio no cargó logo */
   negocioLogoUrl: string | null
+  /** Cómo se nombran las cosas en el panel (barbero / profesional, cliente / paciente...) */
+  rubro: Rubro
 }
 
 export interface LoginResponse {

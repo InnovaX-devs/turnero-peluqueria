@@ -2,6 +2,7 @@ package com.innovax.barberia.atencion.gestion.dto;
 
 import com.innovax.barberia.atencion.Atencion;
 import com.innovax.barberia.atencion.EstadoAtencion;
+import com.innovax.barberia.negocio.Rubro;
 
 import java.time.Instant;
 import java.util.UUID;
@@ -26,10 +27,10 @@ public record TurnoPublicoResponse(
         /** Hasta cuándo se puede cancelar o reprogramar online. */
         Instant limiteModificacion,
         boolean puedeCancelar,
-        /** Además de estar en plazo: reserva online prendida, y barbero y servicio todavía activos. */
+        /** Además de estar en plazo: reserva online prendida, y profesional y servicio todavía activos. */
         boolean puedeReprogramar) {
 
-    public record Negocio(String nombre, String slug) {
+    public record Negocio(String nombre, String slug, Rubro rubro) {
     }
 
     public record Sucursal(UUID id, String nombre, String direccion, String ciudad, String telefono) {
@@ -55,7 +56,7 @@ public record TurnoPublicoResponse(
                 a.getFin(),
                 a.getCliente() == null ? null : a.getCliente().getNombre(),
                 a.getPrecioFinal(),
-                new Negocio(b.getNombre(), b.getSlug()),
+                new Negocio(b.getNombre(), b.getSlug(), b.getRubro()),
                 new Sucursal(s.getId(), s.getNombre(), s.getDireccion(), s.getCiudad(), s.getTelefono()),
                 new Servicio(a.getServicio().getId(), a.getServicio().getNombre(), a.getServicio().getDuracionMin()),
                 new Profesional(a.getProfesional().getId(), a.getProfesional().getNombre() + " " + a.getProfesional().getApellido()),

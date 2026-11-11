@@ -31,6 +31,8 @@ public record TurnoAgendaResponse(
         UUID clienteId,
         String clienteNombre,
         String clienteTelefono,
+        /** DNI del paciente. Null fuera de salud (ahí el cliente no tiene DNI) o si el turno no tiene cliente. */
+        String clienteDni,
         /** Nota de la ficha del cliente (ej. "degradé en 2, arriba tijera"), para tenerla a mano al atenderlo. */
         String clienteNotas,
         /** Nota de este turno en particular (la que dejó quien reservó). */
@@ -61,6 +63,7 @@ public record TurnoAgendaResponse(
                 a.getCliente() != null ? a.getCliente().getId() : null,
                 a.getCliente() != null ? a.getCliente().getNombre() : null,
                 a.getCliente() != null ? a.getCliente().getTelefono() : null,
+                a.getCliente() != null ? a.getCliente().getDni() : null,
                 a.getCliente() != null ? a.getCliente().getNotas() : null,
                 a.getNotas(),
                 a.getEstadoCambiadoPor() != null ? a.getEstadoCambiadoPor().getEmail() : null,

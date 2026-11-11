@@ -121,11 +121,11 @@ public class ListaEsperaService {
     private Profesional buscarProfesional(Negocio negocio, UUID id) {
         return profesionales.findById(id)
                 .filter(p -> p.getNegocio().getId().equals(negocio.getId()))
-                .orElseThrow(() -> new RecursoNoEncontradoException("Barbero no encontrado"));
+                .orElseThrow(() -> new RecursoNoEncontradoException("Profesional no encontrado"));
     }
 
     private UUID profesionalPropio() {
         return usuarioActual.profesionalId()
-                .orElseThrow(() -> new AccessDeniedException("Tu usuario no está vinculado a un barbero"));
+                .orElseThrow(() -> new AccessDeniedException("Tu usuario no está vinculado a un profesional"));
     }
 }

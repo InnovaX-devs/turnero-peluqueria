@@ -74,7 +74,7 @@ public class UsuarioActual {
         }
         boolean esElMismo = profesionalId().map(profesionalId::equals).orElse(false);
         if (!esElMismo) {
-            throw new AccessDeniedException("No tenés permiso sobre este barbero");
+            throw new AccessDeniedException("No tenés permiso sobre este profesional");
         }
     }
 }

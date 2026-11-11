@@ -36,7 +36,7 @@ export function App() {
           <Route path="clientes" element={<ClientesPage />} />
           <Route path="clientes/:id" element={<ClienteFichaPage />} />
           <Route path="cuenta" element={<CuentaPage />} />
-          {/* Admin: toda la barbería. Barbero: solo lo suyo (lo filtra el backend). Recepción no. */}
+          {/* Admin: todo el negocio. Profesional: solo lo suyo (lo filtra el backend). Recepción no. */}
           <Route element={<RutaRoles roles={['ADMIN', 'PROFESIONAL']} />}>
             <Route path="reportes" element={<ReportesPage />} />
           </Route>

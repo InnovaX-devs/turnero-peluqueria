@@ -15,18 +15,21 @@ public interface ClienteRepository extends JpaRepository<Cliente, UUID> {
 
     Optional<Cliente> findByNegocioIdAndTelefono(UUID negocioId, String telefono);
 
+    Optional<Cliente> findByNegocioIdAndDni(UUID negocioId, String dni);
+
     /** Búsqueda por nombre (cuando lo tipeado no tiene números). */
     List<Cliente> findTop10ByNegocioIdAndNombreContainingIgnoreCaseOrderByNombreAsc(UUID negocioId, String nombre);
 
-    /** Búsqueda por nombre o por parte del teléfono (ej. "4111" encuentra +5493584111111). */
+    /** Búsqueda por nombre, por parte del teléfono (ej. "4111" encuentra +5493584111111) o por parte del DNI. */
     @Query("""
             select c from Cliente c
             where c.negocio.id = :negocioId
               and (lower(c.nombre) like lower(concat('%', :texto, '%'))
-                   or c.telefono like concat('%', :digitos, '%'))
+                   or c.telefono like concat('%', :digitos, '%')
+                   or c.dni like concat('%', :digitos, '%'))
             order by c.nombre
             """)
-    List<Cliente> buscarPorNombreOTelefono(
+    List<Cliente> buscarPorNombreTelefonoODni(
             @Param("negocioId") UUID negocioId,
             @Param("texto") String texto,
             @Param("digitos") String digitos,
@@ -35,14 +38,15 @@ public interface ClienteRepository extends JpaRepository<Cliente, UUID> {
     Optional<Cliente> findByIdAndNegocioId(UUID id, UUID negocioId);
 
     // ---------- Listado del panel, paginado ----------
-    // Filtro común: sin texto trae todos; con texto busca en el nombre o (si hay 3+ dígitos) en el teléfono.
+    // Filtro común: sin texto trae todos; con texto busca en el nombre o (si hay 3+ dígitos) en el teléfono o el DNI.
     // Son consultas nativas porque el orden por última visita necesita un LEFT JOIN a un agregado.
 
     String FILTRO_LISTADO = """
             c.negocio_id = :negocioId
               AND (:texto = ''
                    OR lower(c.nombre) LIKE '%' || lower(:texto) || '%'
-                   OR (:digitos <> '' AND c.telefono LIKE '%' || :digitos || '%'))
+                   OR (:digitos <> '' AND (c.telefono LIKE '%' || :digitos || '%'
+                                           OR c.dni LIKE '%' || :digitos || '%')))
             """;
 
     @Query(value = "SELECT count(*) FROM cliente c WHERE " + FILTRO_LISTADO, nativeQuery = true)

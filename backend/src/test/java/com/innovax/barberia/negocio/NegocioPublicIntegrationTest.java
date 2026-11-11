@@ -44,6 +44,7 @@ class NegocioPublicoIntegrationTest {
         mvc.perform(get("/api/public/negocios/jade"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.nombre").value("Jade"))
+                .andExpect(jsonPath("$.rubro").value("BARBERIA")) // los negocios existentes siguen siendo barberías
                 .andExpect(jsonPath("$.reservasOnline").value(true))
                 .andExpect(jsonPath("$.sucursales", hasSize(1)))
                 .andExpect(jsonPath("$.sucursales[0].telefono").value("+5493584000000"))
@@ -75,6 +76,6 @@ class NegocioPublicoIntegrationTest {
     void slugInexistenteDevuelve404() throws Exception {
         mvc.perform(get("/api/public/negocios/no-existe"))
                 .andExpect(status().isNotFound())
-                .andExpect(jsonPath("$.mensaje").value("Barbería no encontrada"));
+                .andExpect(jsonPath("$.mensaje").value("Negocio no encontrado"));
     }
 }

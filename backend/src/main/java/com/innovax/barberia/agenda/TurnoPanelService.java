@@ -168,7 +168,7 @@ public class TurnoPanelService {
             throw new DatosInvalidosException("hora", "Ese horario ya pasó");
         }
         if (!bloqueos.findSolapados(profesional.getId(), inicio, fin).isEmpty()) {
-            throw new ConflictoException("horario", "El barbero tiene bloqueado ese horario");
+            throw new ConflictoException("horario", "El profesional tiene bloqueado ese horario");
         }
         boolean pisaOtroTurno = !atenciones.findOcupadas(profesional.getId(), OCUPAN, inicio, fin).isEmpty();
         LocalTime horaFin = hora.plusMinutes(servicio.getDuracionMin());
@@ -199,7 +199,7 @@ public class TurnoPanelService {
         return profesionales.findById(profesionalId)
                 .filter(p -> p.getNegocio().getId().equals(negocio.getId()))
                 .filter(Profesional::isActivo)
-                .orElseThrow(() -> new RecursoNoEncontradoException("Barbero no encontrado"));
+                .orElseThrow(() -> new RecursoNoEncontradoException("Profesional no encontrado"));
     }
 
     /** Si el profesional trabaja en una sola sucursal, no hace falta elegirla. */
@@ -216,7 +216,7 @@ public class TurnoPanelService {
                 .filter(Sucursal::isActiva)
                 .orElseThrow(() -> new RecursoNoEncontradoException("Sucursal no encontrada"));
         if (!profesional.getSucursales().contains(sucursal)) {
-            throw new DatosInvalidosException("sucursalId", "Ese barbero no trabaja en esa sucursal");
+            throw new DatosInvalidosException("sucursalId", "Ese profesional no trabaja en esa sucursal");
         }
         return sucursal;
     }
@@ -227,7 +227,7 @@ public class TurnoPanelService {
                 .filter(s -> s.getNegocio().getId().equals(negocio.getId()))
                 .orElseThrow(() -> new RecursoNoEncontradoException("Servicio no encontrado"));
         if (!profesional.getServicios().contains(servicio)) {
-            throw new DatosInvalidosException("servicioId", "Ese barbero no hace ese servicio");
+            throw new DatosInvalidosException("servicioId", "Ese profesional no hace ese servicio");
         }
         return servicio;
     }

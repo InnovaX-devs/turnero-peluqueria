@@ -56,7 +56,7 @@ public class AgendaService {
 
         UUID negocioId = usuarioActual.negocioId();
         Negocio negocio = negocios.findById(negocioId)
-                .orElseThrow(() -> new IllegalStateException("La barbería del token no existe"));
+                .orElseThrow(() -> new IllegalStateException("El negocio del token no existe"));
 
         UUID profesionalId = usuarioActual.rol() == Rol.PROFESIONAL
                 ? profesionalPropio()
@@ -86,6 +86,6 @@ public class AgendaService {
 
     private UUID profesionalPropio() {
         return usuarioActual.profesionalId()
-                .orElseThrow(() -> new IllegalStateException("El usuario barbero no está vinculado a un barbero"));
+                .orElseThrow(() -> new IllegalStateException("El usuario barbero no está vinculado a un profesional"));
     }
 }

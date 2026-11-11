@@ -113,7 +113,8 @@ class AuthIntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.email").value("admin@jade.com"))
                 .andExpect(jsonPath("$.rol").value("ADMIN"))
-                .andExpect(jsonPath("$.negocioNombre").value("Jade"));
+                .andExpect(jsonPath("$.negocioNombre").value("Jade"))
+                .andExpect(jsonPath("$.rubro").value("BARBERIA"));
     }
 
     // ---------- Roles ----------

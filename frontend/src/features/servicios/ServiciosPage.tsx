@@ -9,8 +9,10 @@ import { CLAVE_LISTA_SERVICIOS, useInvalidarServicios } from './servicios'
 import '../admin/configuracion.css'
 import '../profesionales/profesionales.css'
 import './servicios.css'
+import { useTerminos } from '../terminos/useTerminos'
 
 export function ServiciosPage() {
+  const t = useTerminos()
   const queryClient = useQueryClient()
   const invalidar = useInvalidarServicios()
   // 'nuevo' = formulario de alta; un id = editando ese servicio
@@ -110,14 +112,14 @@ export function ServiciosPage() {
     <section className="profesionales servicios">
       {formulario === 'nuevo' && (
         <button type="button" className="profesional-volver" onClick={() => setFormulario(null)}>
-          ← Servicios
+          ← {t.servicio.P}
         </button>
       )}
       <div className="profesionales-cabecera">
-        <h1>Servicios</h1>
+        <h1>{t.servicio.P}</h1>
         {formulario !== 'nuevo' && (
           <button type="button" className="boton-secundario" onClick={() => setFormulario('nuevo')}>
-            + Nuevo servicio
+            + Nuev{t.servicio.o} {t.servicio.s}
           </button>
         )}
       </div>
@@ -198,7 +200,7 @@ export function ServiciosPage() {
                   {confirmandoBaja === s.id && (
                     <div className="servicio-confirmacion" role="alert">
                       <span>
-                        Deja de mostrarse para reservar y registrar cortes. Las atenciones ya registradas se conservan.
+                        Deja de mostrarse para reservar y registrar {t.atencion.p}. Las atenciones ya registradas se conservan.
                       </span>
                       <div className="profesional-acciones">
                         <button

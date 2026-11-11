@@ -5,6 +5,7 @@ import com.innovax.barberia.auth.Usuario;
 import com.innovax.barberia.auth.UsuarioRepository;
 import com.innovax.barberia.negocio.Negocio;
 import com.innovax.barberia.negocio.NegocioRepository;
+import com.innovax.barberia.negocio.Rubro;
 import com.innovax.barberia.sucursal.Sucursal;
 import com.innovax.barberia.sucursal.SucursalRepository;
 import lombok.RequiredArgsConstructor;
@@ -20,10 +21,10 @@ import java.util.Locale;
 import java.util.regex.Pattern;
 
 /**
- * Da de alta una barbería nueva con su primera sucursal y su usuario admin, con la contraseña que
+ * Da de alta un negocio nuevo (barbería, peluquería, centro de estética o consultorio) con su primera sucursal y su usuario admin, con la contraseña que
  * elige Innovax (lo usa al vender el sistema). Todo lo demás (barberos, servicios, horarios) lo carga el admin desde el panel.
  *
- * <p>La barbería arranca con la reserva online APAGADA: el admin la prende cuando terminó de
+ * <p>El negocio arranca con la reserva online APAGADA: el admin la prende cuando terminó de
  * configurar barberos y servicios, así nadie ve una página de reservas vacía.
  */
 @Service
@@ -45,7 +46,8 @@ public class AltaNegocioService {
 
     @Transactional
     public ResultadoAltaNegocio crear(DatosAltaNegocio datos) {
-        String nombre = obligatorio(datos.nombre(), "el nombre de la barbería", 120);
+        String nombre = obligatorio(datos.nombre(), "el nombre del negocio", 120);
+        Rubro rubro = rubroDe(datos.rubro());
         String slug = vacio(datos.slug()) ? slugDe(nombre) : datos.slug().trim().toLowerCase(Locale.ROOT);
         String zona = vacio(datos.zonaHoraria()) ? ZONA_POR_DEFECTO : datos.zonaHoraria().trim();
         String sucursalNombre = vacio(datos.sucursalNombre()) ? nombre : datos.sucursalNombre().trim();
@@ -56,10 +58,10 @@ public class AltaNegocioService {
 
         if (slug.length() > 80 || !SLUG.matcher(slug).matches()) {
             throw new AltaInvalidaException("El slug \"" + slug + "\" no sirve para una URL: usá minúsculas, "
-                    + "números y guiones (por ejemplo: barberia-el-tano)");
+                    + "números y guiones (por ejemplo: el-tano)");
         }
         if (negocios.existsBySlug(slug)) {
-            throw new AltaInvalidaException("Ya hay una barbería con el slug \"" + slug + "\". Elegí otro.");
+            throw new AltaInvalidaException("Ya hay un negocio con el slug \"" + slug + "\". Elegí otro.");
         }
         try {
             ZoneId.of(zona);
@@ -93,6 +95,7 @@ public class AltaNegocioService {
         Negocio negocio = new Negocio();
         negocio.setNombre(nombre);
         negocio.setSlug(slug);
+        negocio.setRubro(rubro);
         negocio.setZonaHoraria(zona);
         negocio.setReservasOnline(false);
         negocio = negocios.save(negocio);
@@ -112,7 +115,20 @@ public class AltaNegocioService {
         admin.setRol(Rol.ADMIN);
         usuarios.save(admin);
 
-        return new ResultadoAltaNegocio(negocio.getId(), nombre, slug, email);
+        return new ResultadoAltaNegocio(negocio.getId(), nombre, slug, email, rubro);
+    }
+
+    /** Sin rubro es BARBERIA (lo que había antes de que existiera el rubro). */
+    private static Rubro rubroDe(String texto) {
+        if (vacio(texto)) {
+            return Rubro.BARBERIA;
+        }
+        try {
+            return Rubro.valueOf(texto.trim().toUpperCase(Locale.ROOT));
+        } catch (IllegalArgumentException e) {
+            throw new AltaInvalidaException("El rubro \"" + texto.trim() + "\" no existe. Los rubros son: "
+                    + java.util.Arrays.stream(Rubro.values()).map(Enum::name).collect(java.util.stream.Collectors.joining(", ")));
+        }
     }
 
     /** "Barbería El Tano" → "barberia-el-tano" */

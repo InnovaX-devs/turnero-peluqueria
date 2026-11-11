@@ -32,7 +32,7 @@ public class ProfesionalPublicoService {
     @Transactional(readOnly = true)
     public List<ProfesionalPublicoResponse> listar(String slug, UUID sucursalId, UUID servicioId) {
         Negocio negocio = negocios.findBySlug(slug.trim().toLowerCase(Locale.ROOT))
-                .orElseThrow(() -> new RecursoNoEncontradoException("Barbería no encontrada"));
+                .orElseThrow(() -> new RecursoNoEncontradoException("Negocio no encontrado"));
 
         Sucursal sucursal = sucursales.findById(sucursalId)
                 .filter(Sucursal::isActiva)

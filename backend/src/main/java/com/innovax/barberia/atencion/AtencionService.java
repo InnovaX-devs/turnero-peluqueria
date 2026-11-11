@@ -12,6 +12,7 @@ import com.innovax.barberia.negocio.Negocio;
 import com.innovax.barberia.profesional.Profesional;
 import com.innovax.barberia.profesional.ProfesionalRepository;
 import com.innovax.barberia.cliente.Cliente;
+import com.innovax.barberia.cliente.Dni;
 import com.innovax.barberia.cliente.ClienteRepository;
 import com.innovax.barberia.common.ConflictoException;
 import com.innovax.barberia.common.DatosInvalidosException;
@@ -73,19 +74,20 @@ public class AtencionService {
         Servicio servicio = servicios.findById(request.servicioId())
                 .orElseThrow(() -> new RecursoNoEncontradoException("Servicio no encontrado"));
         Profesional profesional = profesionales.findById(request.profesionalId())
-                .orElseThrow(() -> new RecursoNoEncontradoException("Barbero no encontrado"));
+                .orElseThrow(() -> new RecursoNoEncontradoException("Profesional no encontrado"));
 
         Negocio negocio = sucursal.getNegocio();
         validarPertenecenAlMismoNegocio(negocio, servicio, profesional);
 
         if (!servicio.isActivo()) {
-            throw new DatosInvalidosException("servicioId", "Ese servicio ya no está disponible");
+            throw new DatosInvalidosException("servicioId", negocio.getRubro().servicio().eseCapitalizado() + " ya no está disponible");
         }
         if (!negocio.isReservasOnline()) {
-            throw new DatosInvalidosException("negocio", "Esta barbería no acepta reservas online por ahora");
+            throw new DatosInvalidosException("negocio",
+                    negocio.getRubro().negocio().esteCapitalizado() + " no acepta reservas online por ahora");
         }
         if (!profesional.isActivo() || !profesional.getSucursales().contains(sucursal) || !profesional.getServicios().contains(servicio)) {
-            throw new DatosInvalidosException("profesional", "No atiende ese servicio en esa sucursal");
+            throw new DatosInvalidosException("profesional", "No atiende " + negocio.getRubro().servicio().ese() + " en esa sucursal");
         }
 
         // 1) Chequeo rápido dentro de la transacción: mismo criterio que la grilla pública.
@@ -98,7 +100,7 @@ public class AtencionService {
         Instant inicio = ZonedDateTime.of(request.fecha(), request.hora(), zonaHoraria).toInstant();
         Instant fin = inicio.plus(Duration.ofMinutes(servicio.getDuracionMin()));
 
-        Cliente cliente = obtenerOCrearCliente(negocio, request.clienteNombre(), request.clienteTelefono());
+        Cliente cliente = obtenerOCrearCliente(negocio, request);
 
         Atencion atencion = new Atencion();
         atencion.setNegocio(negocio);
@@ -215,24 +217,51 @@ public class AtencionService {
         return TurnoAgendaResponse.de(atenciones.save(atencion));
     }
 
-    private Cliente obtenerOCrearCliente(Negocio negocio, String nombre, String telefono) {
-        Cliente cliente = clientes.findByNegocioIdAndTelefono(negocio.getId(), telefono)
-                .orElseGet(() -> {
-                    Cliente nuevo = new Cliente();
-                    nuevo.setNegocio(negocio);
-                    nuevo.setTelefono(telefono);
-                    return nuevo;
-                });
-        cliente.setNombre(nombre.trim());
+    /**
+     * En salud el paciente se busca por DNI (obligatorio): el teléfono es solo un dato de contacto y
+     * puede repetirse entre pacientes. En los demás rubros se busca por teléfono, como siempre.
+     */
+    private Cliente obtenerOCrearCliente(Negocio negocio, CrearReservaRequest request) {
+        String telefono = request.clienteTelefono();
+        Cliente cliente;
+        if (negocio.getRubro().identificaPorDni()) {
+            String dni = Dni.normalizar(request.clienteDni());
+            if (dni == null) {
+                throw new DatosInvalidosException("clienteDni", "El DNI es obligatorio");
+            }
+            cliente = clientes.findByNegocioIdAndDni(negocio.getId(), dni)
+                    .orElseGet(() -> {
+                        Cliente nuevo = new Cliente();
+                        nuevo.setNegocio(negocio);
+                        nuevo.setDni(dni);
+                        return nuevo;
+                    });
+            cliente.setTelefono(telefono);
+            if (request.clienteFechaNacimiento() != null) {
+                cliente.setFechaNacimiento(request.clienteFechaNacimiento());
+            }
+            if (request.clienteSexo() != null) {
+                cliente.setSexo(request.clienteSexo());
+            }
+        } else {
+            cliente = clientes.findByNegocioIdAndTelefono(negocio.getId(), telefono)
+                    .orElseGet(() -> {
+                        Cliente nuevo = new Cliente();
+                        nuevo.setNegocio(negocio);
+                        nuevo.setTelefono(telefono);
+                        return nuevo;
+                    });
+        }
+        cliente.setNombre(request.clienteNombre().trim());
         return clientes.save(cliente);
     }
 
     private void validarPertenecenAlMismoNegocio(Negocio negocio, Servicio servicio, Profesional profesional) {
         if (!servicio.getNegocio().getId().equals(negocio.getId())) {
-            throw new DatosInvalidosException("servicioId", "No pertenece a la barbería de la sucursal");
+            throw new DatosInvalidosException("servicioId", "No pertenece " + negocio.getRubro().negocio().al() + " de la sucursal");
         }
         if (!profesional.getNegocio().getId().equals(negocio.getId())) {
-            throw new DatosInvalidosException("profesionalId", "No pertenece a la barbería de la sucursal");
+            throw new DatosInvalidosException("profesionalId", "No pertenece " + negocio.getRubro().negocio().al() + " de la sucursal");
         }
     }
 }

@@ -1,15 +1,17 @@
-export type Paso = 'sucursal' | 'servicio' | 'barbero' | 'horario' | 'datos'
+import type { Terminos } from '../../lib/terminos'
 
-/** Valor de profesionalId cuando el cliente elige "Cualquier barbero". */
+export type Paso = 'sucursal' | 'servicio' | 'profesional' | 'horario' | 'datos'
+
+/** Valor de profesionalId cuando el cliente elige "Cualquier profesional". */
 export const PROFESIONAL_CUALQUIERA = 'cualquiera'
 
 export interface Selecciones {
   sucursalId: string | null
   servicioId: string | null
-  profesionalId: string | null // 'cualquiera' = primer barbero disponible
+  profesionalId: string | null // 'cualquiera' = primer profesional disponible
   fecha: string | null // YYYY-MM-DD
   hora: string | null // HH:mm
-  /** El barbero real del turno: igual a profesionalId, o el que tocó en el horario si eligió "cualquiera" */
+  /** El profesional real del turno: igual a profesionalId, o el que tocó en el horario si eligió "cualquiera" */
   profesionalAsignadoId: string | null
 }
 
@@ -19,16 +21,17 @@ export const SELECCIONES_VACIAS: Selecciones = {
 
 interface DefinicionPaso {
   paso: Paso
-  titulo: string
+  /** Recibe los términos del rubro: "Elegí el barbero" / "Elegí el profesional". */
+  titulo: (t: Terminos) => string
   campos: (keyof Selecciones)[]
 }
 
 const TODOS_LOS_PASOS: DefinicionPaso[] = [
-  { paso: 'sucursal', titulo: 'Elegí la sucursal', campos: ['sucursalId'] },
-  { paso: 'servicio', titulo: 'Elegí el servicio', campos: ['servicioId'] },
-  { paso: 'barbero', titulo: 'Elegí el barbero', campos: ['profesionalId'] },
-  { paso: 'horario', titulo: 'Elegí día y horario', campos: ['fecha', 'hora', 'profesionalAsignadoId'] },
-  { paso: 'datos', titulo: 'Tus datos', campos: [] },
+  { paso: 'sucursal', titulo: () => 'Elegí la sucursal', campos: ['sucursalId'] },
+  { paso: 'servicio', titulo: (t) => `Elegí ${t.servicio.el}`, campos: ['servicioId'] },
+  { paso: 'profesional', titulo: (t) => `Elegí ${t.profesional.el}`, campos: ['profesionalId'] },
+  { paso: 'horario', titulo: () => 'Elegí día y horario', campos: ['fecha', 'hora', 'profesionalAsignadoId'] },
+  { paso: 'datos', titulo: () => 'Tus datos', campos: [] },
 ]
 
 /** Con una sola sucursal, el paso se saltea y se elige sola. */

@@ -100,7 +100,7 @@ public class RecuperacionService {
         tokens.save(new TokenRecuperacion(usuario, hashear(token), ahora.plus(VIGENCIA_INVITACION)));
 
         String link = frontendUrl + "/panel/restablecer?token=" + token;
-        eventos.publishEvent(new UsuarioInvitado(usuario.getEmail(), link));
+        eventos.publishEvent(new UsuarioInvitado(usuario.getEmail(), link, usuario.getNegocio().getRubro()));
     }
 
     @Transactional

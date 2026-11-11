@@ -111,7 +111,7 @@ public class RegistroCorteService {
             atenciones.saveAndFlush(atencion);
         } catch (DataIntegrityViolationException e) {
             if (e.getMessage() != null && e.getMessage().contains("excl_atencion_superpuesta")) {
-                throw new ConflictoException("horario", "Ese barbero ya tiene otra atención en ese horario");
+                throw new ConflictoException("horario", "Ese profesional ya tiene otra atención en ese horario");
             }
             throw e;
         }
@@ -123,7 +123,7 @@ public class RegistroCorteService {
         UUID profesionalId;
         if (!usuarioActual.veTodoElNegocio()) {
             profesionalId = usuarioActual.profesionalId()
-                    .orElseThrow(() -> new AccessDeniedException("El usuario no está vinculado a un barbero"));
+                    .orElseThrow(() -> new AccessDeniedException("El usuario no está vinculado a un profesional"));
             if (profesionalPedido != null) {
                 usuarioActual.verificarAccesoAProfesional(profesionalPedido); // 403 si pide otro
             }
@@ -131,11 +131,11 @@ public class RegistroCorteService {
             profesionalId = profesionalPedido;
         } else {
             profesionalId = usuarioActual.profesionalId()
-                    .orElseThrow(() -> new DatosInvalidosException("profesionalId", "Elegí el barbero"));
+                    .orElseThrow(() -> new DatosInvalidosException("profesionalId", "Elegí el profesional"));
         }
         return profesionales.findById(profesionalId)
                 .filter(b -> b.getNegocio().getId().equals(negocio.getId()))
-                .orElseThrow(() -> new RecursoNoEncontradoException("Barbero no encontrado"));
+                .orElseThrow(() -> new RecursoNoEncontradoException("Profesional no encontrado"));
     }
 
     /** Si el barbero trabaja en una sola sucursal, no hace falta elegirla. */
@@ -151,7 +151,7 @@ public class RegistroCorteService {
                 .filter(s -> s.getNegocio().getId().equals(negocio.getId()))
                 .orElseThrow(() -> new RecursoNoEncontradoException("Sucursal no encontrada"));
         if (!profesional.getSucursales().contains(sucursal)) {
-            throw new DatosInvalidosException("sucursalId", "Ese barbero no trabaja en esa sucursal");
+            throw new DatosInvalidosException("sucursalId", "Ese profesional no trabaja en esa sucursal");
         }
         return sucursal;
     }
@@ -168,7 +168,7 @@ public class RegistroCorteService {
         
         Instant inicio = ZonedDateTime.of(fecha, hora, zona).toInstant();
         if(inicio.isAfter(ahora.plus(TOLERANCIA_FUTURO))){
-            throw new DatosInvalidosException("fecha", "No se puede registar un corte en el futuro");
+            throw new DatosInvalidosException("fecha", "No se puede registrar una atención en el futuro");
         }
 
         return inicio;
@@ -186,7 +186,7 @@ public class RegistroCorteService {
         Instant finAjustado = fin;
         for (Atencion otra : atenciones.findOcupadas(profesional.getId(), ACTIVAS, inicio, fin)) {
             if (otra.getInicio().equals(inicio)) {
-                throw new ConflictoException("horario", "Ese barbero ya tiene una atención registrada a esa misma hora");
+                throw new ConflictoException("horario", "Ese profesional ya tiene una atención registrada a esa misma hora");
             }
             if (otra.getInicio().isAfter(inicio)) {
                 if (otra.getInicio().isBefore(finAjustado)) {
@@ -207,6 +207,6 @@ public class RegistroCorteService {
 
     private Negocio negocioActual() {
         return negocios.findById(usuarioActual.negocioId())
-                .orElseThrow(() -> new IllegalStateException("La barbería del token no existe"));
+                .orElseThrow(() -> new IllegalStateException("El negocio del token no existe"));
     }
 }

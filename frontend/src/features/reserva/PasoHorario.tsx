@@ -10,6 +10,7 @@ import { mensajeDeError } from '../../lib/errores'
 import { diaSemanaCorto, diasEntre, fechaLarga, horaCorta, hoyISO, mesYAnio, sumarDias } from '../../lib/fechas'
 import { formatearDuracion } from '../../lib/formato'
 import { PROFESIONAL_CUALQUIERA } from './flujo'
+import { useTerminos } from '../terminos/useTerminos'
 
 const DIAS_POR_SEMANA = 7
 
@@ -32,6 +33,7 @@ interface Props {
 }
 
 export function PasoHorario(props: Props) {
+  const t = useTerminos()
   const { slug, anticipacionMaximaDias, sucursalId, servicioId, profesionalId, fechaElegida, horaElegida, onElegir } = props
   const esCualquiera = profesionalId === PROFESIONAL_CUALQUIERA
   const consulta = { sucursalId, servicioId, profesionalId: esCualquiera ? null : profesionalId }
@@ -82,7 +84,7 @@ export function PasoHorario(props: Props) {
   })
   const servicio = servicios?.find((s) => s.id === servicioId)
   const profesional = profesionales?.find((b) => b.id === profesionalId)
-  const nombreProfesional = esCualquiera ? 'Cualquier barbero' : profesional ? `${profesional.nombre} ${profesional.apellido}` : ''
+  const nombreProfesional = esCualquiera ? `Cualquier ${t.profesional.s}` : profesional ? `${profesional.nombre} ${profesional.apellido}` : ''
   const iniciales = esCualquiera ? '✦' : profesional ? `${profesional.nombre[0]}${profesional.apellido[0]}`.toUpperCase() : ''
 
   function cambiarSemana(delta: number) {
@@ -199,7 +201,7 @@ export function PasoHorario(props: Props) {
                         onElegir({
                           fecha: diaActivo,
                           hora,
-                          // Con "cualquiera", el turno queda para el primer barbero libre en ese horario
+                          // Con "cualquiera", el turno queda para el primer profesional libre en ese horario
                           profesionalAsignadoId: esCualquiera ? slot.profesionales[0] : profesionalId,
                         })
                       }

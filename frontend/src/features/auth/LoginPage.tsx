@@ -51,7 +51,7 @@ export function LoginPage() {
       <div className="auth-contenido">
         <section className="auth-tarjeta">
           <h1 className="auth-titulo">Ingresá al panel</h1>
-          <p className="auth-subtitulo">Accedé con el email y la contraseña de tu barbería.</p>
+          <p className="auth-subtitulo">Accedé con el email y la contraseña de tu cuenta.</p>
 
           <form onSubmit={handleSubmit} noValidate>
             <label className="campo">

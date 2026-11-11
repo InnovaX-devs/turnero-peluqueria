@@ -18,7 +18,7 @@ public record NuevoTurnoRequest(
         @NotNull(message = "Elegí el servicio")
         UUID servicioId,
 
-        @NotNull(message = "Elegí el barbero")
+        @NotNull(message = "Elegí el profesional")
         UUID profesionalId,
 
         /** null = la única sucursal del profesional */

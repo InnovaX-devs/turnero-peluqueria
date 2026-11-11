@@ -2,12 +2,15 @@ import { useEffect, useState } from 'react'
 import { keepPreviousData, useInfiniteQuery } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
 import { listarClientes } from '../../api/clientes'
+import { formatearDni } from '../../lib/dni'
 import { mensajeDeError } from '../../lib/errores'
 import type { OrdenClientes } from '../../types/cliente'
 import { textoUltimaVisita } from './ultimaVisita'
 import './clientes.css'
+import { useTerminos } from '../terminos/useTerminos'
 
 export function ClientesPage() {
+  const t = useTerminos()
   const [texto, setTexto] = useState('')
   const [buscado, setBuscado] = useState('')
   const [orden, setOrden] = useState<OrdenClientes>('nombre')
@@ -32,14 +35,14 @@ export function ClientesPage() {
 
   return (
     <section className="clientes">
-      <h1 className="clientes-titulo">Clientes</h1>
+      <h1 className="clientes-titulo">{t.cliente.P}</h1>
 
       <div className="clientes-filtros">
         <input
           className="clientes-buscador"
           type="search"
-          placeholder="Buscar por nombre o teléfono"
-          aria-label="Buscar cliente por nombre o teléfono"
+          placeholder={t.pideDni ? 'Buscar por nombre o DNI' : 'Buscar por nombre o teléfono'}
+          aria-label={`Buscar ${t.cliente.s} por nombre o ${t.pideDni ? 'DNI' : 'teléfono'}`}
           value={texto}
           onChange={(e) => setTexto(e.target.value)}
         />
@@ -62,7 +65,7 @@ export function ClientesPage() {
 
       {consulta.isSuccess && clientes.length === 0 && (
         <p className="clientes-estado">
-          {buscado ? 'No se encontró ningún cliente con esa búsqueda.' : 'Todavía no hay clientes cargados.'}
+          {buscado ? `No se encontró ningún ${t.cliente.s} con esa búsqueda.` : `Todavía no hay ${t.cliente.p} cargados.`}
         </p>
       )}
 
@@ -71,7 +74,7 @@ export function ClientesPage() {
           <p className="clientes-total" aria-live="polite">
             {buscado
               ? `${total} ${total === 1 ? 'resultado' : 'resultados'}`
-              : `${total} ${total === 1 ? 'cliente' : 'clientes'}`}
+              : `${total} ${t.cliente.cantidad(total)}`}
           </p>
 
           <ul className="clientes-lista">
@@ -80,7 +83,7 @@ export function ClientesPage() {
                 <Link to={`/panel/clientes/${c.id}`} className="clientes-fila">
                   <span className="clientes-fila-datos">
                     <strong>{c.nombre}</strong>
-                    <small>{c.telefono}</small>
+                    <small>{c.dni ? `DNI ${formatearDni(c.dni)} · ${c.telefono}` : c.telefono}</small>
                     <small className="clientes-fila-visita">{textoUltimaVisita(c.ultimaVisita)}</small>
                   </span>
                   {c.tieneNotas && <span className="clientes-etiqueta-nota">Con nota</span>}

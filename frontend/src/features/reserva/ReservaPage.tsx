@@ -4,6 +4,7 @@ import axios from 'axios'
 import { useParams } from 'react-router-dom'
 import { obtenerNegocioPublico } from '../../api/reservaPublica'
 import { mensajeDeError } from '../../lib/errores'
+import { TerminosProvider } from '../terminos/TerminosProvider'
 import { EncabezadoNegocio } from './EncabezadoNegocio'
 import { FlujoReserva } from './FlujoReserva'
 import { SinReservasOnline } from './SinReservasOnline'
@@ -37,8 +38,8 @@ export function ReservaPage() {
     return (
       <main className="reserva reserva-no-encontrada">
         <p className="reserva-404">404</p>
-        <h1>No encontramos esta barbería</h1>
-        <p>Revisá que el link esté bien escrito o pedile a la barbería que te lo vuelva a pasar.</p>
+        <h1>No encontramos esta página</h1>
+        <p>Revisá que el link esté bien escrito o pedile a quien te lo pasó que te lo vuelva a mandar.</p>
       </main>
     )
   }
@@ -57,13 +58,15 @@ export function ReservaPage() {
   }
 
   return (
-    <main className="reserva">
-      <EncabezadoNegocio key={data.logoUrl} nombre={data.nombre} logoUrl={data.logoUrl} />
-      {data.reservasOnline ? (
-        <FlujoReserva key={data.slug} negocio={data} />
-      ) : (
-        <SinReservasOnline sucursales={data.sucursales} />
-      )}
-    </main>
+    <TerminosProvider rubro={data.rubro}>
+      <main className="reserva">
+        <EncabezadoNegocio key={data.logoUrl} nombre={data.nombre} logoUrl={data.logoUrl} />
+        {data.reservasOnline ? (
+          <FlujoReserva key={data.slug} negocio={data} />
+        ) : (
+          <SinReservasOnline sucursales={data.sucursales} />
+        )}
+      </main>
+    </TerminosProvider>
   )
 }

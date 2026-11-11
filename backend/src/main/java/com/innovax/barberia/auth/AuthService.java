@@ -73,6 +73,6 @@ public class AuthService {
     private UsuarioResponse aResponse(Usuario u, UUID profesionalId) {
         var negocio = u.getNegocio();
         return new UsuarioResponse(u.getId(), u.getEmail(), u.getRol(), negocio.getId(), profesionalId,
-                negocio.getNombre(), negocio.getLogoUrl());
+                negocio.getNombre(), negocio.getLogoUrl(), negocio.getRubro());
     }
 }

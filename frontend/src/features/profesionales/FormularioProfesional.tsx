@@ -4,6 +4,7 @@ import { actualizarProfesional, crearProfesional } from '../../api/profesionales
 import { erroresDeCampos, mensajeDeError } from '../../lib/errores'
 import type { Profesional, OpcionesProfesional } from '../../types/profesional'
 import { mismoConjunto } from './profesionales'
+import { useTerminos } from '../terminos/useTerminos'
 
 interface Form {
   nombre: string
@@ -25,6 +26,7 @@ function alternar(lista: string[], id: string): string[] {
 }
 
 export function FormularioProfesional({ profesional, opciones, onGuardado }: Props) {
+  const t = useTerminos()
   const queryClient = useQueryClient()
   const [form, setForm] = useState<Form>({
     nombre: profesional?.nombre ?? '',
@@ -160,9 +162,9 @@ export function FormularioProfesional({ profesional, opciones, onGuardado }: Pro
       </fieldset>
 
       <fieldset className="config-grupo">
-        <legend>Servicios que realiza</legend>
+        <legend>{t.servicio.P} que realiza</legend>
         {opciones.servicios.length === 0 && (
-          <p className="config-ayuda">No hay servicios activos para asignar.</p>
+          <p className="config-ayuda">No hay {t.servicio.p} activ{t.servicio.o}s para asignar.</p>
         )}
         <div className="checks">
           {opciones.servicios.map((s) => (
@@ -227,7 +229,7 @@ export function FormularioProfesional({ profesional, opciones, onGuardado }: Pro
         className="boton-principal config-guardar"
         disabled={sinCambios || guardar.isPending}
       >
-        {guardar.isPending ? 'Guardando…' : profesional ? 'Guardar cambios' : 'Crear barbero'}
+        {guardar.isPending ? 'Guardando…' : profesional ? 'Guardar cambios' : `Crear ${t.profesional.s}`}
       </button>
     </form>
   )

@@ -99,7 +99,7 @@ public class NegocioService {
     /** La barbería sale del token, nunca del request. */
     private Negocio negocioActual() {
         return negocios.findById(usuarioActual.negocioId())
-                .orElseThrow(() -> new IllegalStateException("La barbería del token no existe"));
+                .orElseThrow(() -> new IllegalStateException("El negocio del token no existe"));
     }
 
     private ConflictoException slugEnUso() {

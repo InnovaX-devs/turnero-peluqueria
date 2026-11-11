@@ -6,8 +6,10 @@ import { mensajeDeError } from '../../lib/errores'
 import { Avatar } from './FotoProfesional'
 import '../admin/configuracion.css'
 import './profesionales.css'
+import { useTerminos } from '../terminos/useTerminos'
 
 export function ProfesionalesPage() {
+  const t = useTerminos()
   const queryClient = useQueryClient()
   const [verInactivos, setVerInactivos] = useState(false)
   const [confirmandoBaja, setConfirmandoBaja] = useState<string | null>(null)
@@ -39,9 +41,9 @@ export function ProfesionalesPage() {
   return (
     <section className="profesionales">
       <div className="profesionales-cabecera">
-        <h1>Barberos</h1>
+        <h1>{t.profesional.P}</h1>
         <Link to="/panel/profesionales/nuevo" className="boton-secundario">
-          + Nuevo barbero
+          + Nuev{t.profesional.o} {t.profesional.s}
         </Link>
       </div>
 
@@ -63,7 +65,7 @@ export function ProfesionalesPage() {
       )}
       {errorAccion && <p className="config-error" role="alert">{errorAccion}</p>}
 
-      {data && visibles.length === 0 && <p className="config-estado">Todavía no hay barberos cargados.</p>}
+      {data && visibles.length === 0 && <p className="config-estado">Todavía no hay {t.profesional.p} cargad{t.profesional.o}s.</p>}
 
       <ul className="profesionales-lista">
         {visibles.map((b) => (
@@ -81,7 +83,7 @@ export function ProfesionalesPage() {
                 {b.nombre} {b.apellido}
               </strong>
               <span className="profesional-detalle-linea">
-                {b.sucursalIds.length} sucursal(es) · {b.servicioIds.length} servicio(s)
+                {b.sucursalIds.length} sucursal(es) · {b.servicioIds.length} {t.servicio.cantidad(b.servicioIds.length)}
                 {b.usuarioEmail ? ' · con acceso' : ''}
               </span>
               {!b.activo && <span className="badge badge-inactivo">Inactivo</span>}

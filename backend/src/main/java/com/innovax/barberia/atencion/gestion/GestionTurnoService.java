@@ -57,7 +57,7 @@ public class GestionTurnoService {
     }
 
     /**
-     * Mueve el turno a otro día y hora con el mismo barbero y servicio. El token no cambia.
+     * Mueve el turno a otro día y hora con el mismo profesional y servicio. El token no cambia.
      *
      * <p>El turno actual ocupa su propio horario: si el cliente lo corre media hora, se
      * superpondría consigo mismo. Por eso primero se libera (se marca cancelado y se hace flush),
@@ -74,12 +74,13 @@ public class GestionTurnoService {
         var negocio = atencion.getNegocio();
         if (!negocio.isReservasOnline()) {
             throw new DatosInvalidosException("negocio",
-                    "La barbería no está tomando turnos online. Comunicate con ellos para cambiarlo.");
+                    negocio.getRubro().negocio().elCapitalizado() + " no está tomando turnos online. Comunicate con ellos para cambiarlo.");
         }
 
         if (!atencion.getServicio().isActivo()) {
             throw new DatosInvalidosException("servicioId",
-                    "Ese servicio ya no está disponible. Comunicate con la barbería para cambiar el turno.");
+                    negocio.getRubro().servicio().eseCapitalizado() + " ya no está disponible. Comunicate con "
+                            + negocio.getRubro().negocio().el() + " para cambiar el turno.");
         }
 
         atencion.setEstado(EstadoAtencion.CANCELADA);
@@ -127,7 +128,7 @@ public class GestionTurnoService {
         int minutos = atencion.getNegocio().getAnticipacionCancelacionMin();
         if (!ahora.isBefore(atencion.getInicio().minusSeconds(minutos * 60L))) {
             throw new ConflictoException("turno", "Los cambios online se aceptan hasta " + anticipacion(minutos)
-                    + " antes del turno. Comunicate con la barbería.");
+                    + " antes del turno. Comunicate con " + atencion.getNegocio().getRubro().negocio().el() + ".");
         }
     }
 

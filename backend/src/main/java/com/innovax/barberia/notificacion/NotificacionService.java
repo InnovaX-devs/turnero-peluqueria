@@ -94,7 +94,7 @@ public class NotificacionService {
         UUID profesionalId = null;
         if (!usuarioActual.veTodoElNegocio()) {
             profesionalId = usuarioActual.profesionalId()
-                    .orElseThrow(() -> new AccessDeniedException("Tu usuario no está vinculado a un barbero"));
+                    .orElseThrow(() -> new AccessDeniedException("Tu usuario no está vinculado a un profesional"));
         }
         return notificaciones.findParaPanel(usuarioActual.negocioId(), estado, profesionalId).stream()
                 .map(this::respuesta)
