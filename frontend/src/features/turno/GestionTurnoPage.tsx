@@ -8,6 +8,9 @@ import { mensajeDeError } from '../../lib/errores'
 import { fechaLarga, horaCorta } from '../../lib/fechas'
 import { formatearDuracion, formatearPrecio } from '../../lib/formato'
 import type { TurnoPublico } from '../../types/turno'
+import { terminosDe } from '../../lib/terminos'
+import { TerminosProvider } from '../terminos/TerminosProvider'
+import { useTerminos } from '../terminos/useTerminos'
 import { PasoHorario, type EleccionHorario } from '../reserva/PasoHorario'
 import { linkWhatsAppSucursal, textoAnticipacion } from './linkTurno'
 import '../reserva/reserva.css'
@@ -39,6 +42,8 @@ export function GestionTurnoPage() {
     enabled: tokenValido,
     retry: (intentos, err) => !esNoEncontrado(err) && intentos < 1,
   })
+
+  const terminos = terminosDe(turno?.negocio.rubro)
 
   useEffect(() => {
     if (!turno) return
@@ -95,103 +100,107 @@ export function GestionTurnoPage() {
 
   if (modo === 'reprogramar') {
     return (
-      <main className="reserva">
-        <Encabezado turno={turno} />
-        <Reprogramar
-          turno={turno}
-          eleccion={eleccion}
-          onElegir={setEleccion}
-          confirmando={reprogramar.isPending}
-          error={reprogramar.error ? mensajeDeError(reprogramar.error) : null}
-          onConfirmar={() => eleccion && reprogramar.mutate(eleccion)}
-          onVolver={() => {
-            setModo('ver')
-            setEleccion(null)
-            reprogramar.reset()
-          }}
-        />
-      </main>
+      <TerminosProvider rubro={turno.negocio.rubro}>
+        <main className="reserva">
+          <Encabezado turno={turno} />
+          <Reprogramar
+            turno={turno}
+            eleccion={eleccion}
+            onElegir={setEleccion}
+            confirmando={reprogramar.isPending}
+            error={reprogramar.error ? mensajeDeError(reprogramar.error) : null}
+            onConfirmar={() => eleccion && reprogramar.mutate(eleccion)}
+            onVolver={() => {
+              setModo('ver')
+              setEleccion(null)
+              reprogramar.reset()
+            }}
+          />
+        </main>
+      </TerminosProvider>
     )
   }
 
   return (
-    <main className="reserva">
-      <Encabezado turno={turno} />
+    <TerminosProvider rubro={turno.negocio.rubro}>
+      <main className="reserva">
+        <Encabezado turno={turno} />
 
-      {aviso && (
-        <p className="turno-aviso" role="status">
-          {aviso}
-        </p>
-      )}
-
-      <EstadoTurno turno={turno} />
-
-      <dl className="reserva-resumen">
-        <div>
-          <dt>Servicio</dt>
-          <dd>{turno.servicio.nombre} · {formatearDuracion(turno.servicio.duracionMin)}</dd>
-        </div>
-        <div>
-          <dt>Barbero</dt>
-          <dd>{turno.profesional.nombre}</dd>
-        </div>
-        <div>
-          <dt>Cuándo</dt>
-          <dd>{cuando(turno.inicio)}</dd>
-        </div>
-        <div>
-          <dt>Dónde</dt>
-          <dd>{turno.sucursal.nombre} · {turno.sucursal.direccion}, {turno.sucursal.ciudad}</dd>
-        </div>
-        <div className="reserva-resumen-total">
-          <dt>Total (se paga en la barbería)</dt>
-          <dd>{formatearPrecio(turno.precio)}</dd>
-        </div>
-      </dl>
-
-      {turno.puedeCancelar && modo === 'ver' && (
-        <div className="turno-acciones">
-          {turno.puedeReprogramar && (
-            <button type="button" className="boton-principal" onClick={() => { setAviso(null); setModo('reprogramar') }}>
-              Cambiar día u horario
-            </button>
-          )}
-          <button
-            type="button"
-            className="boton-secundario"
-            onClick={() => { setAviso(null); cancelar.reset(); setModo('confirmarCancelacion') }}
-          >
-            Cancelar turno
-          </button>
-          <p className="turno-limite">
-            Podés hacer cambios hasta el {cuando(turno.limiteModificacion)}.
-            {!turno.puedeReprogramar && ' Para cambiar el horario, comunicate con la barbería.'}
+        {aviso && (
+          <p className="turno-aviso" role="status">
+            {aviso}
           </p>
-        </div>
-      )}
+        )}
 
-      {modo === 'confirmarCancelacion' && (
-        <div className="turno-confirmar" role="alertdialog" aria-labelledby="turno-confirmar-titulo">
-          <p id="turno-confirmar-titulo">
-            <strong>¿Seguro que querés cancelar el turno?</strong> El horario queda libre para otra persona.
-          </p>
-          {cancelar.error && <p className="turno-error" role="alert">{mensajeDeError(cancelar.error)}</p>}
-          <div className="turno-acciones-fila">
+        <EstadoTurno turno={turno} />
+
+        <dl className="reserva-resumen">
+          <div>
+            <dt>{terminos.servicio.S}</dt>
+            <dd>{turno.servicio.nombre} · {formatearDuracion(turno.servicio.duracionMin)}</dd>
+          </div>
+          <div>
+            <dt>{terminos.profesional.S}</dt>
+            <dd>{turno.profesional.nombre}</dd>
+          </div>
+          <div>
+            <dt>Cuándo</dt>
+            <dd>{cuando(turno.inicio)}</dd>
+          </div>
+          <div>
+            <dt>Dónde</dt>
+            <dd>{turno.sucursal.nombre} · {turno.sucursal.direccion}, {turno.sucursal.ciudad}</dd>
+          </div>
+          <div className="reserva-resumen-total">
+            <dt>Total (se paga en {terminos.negocio.el})</dt>
+            <dd>{formatearPrecio(turno.precio)}</dd>
+          </div>
+        </dl>
+
+        {turno.puedeCancelar && modo === 'ver' && (
+          <div className="turno-acciones">
+            {turno.puedeReprogramar && (
+              <button type="button" className="boton-principal" onClick={() => { setAviso(null); setModo('reprogramar') }}>
+                Cambiar día u horario
+              </button>
+            )}
             <button
               type="button"
-              className="boton-peligro"
-              onClick={() => cancelar.mutate()}
-              disabled={cancelar.isPending}
+              className="boton-secundario"
+              onClick={() => { setAviso(null); cancelar.reset(); setModo('confirmarCancelacion') }}
             >
-              {cancelar.isPending ? 'Cancelando…' : 'Sí, cancelar'}
+              Cancelar turno
             </button>
-            <button type="button" className="boton-secundario" onClick={() => setModo('ver')} disabled={cancelar.isPending}>
-              No, mantenerlo
-            </button>
+            <p className="turno-limite">
+              Podés hacer cambios hasta el {cuando(turno.limiteModificacion)}.
+              {!turno.puedeReprogramar && ` Para cambiar el horario, comunicate con ${terminos.negocio.el}.`}
+            </p>
           </div>
-        </div>
-      )}
-    </main>
+        )}
+
+        {modo === 'confirmarCancelacion' && (
+          <div className="turno-confirmar" role="alertdialog" aria-labelledby="turno-confirmar-titulo">
+            <p id="turno-confirmar-titulo">
+              <strong>¿Seguro que querés cancelar el turno?</strong> El horario queda libre para otra persona.
+            </p>
+            {cancelar.error && <p className="turno-error" role="alert">{mensajeDeError(cancelar.error)}</p>}
+            <div className="turno-acciones-fila">
+              <button
+                type="button"
+                className="boton-peligro"
+                onClick={() => cancelar.mutate()}
+                disabled={cancelar.isPending}
+              >
+                {cancelar.isPending ? 'Cancelando…' : 'Sí, cancelar'}
+              </button>
+              <button type="button" className="boton-secundario" onClick={() => setModo('ver')} disabled={cancelar.isPending}>
+                No, mantenerlo
+              </button>
+            </div>
+          </div>
+        )}
+      </main>
+    </TerminosProvider>
   )
 }
 
@@ -205,6 +214,7 @@ function Encabezado({ turno }: { turno: TurnoPublico }) {
 }
 
 function EstadoTurno({ turno }: { turno: TurnoPublico }) {
+  const t = useTerminos()
   const otroTurno = (
     <Link className="boton-secundario turno-link" to={`/b/${turno.negocio.slug}`}>
       Sacar otro turno
@@ -234,7 +244,7 @@ function EstadoTurno({ turno }: { turno: TurnoPublico }) {
         <p>
           <strong>Te esperamos.</strong> Los cambios online se aceptan hasta{' '}
           {textoAnticipacion(turno.anticipacionCancelacionMin)} antes del turno. Si necesitás cambiarlo,
-          comunicate con la barbería.
+          comunicate con {t.negocio.el}.
         </p>
         {turno.sucursal.telefono && (
           <a
@@ -243,7 +253,7 @@ function EstadoTurno({ turno }: { turno: TurnoPublico }) {
             target="_blank"
             rel="noreferrer"
           >
-            Escribir a la barbería
+            Escribir {t.negocio.al}
           </a>
         )}
       </div>
@@ -263,7 +273,7 @@ interface ReprogramarProps {
 }
 
 function Reprogramar({ turno, eleccion, onElegir, confirmando, error, onConfirmar, onVolver }: ReprogramarProps) {
-  // El calendario necesita la anticipación máxima de la barbería
+  // El calendario necesita la anticipación máxima del negocio
   const { data: negocio, isPending, error: errorNegocio } = useQuery({
     queryKey: ['negocio-publica', turno.negocio.slug],
     queryFn: () => obtenerNegocioPublico(turno.negocio.slug),

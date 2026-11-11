@@ -1,6 +1,7 @@
 package com.innovax.barberia.negocio.dto;
 
 import com.innovax.barberia.negocio.Negocio;
+import com.innovax.barberia.negocio.Rubro;
 import com.innovax.barberia.sucursal.Sucursal;
 
 import java.util.List;
@@ -11,6 +12,8 @@ public record NegocioPublicoResponse(
         String nombre,
         String slug,
         String logoUrl,
+        /** Para que la página pública hable en los términos del rubro (barbero / profesional, cliente / paciente...). */
+        Rubro rubro,
         boolean reservasOnline,
         /** Hasta cuántos días adelante se puede reservar: el calendario no deja avanzar más. */
         int anticipacionMaximaDias,
@@ -24,7 +27,7 @@ public record NegocioPublicoResponse(
     }
 
     public static NegocioPublicoResponse de(Negocio b, List<Sucursal> sucursales) {
-        return new NegocioPublicoResponse(b.getNombre(), b.getSlug(), b.getLogoUrl(), b.isReservasOnline(), b.getAnticipacionMaximaDias(),
+        return new NegocioPublicoResponse(b.getNombre(), b.getSlug(), b.getLogoUrl(), b.getRubro(), b.isReservasOnline(), b.getAnticipacionMaximaDias(),
                 sucursales.stream().map(SucursalPublica::de).toList());
     }
 }

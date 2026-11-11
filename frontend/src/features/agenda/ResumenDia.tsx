@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { formatearPrecio } from '../../lib/formato'
 import type { Turno } from '../../types/agenda'
 import { formatearHora, hoyISO } from './agenda'
+import { useTerminos } from '../terminos/useTerminos'
 
 interface Props {
   /** Turnos del día que se está viendo */
@@ -22,6 +23,7 @@ function Dato({ etiqueta, valor }: { etiqueta: string; valor: string | number })
 
 /** Tarjeta de marca con lo que importa del día: qué sigue y cómo viene la jornada. */
 export function ResumenDia({ turnos, fecha, esAdmin }: Props) {
+  const t = useTerminos()
   const [ahora, setAhora] = useState(() => Date.now())
   useEffect(() => {
     const t = setInterval(() => setAhora(Date.now()), 60_000)
@@ -57,7 +59,7 @@ export function ResumenDia({ turnos, fecha, esAdmin }: Props) {
               {formatearHora(proximo.inicio)}
             </p>
             <p className="m-0 mt-2 truncate text-[15px] font-medium">
-              {proximo.clienteNombre ?? 'Sin cliente'}
+              {proximo.clienteNombre ?? `Sin ${t.cliente.s}`}
               <span className="font-normal text-barra-texto/60"> · {proximo.servicioNombre}</span>
             </p>
           </>

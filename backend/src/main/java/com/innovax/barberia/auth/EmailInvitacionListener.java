@@ -10,7 +10,7 @@ import org.springframework.web.util.HtmlUtils;
 
 /**
  * Manda el email de invitación al panel después de que se guardó el token (AFTER_COMMIT) y en otro hilo,
- * así un fallo del proveedor de mails no rompe el alta del barbero (el admin puede reenviar la invitación).
+ * así un fallo del proveedor de mails no rompe el alta del profesional (el admin puede reenviar la invitación).
  */
 @Slf4j
 @Component
@@ -23,21 +23,22 @@ public class EmailInvitacionListener {
     @TransactionalEventListener
     public void enviar(UsuarioInvitado evento) {
         String asunto = "Te invitaron a entrar al panel";
+        String negocio = evento.rubro().negocio().del();
         String texto = """
-                Te crearon un usuario para entrar al panel de la barbería.
+                Te crearon un usuario para entrar al panel %s.
 
                 Entrá a este link para elegir tu contraseña (vence en 3 días y sirve una sola vez):
                 %s
 
                 Si no esperabas este email, ignoralo.
-                """.formatted(evento.link());
+                """.formatted(negocio, evento.link());
         String link = HtmlUtils.htmlEscape(evento.link());
         String html = """
-                <p>Te crearon un usuario para entrar al panel de la barbería.</p>
+                <p>Te crearon un usuario para entrar al panel %s.</p>
                 <p><a href="%s">Elegir mi contraseña</a></p>
                 <p>El link vence en 3 días y sirve una sola vez.</p>
                 <p style="color:#666">Si no esperabas este email, ignoralo.</p>
-                """.formatted(link);
+                """.formatted(negocio, link);
         try {
             emailSender.enviar(new EmailSender.Email(evento.email(), asunto, texto, html));
         } catch (RuntimeException e) {

@@ -8,6 +8,7 @@ import {
 } from '../../api/recepcion'
 import { erroresDeCampos, mensajeDeError } from '../../lib/errores'
 import type { UsuarioRecepcion } from '../../types/recepcion'
+import { useTerminos } from '../terminos/useTerminos'
 
 const CLAVE = ['recepcion', 'usuarios']
 
@@ -17,14 +18,15 @@ const CLAVE = ['recepcion', 'usuarios']
  * configuración, caja ni reportes.
  */
 export function UsuariosRecepcion() {
+  const t = useTerminos()
   const { data, isPending, error } = useQuery({ queryKey: CLAVE, queryFn: listarUsuariosRecepcion })
 
   return (
     <section className="config-grupo config-recepcion" aria-labelledby="titulo-recepcion">
       <h2 id="titulo-recepcion" className="config-recepcion-titulo">Recepción</h2>
       <p className="config-ayuda">
-        Usuarios para la persona que atiende el mostrador o el teléfono: da turnos para todos los barberos y registra
-        clientes y cobros. No ve la configuración, la caja ni los reportes.
+        Usuarios para la persona que atiende el mostrador o el teléfono: da turnos para todos los {t.profesional.p} y registra
+        {t.cliente.p} y cobros. No ve la configuración, la caja ni los reportes.
       </p>
 
       {isPending && <p className="config-estado">Cargando…</p>}

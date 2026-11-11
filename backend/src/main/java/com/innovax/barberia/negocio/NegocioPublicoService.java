@@ -21,7 +21,7 @@ public class NegocioPublicoService {
     public NegocioPublicoResponse obtenerPorSlug(String slug) {
         // Los slugs se guardan en minúscula; así /b/Jade también funciona
         Negocio negocio = negocios.findBySlug(slug.trim().toLowerCase(Locale.ROOT))
-                .orElseThrow(() -> new RecursoNoEncontradoException("Barbería no encontrada"));
+                .orElseThrow(() -> new RecursoNoEncontradoException("Negocio no encontrado"));
         return NegocioPublicoResponse.de(negocio,
                 sucursales.findByNegocioIdAndActivaTrueOrderByNombreAsc(negocio.getId()));
     }

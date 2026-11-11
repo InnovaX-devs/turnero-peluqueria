@@ -1,3 +1,5 @@
+import type { Rubro } from '../lib/terminos'
+
 /** Lo que ve el cliente en /turno/:token. Fechas ISO en UTC; precio en centavos. */
 export interface TurnoPublico {
   token: string
@@ -6,7 +8,7 @@ export interface TurnoPublico {
   fin: string
   clienteNombre: string | null
   precio: number
-  negocio: { nombre: string; slug: string }
+  negocio: { nombre: string; slug: string; rubro: Rubro }
   sucursal: { id: string; nombre: string; direccion: string; ciudad: string; telefono: string | null }
   servicio: { id: string; nombre: string; duracionMin: number }
   profesional: { id: string; nombre: string }

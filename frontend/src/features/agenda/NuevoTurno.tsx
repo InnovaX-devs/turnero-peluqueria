@@ -11,6 +11,7 @@ import { useOpcionesRegistro } from '../atenciones/useOpcionesRegistro'
 import { useAuth } from '../auth/useAuth'
 import { formatearFechaLarga, hoyISO } from './agenda'
 import '../atenciones/registro.css'
+import { useTerminos } from '../terminos/useTerminos'
 
 interface Props {
   /** Día que se está viendo en la agenda */
@@ -90,6 +91,7 @@ function hhmm(hora: string): string {
 }
 
 function Formulario({ opciones, fechaInicial, profesionalInicialId, onListo }: FormularioProps) {
+  const t = useTerminos()
   const queryClient = useQueryClient()
   const { usuario } = useAuth()
   const puedeSobreturno = veTodoElNegocio(usuario?.rol)
@@ -193,13 +195,13 @@ function Formulario({ opciones, fechaInicial, profesionalInicialId, onListo }: F
       </div>
 
       <fieldset className="registro-grupo">
-        <legend>Cliente</legend>
+        <legend>{t.cliente.S}</legend>
         <BuscadorCliente seleccionado={cliente} onSeleccionar={setCliente} />
       </fieldset>
 
       {modo === 'turno' && (
         <fieldset className="registro-grupo">
-          <legend>Servicio</legend>
+          <legend>{t.servicio.S}</legend>
           <div className="registro-opciones">
             {opciones.servicios.map((s) => (
               <button
@@ -221,7 +223,7 @@ function Formulario({ opciones, fechaInicial, profesionalInicialId, onListo }: F
 
       {(opciones.profesionales.length > 1 || (modo === 'espera' && puedeSobreturno)) && (
         <fieldset className="registro-grupo">
-          <legend>Barbero</legend>
+          <legend>{t.profesional.S}</legend>
           <div className="registro-opciones">
             {modo === 'espera' && puedeSobreturno && (
               <button
@@ -285,7 +287,7 @@ function Formulario({ opciones, fechaInicial, profesionalInicialId, onListo }: F
         <fieldset className="registro-grupo">
           <legend>Horario</legend>
 
-          {!sobreturno && profesionalId === null && <p className="registro-estado">Elegí el barbero.</p>}
+          {!sobreturno && profesionalId === null && <p className="registro-estado">Elegí {t.profesional.el}.</p>}
           {!sobreturno && faltaSucursal && <p className="registro-estado">Elegí la sucursal.</p>}
           {!sobreturno && libres.isPending && libres.fetchStatus !== 'idle' && (
             <p className="registro-estado">Buscando horarios…</p>
@@ -320,7 +322,7 @@ function Formulario({ opciones, fechaInicial, profesionalInicialId, onListo }: F
               <input type="checkbox" checked={sobreturno} onChange={(e) => setSobreturno(e.target.checked)} />
               <span>
                 <strong>Sobreturno</strong>
-                <small>Encima de otro turno o fuera del horario del barbero. No se ofrece en la reserva online.</small>
+                <small>Encima de otro turno o fuera del horario {t.profesional.del}. No se ofrece en la reserva online.</small>
               </span>
             </label>
           )}
@@ -358,14 +360,14 @@ function Formulario({ opciones, fechaInicial, profesionalInicialId, onListo }: F
             {darTurno.isPending
               ? 'Guardando…'
               : cliente === null
-                ? 'Elegí el cliente'
+                ? `Elegí ${t.cliente.el}`
                 : horaFinal
                 ? `${sobreturno ? 'Dar sobreturno' : 'Dar turno'} · ${hhmm(horaFinal)}${servicio ? ' · ' + servicio.nombre : ''}`
                 : 'Elegí un horario'}
           </button>
         ) : (
           <button type="submit" className="boton-principal" disabled={!listoEspera || anotar.isPending}>
-            {anotar.isPending ? 'Guardando…' : cliente === null ? 'Elegí el cliente' : 'Anotar en lista de espera'}
+            {anotar.isPending ? 'Guardando…' : cliente === null ? `Elegí ${t.cliente.el}` : 'Anotar en lista de espera'}
           </button>
         )}
       </div>

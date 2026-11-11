@@ -73,19 +73,20 @@ public class AtencionService {
         Servicio servicio = servicios.findById(request.servicioId())
                 .orElseThrow(() -> new RecursoNoEncontradoException("Servicio no encontrado"));
         Profesional profesional = profesionales.findById(request.profesionalId())
-                .orElseThrow(() -> new RecursoNoEncontradoException("Barbero no encontrado"));
+                .orElseThrow(() -> new RecursoNoEncontradoException("Profesional no encontrado"));
 
         Negocio negocio = sucursal.getNegocio();
         validarPertenecenAlMismoNegocio(negocio, servicio, profesional);
 
         if (!servicio.isActivo()) {
-            throw new DatosInvalidosException("servicioId", "Ese servicio ya no está disponible");
+            throw new DatosInvalidosException("servicioId", negocio.getRubro().servicio().eseCapitalizado() + " ya no está disponible");
         }
         if (!negocio.isReservasOnline()) {
-            throw new DatosInvalidosException("negocio", "Esta barbería no acepta reservas online por ahora");
+            throw new DatosInvalidosException("negocio",
+                    negocio.getRubro().negocio().esteCapitalizado() + " no acepta reservas online por ahora");
         }
         if (!profesional.isActivo() || !profesional.getSucursales().contains(sucursal) || !profesional.getServicios().contains(servicio)) {
-            throw new DatosInvalidosException("profesional", "No atiende ese servicio en esa sucursal");
+            throw new DatosInvalidosException("profesional", "No atiende " + negocio.getRubro().servicio().ese() + " en esa sucursal");
         }
 
         // 1) Chequeo rápido dentro de la transacción: mismo criterio que la grilla pública.
@@ -229,10 +230,10 @@ public class AtencionService {
 
     private void validarPertenecenAlMismoNegocio(Negocio negocio, Servicio servicio, Profesional profesional) {
         if (!servicio.getNegocio().getId().equals(negocio.getId())) {
-            throw new DatosInvalidosException("servicioId", "No pertenece a la barbería de la sucursal");
+            throw new DatosInvalidosException("servicioId", "No pertenece " + negocio.getRubro().negocio().al() + " de la sucursal");
         }
         if (!profesional.getNegocio().getId().equals(negocio.getId())) {
-            throw new DatosInvalidosException("profesionalId", "No pertenece a la barbería de la sucursal");
+            throw new DatosInvalidosException("profesionalId", "No pertenece " + negocio.getRubro().negocio().al() + " de la sucursal");
         }
     }
 }

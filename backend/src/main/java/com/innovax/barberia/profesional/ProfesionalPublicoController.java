@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 import java.util.UUID;
 
-/** Barberos para el paso "Elegí el barbero" de la reserva pública. Sin login. */
+/** Barberos para el paso "Elegí el profesional" de la reserva pública. Sin login. */
 @RestController
 // /api/public/barberias/{slug}/barberos: ruta anterior al issue #64, queda como alias
 @RequestMapping({"/api/public/negocios/{slug}/profesionales", "/api/public/barberias/{slug}/barberos"})

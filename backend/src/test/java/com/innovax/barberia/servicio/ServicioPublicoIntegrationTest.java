@@ -99,6 +99,6 @@ class ServicioPublicoIntegrationTest {
     void slugInexistenteDevuelve404() throws Exception {
         mvc.perform(get("/api/public/negocios/no-existe/servicios"))
                 .andExpect(status().isNotFound())
-                .andExpect(jsonPath("$.mensaje").value("Barbería no encontrada"));
+                .andExpect(jsonPath("$.mensaje").value("Negocio no encontrado"));
     }
 }

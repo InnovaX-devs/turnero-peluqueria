@@ -7,7 +7,7 @@ export interface AuthContextValue {
   cargando: boolean
   iniciarSesion: (email: string, password: string) => Promise<void>
   cerrarSesion: () => void
-  /** Vuelve a pedir los datos del usuario (ej. después de cambiar el logo de la barbería) */
+  /** Vuelve a pedir los datos del usuario (ej. después de cambiar el logo del negocio) */
   refrescarUsuario: () => void
 }
 

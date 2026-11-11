@@ -29,7 +29,7 @@ public class ServicioPublicoService {
     @Transactional(readOnly = true)
     public List<ServicioPublicoResponse> listar(String slug, UUID sucursalId) {
         Negocio negocio = negocios.findBySlug(slug.trim().toLowerCase(Locale.ROOT))
-                .orElseThrow(() -> new RecursoNoEncontradoException("Barbería no encontrada"));
+                .orElseThrow(() -> new RecursoNoEncontradoException("Negocio no encontrado"));
 
         List<Servicio> lista;
         if (sucursalId == null) {

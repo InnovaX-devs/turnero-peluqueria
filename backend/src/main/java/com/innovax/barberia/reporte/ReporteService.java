@@ -116,13 +116,13 @@ public class ReporteService {
             throw new AccessDeniedException("No tenés permiso para ver reportes");
         }
         return usuarioActual.profesionalId()
-                .orElseThrow(() -> new AccessDeniedException("Tu usuario no está vinculado a un barbero"));
+                .orElseThrow(() -> new AccessDeniedException("Tu usuario no está vinculado a un profesional"));
     }
 
     private Negocio negocioActual() {
         // Aislamiento: la barbería sale siempre del token
         return negocios.findById(usuarioActual.negocioId())
-                .orElseThrow(() -> new IllegalStateException("La barbería del token no existe"));
+                .orElseThrow(() -> new IllegalStateException("El negocio del token no existe"));
     }
 
     private static List<ReportesResponse.Profesional> porProfesional(List<FilaReporte> filas) {

@@ -6,8 +6,10 @@ import { mensajeDeError } from '../../lib/errores'
 import type { OrdenClientes } from '../../types/cliente'
 import { textoUltimaVisita } from './ultimaVisita'
 import './clientes.css'
+import { useTerminos } from '../terminos/useTerminos'
 
 export function ClientesPage() {
+  const t = useTerminos()
   const [texto, setTexto] = useState('')
   const [buscado, setBuscado] = useState('')
   const [orden, setOrden] = useState<OrdenClientes>('nombre')
@@ -32,14 +34,14 @@ export function ClientesPage() {
 
   return (
     <section className="clientes">
-      <h1 className="clientes-titulo">Clientes</h1>
+      <h1 className="clientes-titulo">{t.cliente.P}</h1>
 
       <div className="clientes-filtros">
         <input
           className="clientes-buscador"
           type="search"
           placeholder="Buscar por nombre o teléfono"
-          aria-label="Buscar cliente por nombre o teléfono"
+          aria-label={`Buscar ${t.cliente.s} por nombre o teléfono`}
           value={texto}
           onChange={(e) => setTexto(e.target.value)}
         />
@@ -62,7 +64,7 @@ export function ClientesPage() {
 
       {consulta.isSuccess && clientes.length === 0 && (
         <p className="clientes-estado">
-          {buscado ? 'No se encontró ningún cliente con esa búsqueda.' : 'Todavía no hay clientes cargados.'}
+          {buscado ? `No se encontró ningún ${t.cliente.s} con esa búsqueda.` : `Todavía no hay ${t.cliente.p} cargados.`}
         </p>
       )}
 
@@ -71,7 +73,7 @@ export function ClientesPage() {
           <p className="clientes-total" aria-live="polite">
             {buscado
               ? `${total} ${total === 1 ? 'resultado' : 'resultados'}`
-              : `${total} ${total === 1 ? 'cliente' : 'clientes'}`}
+              : `${total} ${t.cliente.cantidad(total)}`}
           </p>
 
           <ul className="clientes-lista">

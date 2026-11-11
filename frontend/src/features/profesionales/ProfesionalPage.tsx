@@ -8,19 +8,21 @@ import { FormularioProfesional } from './FormularioProfesional'
 import { FotoProfesional } from './FotoProfesional'
 import '../admin/configuracion.css'
 import './profesionales.css'
+import { useTerminos } from '../terminos/useTerminos'
 
 function useOpciones() {
   return useQuery({ queryKey: ['barberos', 'opciones'], queryFn: obtenerOpcionesProfesional })
 }
 
 export function ProfesionalNuevoPage() {
+  const t = useTerminos()
   const navigate = useNavigate()
   const opciones = useOpciones()
 
   return (
     <section className="config profesional-detalle">
-      <Link to="/panel/profesionales" className="profesional-volver">← Barberos</Link>
-      <h1>Nuevo barbero</h1>
+      <Link to="/panel/profesionales" className="profesional-volver">← {t.profesional.P}</Link>
+      <h1>Nuev{t.profesional.o} {t.profesional.s}</h1>
       {opciones.isPending && <p className="config-estado">Cargando…</p>}
       {opciones.error && <p className="config-error" role="alert">{mensajeDeError(opciones.error)}</p>}
       {opciones.data && (
@@ -35,6 +37,7 @@ export function ProfesionalNuevoPage() {
 }
 
 export function ProfesionalEditarPage() {
+  const t = useTerminos()
   const { id = '' } = useParams()
   const profesional = useQuery({ queryKey: ['barbero', id], queryFn: () => obtenerProfesional(id), enabled: id !== '' })
   const opciones = useOpciones()
@@ -45,7 +48,7 @@ export function ProfesionalEditarPage() {
 
   return (
     <section className="config profesional-detalle">
-      <Link to="/panel/profesionales" className="profesional-volver">← Barberos</Link>
+      <Link to="/panel/profesionales" className="profesional-volver">← {t.profesional.P}</Link>
 
       {(profesional.isPending || opciones.isPending) && !error && <p className="config-estado">Cargando…</p>}
       {error && (

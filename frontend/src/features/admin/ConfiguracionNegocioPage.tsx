@@ -4,9 +4,11 @@ import { mensajeDeError } from '../../lib/errores'
 import { FormularioNegocio } from './FormularioNegocio'
 import { UsuariosRecepcion } from './UsuariosRecepcion'
 import './configuracion.css'
+import { useTerminos } from '../terminos/useTerminos'
 
-/** Pantalla de configuración de la barbería (solo admin). */
+/** Pantalla de configuración del negocio (solo admin). */
 export function ConfiguracionNegocioPage() {
+  const t = useTerminos()
   const { data, isPending, error, refetch } = useQuery({
     queryKey: ['barberia'],
     queryFn: obtenerNegocio,
@@ -14,7 +16,7 @@ export function ConfiguracionNegocioPage() {
 
   return (
     <section className="config">
-      <h1>Configuración de la barbería</h1>
+      <h1>Configuración {t.negocio.del}</h1>
 
       {isPending && <p className="config-estado">Cargando…</p>}
 

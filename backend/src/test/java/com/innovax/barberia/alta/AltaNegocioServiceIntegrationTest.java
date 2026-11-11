@@ -3,6 +3,7 @@ package com.innovax.barberia.alta;
 import com.innovax.barberia.auth.Rol;
 import com.innovax.barberia.auth.UsuarioRepository;
 import com.innovax.barberia.negocio.NegocioRepository;
+import com.innovax.barberia.negocio.Rubro;
 import com.innovax.barberia.sucursal.SucursalRepository;
 import com.jayway.jsonpath.JsonPath;
 import org.junit.jupiter.api.Test;
@@ -37,7 +38,7 @@ class AltaNegocioServiceIntegrationTest {
 
     private static DatosAltaNegocio elTano(String slug, String email) {
         return new DatosAltaNegocio("Barbería El Tano", slug, null, null,
-                "Sobremonte 1234", "Río Cuarto", "+5493584000000", email, "tano2026!");
+                "Sobremonte 1234", "Río Cuarto", "+5493584000000", email, "tano2026!", null);
     }
 
     @Test
@@ -110,14 +111,40 @@ class AltaNegocioServiceIntegrationTest {
         assertThatThrownBy(() -> alta.crear(elTano("el-tano", "no-es-un-email")))
                 .hasMessageContaining("email");
         assertThatThrownBy(() -> alta.crear(new DatosAltaNegocio("El Tano", null, "Marte/Olympus", null,
-                "Sobremonte 1234", "Río Cuarto", null, "tano@ejemplo.com", "tano2026!")))
+                "Sobremonte 1234", "Río Cuarto", null, "tano@ejemplo.com", "tano2026!", null)))
                 .hasMessageContaining("zona horaria");
         assertThatThrownBy(() -> alta.crear(new DatosAltaNegocio("El Tano", null, null, null,
-                " ", "Río Cuarto", null, "tano@ejemplo.com", "tano2026!")))
+                " ", "Río Cuarto", null, "tano@ejemplo.com", "tano2026!", null)))
                 .hasMessageContaining("dirección");
         assertThatThrownBy(() -> alta.crear(new DatosAltaNegocio("El Tano", null, null, null,
-                "Sobremonte 1234", "Río Cuarto", null, "tano@ejemplo.com", "corta")))
+                "Sobremonte 1234", "Río Cuarto", null, "tano@ejemplo.com", "corta", null)))
                 .hasMessageContaining("al menos 8");
+    }
+
+    @Test
+    void sinRubroElNegocioEsUnaBarberia() {
+        ResultadoAltaNegocio r = alta.crear(elTano("el-tano", "tano@ejemplo.com"));
+
+        assertThat(r.rubro()).isEqualTo(Rubro.BARBERIA);
+        assertThat(negocios.findById(r.negocioId()).orElseThrow().getRubro()).isEqualTo(Rubro.BARBERIA);
+    }
+
+    @Test
+    void guardaElRubroQueSeLePasa() {
+        ResultadoAltaNegocio r = alta.crear(new DatosAltaNegocio("Consultorio Sol", "consultorio-sol", null, null,
+                "Sobremonte 1234", "Río Cuarto", null, "sol@ejemplo.com", "sol2026!!", "salud"));
+
+        assertThat(r.rubro()).isEqualTo(Rubro.SALUD);
+        assertThat(negocios.findById(r.negocioId()).orElseThrow().getRubro()).isEqualTo(Rubro.SALUD);
+    }
+
+    @Test
+    void rechazaUnRubroQueNoExiste() {
+        assertThatThrownBy(() -> alta.crear(new DatosAltaNegocio("El Tano", null, null, null,
+                "Sobremonte 1234", "Río Cuarto", null, "tano@ejemplo.com", "tano2026!", "PANADERIA")))
+                .isInstanceOf(AltaInvalidaException.class)
+                .hasMessageContaining("rubro")
+                .hasMessageContaining("SALUD");
     }
 
     @Test

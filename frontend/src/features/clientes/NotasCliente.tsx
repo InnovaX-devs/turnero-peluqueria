@@ -3,11 +3,13 @@ import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { actualizarNotasCliente } from '../../api/clientes'
 import { erroresDeCampos, mensajeDeError } from '../../lib/errores'
 import type { FichaCliente } from '../../types/cliente'
+import { useTerminos } from '../terminos/useTerminos'
 
 const MAXIMO = 2000
 
 /** Campo de notas del cliente (ej. "degradé en 2, arriba tijera"). Se guarda con el botón. */
 export function NotasCliente({ cliente }: { cliente: FichaCliente }) {
+  const t = useTerminos()
   const queryClient = useQueryClient()
   const guardadas = cliente.notas ?? ''
   const [borrador, setBorrador] = useState(guardadas)
@@ -34,8 +36,8 @@ export function NotasCliente({ cliente }: { cliente: FichaCliente }) {
         className="ficha-notas"
         rows={4}
         maxLength={MAXIMO}
-        placeholder="Ej: degradé en 2, arriba tijera"
-        aria-label="Notas del cliente"
+        placeholder={t.ejemploNotaFicha}
+        aria-label={`Notas ${t.cliente.del}`}
         value={borrador}
         onChange={(e) => {
           setBorrador(e.target.value)

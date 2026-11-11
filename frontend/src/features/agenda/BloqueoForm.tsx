@@ -9,6 +9,7 @@ import { formatearHora, linkWhatsApp } from './agenda'
 import { valoresIniciales } from './bloqueos'
 import '../atenciones/registro.css'
 import './bloqueo.css'
+import { useTerminos } from '../terminos/useTerminos'
 
 interface Props {
   bloqueo: Bloqueo | null
@@ -85,6 +86,7 @@ interface FormularioProps {
 }
 
 function Formulario({ bloqueo, fechaInicial, profesionalInicialId, opciones, onCerrar }: FormularioProps) {
+  const terminos = useTerminos()
   const queryClient = useQueryClient()
   const [inicial] = useState(() => valoresIniciales(bloqueo, fechaInicial, opciones, profesionalInicialId))
 
@@ -163,14 +165,14 @@ function Formulario({ bloqueo, fechaInicial, profesionalInicialId, opciones, onC
               ? 'Hay 1 turno reservado en ese horario'
               : 'Hay ' + conflictos.length + ' turnos reservados en ese horario'}
           </strong>
-          <p>Si bloqueás igual, los turnos no se cancelan: siguen reservados. Avisales a los clientes.</p>
+          <p>Si bloqueás igual, los turnos no se cancelan: siguen reservados. Avisales a los {terminos.cliente.p}.</p>
         </div>
 
         <ul className="bloqueo-conflictos">
           {conflictos.map((t) => (
             <li key={t.id}>
               <strong>
-                {formatearHora(t.inicio)}–{formatearHora(t.fin)} · {t.clienteNombre ?? 'Sin cliente'}
+                {formatearHora(t.inicio)}–{formatearHora(t.fin)} · {t.clienteNombre ?? `Sin ${terminos.cliente.s}`}
               </strong>
               <small>
                 {t.servicioNombre}
@@ -214,7 +216,7 @@ function Formulario({ bloqueo, fechaInicial, profesionalInicialId, opciones, onC
     <form className="registro-form" onSubmit={enviar}>
             {opciones.profesionales.length > 1 && (
         <fieldset className="registro-grupo">
-          <legend>{bloqueo ? 'Barbero' : 'Barberos (podés marcar varios)'}</legend>
+          <legend>{bloqueo ? terminos.profesional.S : `${terminos.profesional.P} (podés marcar varios)`}</legend>
           <div className="registro-opciones">
             {!bloqueo && (
               <button
@@ -349,7 +351,7 @@ function Formulario({ bloqueo, fechaInicial, profesionalInicialId, opciones, onC
             : bloqueo
               ? 'Guardar cambios'
               : profesionalIds.length > 1
-                ? 'Bloquear (' + profesionalIds.length + ' barberos)'
+                ? 'Bloquear (' + profesionalIds.length + ' ' + terminos.profesional.p + ')'
                 : 'Bloquear'}
         </button>
       </div>

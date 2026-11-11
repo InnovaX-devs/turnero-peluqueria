@@ -21,7 +21,7 @@ public record ActualizarNegocioRequest(
         @NotBlank(message = "El slug es obligatorio")
         @Size(min = 3, max = 80, message = "El slug tiene que tener entre 3 y 80 caracteres")
         @Pattern(regexp = "^[a-z0-9]+(-[a-z0-9]+)*$",
-                message = "Solo minúsculas, números y guiones (sin espacios ni tildes), ej: mi-barberia")
+                message = "Solo minúsculas, números y guiones (sin espacios ni tildes), ej: mi-negocio")
         String slug,
 
         /** Opcional: null = sin logo. */

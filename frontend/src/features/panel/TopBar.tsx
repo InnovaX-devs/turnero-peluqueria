@@ -5,6 +5,7 @@ import { useCerrarAfuera } from '../../hooks/useCerrarAfuera'
 import { etiquetaRol } from '../../lib/roles'
 import type { Usuario } from '../../types/auth'
 import { ITEMS_GESTION, ITEMS_NEGOCIO, ITEMS_PRINCIPALES, ITEM_CUENTA, visibles, type ItemNav } from './navegacion'
+import { useTerminos } from '../terminos/useTerminos'
 
 interface Props {
   usuario: Usuario | null
@@ -20,7 +21,7 @@ const ITEM_INACTIVO = 'text-barra-texto/75 hover:bg-barra-texto/[0.08] hover:tex
 
 const claseLink = ({ isActive }: { isActive: boolean }) => `${ITEM_BASE} ${isActive ? ITEM_ACTIVO : ITEM_INACTIVO}`
 
-/** Logo de la barbería si cargó uno; si no (o si la imagen no carga), lo que se pase como alternativa. */
+/** Logo del negocio si cargó uno; si no (o si la imagen no carga), lo que se pase como alternativa. */
 function ImagenNegocio({ usuario, className, alternativa }: { usuario: Usuario | null; className: string; alternativa: ReactNode }) {
   const url = usuario?.negocioLogoUrl ?? null
   const [rota, setRota] = useState<string | null>(null)
@@ -46,11 +47,12 @@ function Logo({ usuario }: { usuario: Usuario | null }) {
 }
 
 function Enlace({ item }: { item: ItemNav }) {
+  const t = useTerminos()
   const Icono = item.icono
   return (
     <NavLink to={item.to} end={item.exacto} className={claseLink}>
       <Icono size={15} strokeWidth={1.8} aria-hidden="true" />
-      {item.etiqueta}
+      {item.etiqueta(t)}
     </NavLink>
   )
 }
@@ -109,6 +111,7 @@ const claseItemMenu = ({ isActive }: { isActive: boolean }) =>
   ].join(' ')
 
 export function TopBar({ usuario, onRegistrar, onCerrarSesion }: Props) {
+  const t = useTerminos()
   const esAdmin = usuario?.rol === 'ADMIN'
   const { pathname } = useLocation()
   const gestionActiva = ITEMS_GESTION.some((i) => pathname.startsWith(i.to))
@@ -118,7 +121,7 @@ export function TopBar({ usuario, onRegistrar, onCerrarSesion }: Props) {
       {/* Celu: solo la marca; la navegación va abajo */}
       <header className="nav-reset sticky top-0 z-10 flex h-14 items-center justify-between bg-barra px-4 md:hidden">
         <Logo usuario={usuario} />
-        <span className="etiqueta-mono text-barra-texto/60">{etiquetaRol(usuario?.rol)}</span>
+        <span className="etiqueta-mono text-barra-texto/60">{etiquetaRol(usuario?.rol, t)}</span>
       </header>
 
       <header className="nav-reset sticky top-0 z-10 hidden h-[68px] items-center gap-6 bg-barra px-7 md:flex">
@@ -140,7 +143,7 @@ export function TopBar({ usuario, onRegistrar, onCerrarSesion }: Props) {
                 ITEMS_GESTION.map((i) => (
                   <NavLink key={i.to} to={i.to} role="menuitem" className={claseItemMenu} onClick={cerrar}>
                     <i.icono size={14} strokeWidth={1.75} aria-hidden="true" />
-                    {i.etiqueta}
+                    {i.etiqueta(t)}
                   </NavLink>
                 ))
               }
@@ -155,7 +158,7 @@ export function TopBar({ usuario, onRegistrar, onCerrarSesion }: Props) {
             transition-transform hover:-translate-y-0.5"
         >
           <Plus size={16} strokeWidth={2.5} aria-hidden="true" />
-          Registrar corte
+          Registrar {t.atencion.s}
         </button>
 
         <Desplegable
@@ -181,7 +184,7 @@ export function TopBar({ usuario, onRegistrar, onCerrarSesion }: Props) {
                   <p className="m-0 truncate text-[13px] font-semibold text-barra-texto">{usuario.negocioNombre}</p>
                 )}
                 <p className="m-0 truncate text-[13px] font-medium text-barra-texto">{usuario?.email}</p>
-                <p className="etiqueta-mono m-0 mt-0.5 text-barra-texto/60">{etiquetaRol(usuario?.rol)}</p>
+                <p className="etiqueta-mono m-0 mt-0.5 text-barra-texto/60">{etiquetaRol(usuario?.rol, t)}</p>
               </div>
               <NavLink to={ITEM_CUENTA.to} role="menuitem" className={(s) => `${claseItemMenu(s)} mt-1`} onClick={cerrar}>
                 <CircleUser size={14} strokeWidth={1.75} aria-hidden="true" />

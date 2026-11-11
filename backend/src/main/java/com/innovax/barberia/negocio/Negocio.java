@@ -29,6 +29,11 @@ public class Negocio {
     @Column(length = 500)
     private String logoUrl;
 
+    /** Define cómo se nombran las cosas (barbero / profesional, cliente / paciente...). Los negocios anteriores son BARBERIA. */
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
+    private Rubro rubro = Rubro.BARBERIA;
+
     @Column(nullable = false)
     private boolean reservasOnline = false;
 

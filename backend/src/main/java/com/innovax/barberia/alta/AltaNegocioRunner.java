@@ -11,7 +11,7 @@ import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.stereotype.Component;
 
 /**
- * Comando para dar de alta una barbería desde la terminal (scripts/alta-negocio.sh).
+ * Comando para dar de alta un negocio (barbería, peluquería, estética o consultorio) desde la terminal (scripts/alta-negocio.sh).
  * Solo existe si ALTA_EJECUTAR=true: al levantar la app normal o en los tests no hace nada.
  * Los datos llegan por variables de entorno (ALTA_NOMBRE, ALTA_SLUG, ...) para que los nombres
  * con espacios o tildes no se rompan en el camino. Al terminar, cierra la aplicación.
@@ -26,6 +26,7 @@ public class AltaNegocioRunner implements ApplicationRunner {
     private final ConfigurableApplicationContext contexto;
 
     @Value("${alta.nombre:}") private String nombre;
+    @Value("${alta.rubro:}") private String rubro;
     @Value("${alta.slug:}") private String slug;
     @Value("${alta.zona-horaria:}") private String zonaHoraria;
     @Value("${alta.sucursal:}") private String sucursal;
@@ -42,12 +43,12 @@ public class AltaNegocioRunner implements ApplicationRunner {
         int codigo;
         try {
             ResultadoAltaNegocio r = altaNegocioService.crear(new DatosAltaNegocio(
-                    nombre, slug, zonaHoraria, sucursal, direccion, ciudad, telefono, email, password));
+                    nombre, slug, zonaHoraria, sucursal, direccion, ciudad, telefono, email, password, rubro));
             String base = frontendUrl.replaceAll("/+$", "");
             System.out.println("""
 
                     ============================================================
-                     Barbería creada: %s
+                     Negocio creado: %s (%s)
                     ============================================================
                      Base de datos:      %s
                      Página de reservas: %s/b/%s  (apagada hasta que el admin la prenda)
@@ -59,18 +60,21 @@ public class AltaNegocioRunner implements ApplicationRunner {
                      contraseña desde "Mi cuenta" la primera vez que entre.
 
                      Próximos pasos del admin, desde el panel:
-                       1. Servicios: cargar servicios, duraciones y precios.
-                       2. Barberos: cargar barberos, sus servicios y su horario.
+                       1. %s: cargar %s, duraciones y precios.
+                       2. %s: cargar %s, sus %s y su horario.
                        3. Configuración: logo, reglas de reserva, y prender la
                           reserva online.
                     ============================================================
-                    """.formatted(r.nombre(), baseDeDatos, base, r.slug(), base, r.emailAdmin()));
+                    """.formatted(r.nombre(), r.rubro(), baseDeDatos, base, r.slug(), base, r.emailAdmin(),
+                    r.rubro().servicio().pluralCapitalizado(), r.rubro().servicio().plural(),
+                    r.rubro().profesional().pluralCapitalizado(), r.rubro().profesional().plural(),
+                    r.rubro().servicio().plural()));
             codigo = 0;
         } catch (AltaInvalidaException e) {
-            System.out.println("\nNo se creó la barbería: " + e.getMessage() + "\n");
+            System.out.println("\nNo se creó el negocio: " + e.getMessage() + "\n");
             codigo = 1;
         } catch (RuntimeException e) {
-            log.error("Error inesperado al dar de alta la barbería", e);
+            log.error("Error inesperado al dar de alta el negocio", e);
             codigo = 2;
         }
         int salida = codigo;

@@ -76,7 +76,7 @@ export function FlujoReserva({ negocio }: { negocio: NegocioPublico }) {
           onElegir={(servicioId) => avanzar({ servicioId })}
         />
       )}
-      {paso === 'barbero' && selecciones.sucursalId && selecciones.servicioId && (
+      {paso === 'profesional' && selecciones.sucursalId && selecciones.servicioId && (
         <PasoProfesional
           slug={negocio.slug}
           sucursalId={selecciones.sucursalId}

@@ -1,3 +1,5 @@
+import type { Rubro } from '../lib/terminos'
+
 export interface SucursalPublica {
   id: string
   nombre: string
@@ -10,6 +12,8 @@ export interface NegocioPublico {
   nombre: string
   slug: string
   logoUrl: string | null
+  /** Cómo se nombran las cosas en la página pública (barbero / profesional, cliente / paciente...) */
+  rubro: Rubro
   reservasOnline: boolean
   /** Hasta cuántos días adelante se puede reservar */
   anticipacionMaximaDias: number

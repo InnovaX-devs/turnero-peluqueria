@@ -68,7 +68,7 @@ export function validar(f: Formulario): Record<string, string> {
   if (d.nombre === '') errores.nombre = 'El nombre es obligatorio'
 
   if (d.slug.length < 3) errores.slug = 'El slug tiene que tener al menos 3 caracteres'
-  else if (!SLUG_VALIDO.test(d.slug)) errores.slug = 'Solo minúsculas, números y guiones, ej: mi-barberia'
+  else if (!SLUG_VALIDO.test(d.slug)) errores.slug = 'Solo minúsculas, números y guiones, ej: mi-negocio'
 
   if (d.logoUrl !== null && !/^https?:\/\/\S+$/.test(d.logoUrl)) {
     errores.logoUrl = 'La URL del logo tiene que empezar con http:// o https://'

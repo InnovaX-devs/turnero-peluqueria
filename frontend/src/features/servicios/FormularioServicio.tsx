@@ -4,6 +4,7 @@ import { actualizarServicio, crearServicio } from '../../api/servicios'
 import { erroresDeCampos, mensajeDeError } from '../../lib/errores'
 import type { Servicio } from '../../types/servicio'
 import { centavosAPesosTexto, pesosACentavos, useInvalidarServicios } from './servicios'
+import { useTerminos } from '../terminos/useTerminos'
 
 interface Props {
   /** Sin servicio = alta. */
@@ -13,6 +14,7 @@ interface Props {
 }
 
 export function FormularioServicio({ servicio, onGuardado, onCancelar }: Props) {
+  const t = useTerminos()
   const invalidar = useInvalidarServicios()
   const [nombre, setNombre] = useState(servicio?.nombre ?? '')
   const [duracion, setDuracion] = useState(servicio ? String(servicio.duracionMin) : '')
@@ -67,7 +69,7 @@ export function FormularioServicio({ servicio, onGuardado, onCancelar }: Props) 
 
   return (
     <form className="config-form servicio-form config-grupo" onSubmit={handleSubmit} noValidate>
-      <h2>{servicio ? 'Editar servicio' : 'Nuevo servicio'}</h2>
+      <h2>{servicio ? `Editar ${t.servicio.s}` : `Nuev${t.servicio.o} ${t.servicio.s}`}</h2>
 
       <label className="config-campo">
         <span className="config-etiqueta">Nombre</span>
@@ -126,7 +128,7 @@ export function FormularioServicio({ servicio, onGuardado, onCancelar }: Props) 
 
       <div className="servicio-form-acciones">
         <button type="submit" className="boton-principal config-guardar" disabled={sinCambios || guardar.isPending}>
-          {guardar.isPending ? 'Guardando…' : servicio ? 'Guardar cambios' : 'Crear servicio'}
+          {guardar.isPending ? 'Guardando…' : servicio ? 'Guardar cambios' : `Crear ${t.servicio.s}`}
         </button>
         <button type="button" className="boton-secundario" onClick={onCancelar}>
           Cancelar

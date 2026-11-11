@@ -7,6 +7,7 @@ import { formatearPrecio } from '../../lib/formato'
 import { ETIQUETAS_ESTADO, linkWhatsApp } from '../agenda/agenda'
 import { NotasCliente } from './NotasCliente'
 import './clientes.css'
+import { useTerminos } from '../terminos/useTerminos'
 
 function formatearFecha(iso: string): string {
   return new Date(iso).toLocaleString('es-AR', {
@@ -19,6 +20,7 @@ function formatearFecha(iso: string): string {
 }
 
 export function ClienteFichaPage() {
+  const t = useTerminos()
   const { id = '' } = useParams()
 
   const ficha = useQuery({
@@ -31,7 +33,7 @@ export function ClienteFichaPage() {
 
   const volver = (
     <Link to="/panel/clientes" className="ficha-volver">
-      ← Clientes
+      ← {t.cliente.P}
     </Link>
   )
 
@@ -50,7 +52,7 @@ export function ClienteFichaPage() {
       <section className="clientes">
         {volver}
         <p className="clientes-estado clientes-error" role="alert">
-          {noExiste ? 'No encontramos a ese cliente.' : mensajeDeError(ficha.error)}
+          {noExiste ? `No encontramos a ese ${t.cliente.s}.` : mensajeDeError(ficha.error)}
         </p>
       </section>
     )
@@ -66,7 +68,7 @@ export function ClienteFichaPage() {
         <h1 className="clientes-titulo">{cliente.nombre}</h1>
         <p className="ficha-telefono">{cliente.telefono}</p>
         <p className="ficha-dato">
-          Cliente desde{' '}
+          {t.cliente.S} desde{' '}
           {new Date(cliente.creadoEn).toLocaleDateString('es-AR', { month: 'long', year: 'numeric' })}
         </p>
         <a
@@ -82,7 +84,7 @@ export function ClienteFichaPage() {
       <div className="ficha-resumen">
         <div>
           <strong>{cliente.historial.filter((a) => a.estado === 'COMPLETADA').length}</strong>
-          <span>Atenciones</span>
+          <span>{t.atencion.P}</span>
         </div>
         <div className={cliente.ausencias > 0 ? 'ficha-resumen-alerta' : undefined}>
           <strong>{cliente.ausencias}</strong>

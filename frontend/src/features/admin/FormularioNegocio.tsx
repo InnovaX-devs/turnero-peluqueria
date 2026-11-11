@@ -19,6 +19,7 @@ import {
   validar,
   type Formulario,
 } from './configuracion'
+import { useTerminos } from '../terminos/useTerminos'
 
 function aFormulario(b: Negocio): Formulario {
   return {
@@ -35,6 +36,7 @@ function aFormulario(b: Negocio): Formulario {
 }
 
 export function FormularioNegocio({ negocio }: { negocio: Negocio }) {
+  const t = useTerminos()
   const queryClient = useQueryClient()
   // El estado del form arranca con lo guardado; después lo maneja el usuario
   const [form, setForm] = useState<Formulario>(() => aFormulario(negocio))
@@ -86,7 +88,7 @@ export function FormularioNegocio({ negocio }: { negocio: Negocio }) {
   const datos = aDatos(form)
   const hayCambios = !sonIguales(datos, negocio) || logoCambio !== null
   const slugCambio = datos.slug !== negocio.slug
-  const urlPublica = `${window.location.origin}/b/${datos.slug || 'tu-barberia'}`
+  const urlPublica = `${window.location.origin}/b/${datos.slug || 'tu-negocio'}`
 
   function cambiarLogo(cambio: CambioImagen) {
     setLogoCambio(cambio)
@@ -111,7 +113,7 @@ export function FormularioNegocio({ negocio }: { negocio: Negocio }) {
     <form className="config-form" onSubmit={handleSubmit} noValidate>
       {/* ---------- Datos básicos ---------- */}
       <fieldset className="config-grupo">
-        <legend>Datos de la barbería</legend>
+        <legend>Datos {t.negocio.del}</legend>
 
         <label className="config-campo">
           <span className="config-etiqueta">Nombre</span>
@@ -137,7 +139,7 @@ export function FormularioNegocio({ negocio }: { negocio: Negocio }) {
             onChange={(e) => cambiar('slug', normalizarSlug(e.target.value))}
             aria-invalid={!!errores.slug}
           />
-          <span className="config-ayuda">Tus clientes reservan en: {urlPublica}</span>
+          <span className="config-ayuda">Tus {t.cliente.p} reservan en: {urlPublica}</span>
           {slugCambio && (
             <span className="config-aviso">
               Si cambiás el slug, el link anterior (/b/{negocio.slug}) deja de funcionar.
@@ -172,8 +174,8 @@ export function FormularioNegocio({ negocio }: { negocio: Negocio }) {
           <span>
             <strong>Permitir reservas online</strong>
             <small>
-              Si lo desactivás, los clientes no pueden reservar desde tu página, pero los turnos ya
-              reservados se mantienen. Vos y tus barberos siguen pudiendo cargar turnos a mano.
+              Si lo desactivás, tus {t.cliente.p} no pueden reservar desde tu página, pero los turnos ya
+              reservados se mantienen. Vos y tus {t.profesional.p} siguen pudiendo cargar turnos a mano.
             </small>
           </span>
         </label>
@@ -231,7 +233,7 @@ export function FormularioNegocio({ negocio }: { negocio: Negocio }) {
               }))}
             />
             <span className="config-ayuda">
-              Hasta cuándo el cliente puede cancelar o cambiar su turno desde el link que recibe. Después
+              Hasta cuándo {t.cliente.el} puede cancelar o cambiar su turno desde el link que recibe. Después
               tiene que comunicarse con vos.
             </span>
             {errores.anticipacionCancelacionMin && (
@@ -243,7 +245,7 @@ export function FormularioNegocio({ negocio }: { negocio: Negocio }) {
 
       {/* ---------- Avisos al cliente ---------- */}
       <fieldset className="config-grupo">
-        <legend>Avisos al cliente</legend>
+        <legend>Avisos {t.cliente.al}</legend>
 
         <label className="config-campo">
           <span className="config-etiqueta">Recordatorio del turno</span>
@@ -258,7 +260,7 @@ export function FormularioNegocio({ negocio }: { negocio: Negocio }) {
             }))}
           />
           <span className="config-ayuda">
-            Con cuánta anticipación aparece el recordatorio en Mensajes para enviarle al cliente.
+            Con cuánta anticipación aparece el recordatorio en Mensajes para enviarle {t.cliente.al}.
           </span>
           {errores.recordatorioHorasAntes && (
             <span className="config-campo-error" role="alert">{errores.recordatorioHorasAntes}</span>

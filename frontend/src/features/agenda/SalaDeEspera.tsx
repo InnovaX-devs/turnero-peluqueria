@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import type { Turno } from '../../types/agenda'
 import { estaEnSala, formatearHora, tiempoEsperando } from './agenda'
+import { useTerminos } from '../terminos/useTerminos'
 
 interface Props {
   /** Turnos del día (ya filtrados por permisos en el backend) */
@@ -14,6 +15,7 @@ interface Props {
  * Solo aparece si hay alguien esperando, así no cambia nada para quien no la usa.
  */
 export function SalaDeEspera({ turnos, mostrarProfesional, onElegir }: Props) {
+  const terminos = useTerminos()
   const [ahora, setAhora] = useState(() => Date.now())
   useEffect(() => {
     const t = setInterval(() => setAhora(Date.now()), 30_000)
@@ -37,7 +39,7 @@ export function SalaDeEspera({ turnos, mostrarProfesional, onElegir }: Props) {
             <button type="button" className="sala-item" onClick={() => onElegir(t)}>
               <span className="sala-espera">{tiempoEsperando(t.llegadaEn!, ahora)}</span>
               <span className="sala-cuerpo">
-                <strong>{t.clienteNombre ?? 'Sin cliente'}</strong>
+                <strong>{t.clienteNombre ?? `Sin ${terminos.cliente.s}`}</strong>
                 <span className="sala-detalle">
                   Turno {formatearHora(t.inicio)} · {t.servicioNombre}
                   {mostrarProfesional && ` · ${t.profesionalNombre}`}

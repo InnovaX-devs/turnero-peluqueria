@@ -1,4 +1,5 @@
 import type { SucursalPublica } from '../../types/reserva'
+import { useTerminos } from '../terminos/useTerminos'
 
 interface Props {
   sucursales: SucursalPublica[]
@@ -10,9 +11,10 @@ function linkMapa(s: SucursalPublica): string {
 }
 
 export function SinReservasOnline({ sucursales }: Props) {
+  const t = useTerminos()
   return (
     <section className="reserva-cerrada">
-      <h2>Esta barbería no toma reservas online</h2>
+      <h2>{t.negocio.Este} no toma reservas online</h2>
       {sucursales.length > 0 && <p>Podés pedir tu turno directamente:</p>}
 
       <ul className="reserva-contactos">

@@ -4,6 +4,7 @@ import { buscarClientes, crearCliente } from '../../api/registroCorte'
 import { erroresDeCampos, mensajeDeError } from '../../lib/errores'
 import type { ClienteResumen } from '../../types/registroCorte'
 import { normalizarTelefono } from './registroCorte'
+import { useTerminos } from '../terminos/useTerminos'
 
 interface Props {
   seleccionado: ClienteResumen | null
@@ -16,6 +17,7 @@ function evitarEnter(e: KeyboardEvent<HTMLInputElement>) {
 }
 
 export function BuscadorCliente({ seleccionado, onSeleccionar }: Props) {
+  const t = useTerminos()
   const [texto, setTexto] = useState('')
   const [buscado, setBuscado] = useState('')
   const [creando, setCreando] = useState(false)
@@ -103,7 +105,7 @@ export function BuscadorCliente({ seleccionado, onSeleccionar }: Props) {
             disabled={creacion.isPending || nombre.trim() === '' || telefono.trim() === ''}
             onClick={() => creacion.mutate()}
           >
-            {creacion.isPending ? 'Guardando…' : 'Crear cliente'}
+            {creacion.isPending ? 'Guardando…' : `Crear ${t.cliente.s}`}
           </button>
         </div>
       </div>
@@ -142,10 +144,10 @@ export function BuscadorCliente({ seleccionado, onSeleccionar }: Props) {
         </ul>
       )}
       {buscado.length >= 2 && busqueda.isSuccess && resultados.length === 0 && (
-        <p className="registro-estado">No se encontró ningún cliente.</p>
+        <p className="registro-estado">No se encontró ningún {t.cliente.s}.</p>
       )}
       <button type="button" className="boton-texto" onClick={empezarACrear}>
-        + Crear cliente nuevo
+        + Crear {t.cliente.s} nuev{t.cliente.o}
       </button>
     </div>
   )

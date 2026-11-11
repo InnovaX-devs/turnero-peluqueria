@@ -5,12 +5,14 @@ import { etiquetaRol } from '../../lib/roles'
 import { useAuth } from '../auth/useAuth'
 import '../auth/auth.css'
 import './cuenta.css'
+import { useTerminos } from '../terminos/useTerminos'
 
 const MINIMO = 8
 
 /** "Mi cuenta": datos del usuario y cambio de contraseña. La ven admin y barberos. */
 export function CuentaPage() {
   const { usuario } = useAuth()
+  const t = useTerminos()
   const [actual, setActual] = useState('')
   const [nueva, setNueva] = useState('')
   const [repetida, setRepetida] = useState('')
@@ -59,7 +61,7 @@ export function CuentaPage() {
         </div>
         <div>
           <dt>Rol</dt>
-          <dd>{etiquetaRol(usuario?.rol)}</dd>
+          <dd>{etiquetaRol(usuario?.rol, t)}</dd>
         </div>
       </dl>
 

@@ -1,6 +1,7 @@
 package com.innovax.barberia.notificacion;
 
 import com.innovax.barberia.atencion.Atencion;
+import com.innovax.barberia.negocio.Rubro;
 import org.springframework.stereotype.Component;
 
 import java.time.ZoneId;
@@ -10,7 +11,8 @@ import java.util.Locale;
 
 /**
  * Arma el texto de los mensajes al cliente.
- * Recorre relaciones lazy de la atención (barbería, sucursal, barbero, servicio, cliente),
+ * Usa los términos del rubro del negocio (Barbero / Profesional, Servicio / Prestación...).
+ * Recorre relaciones lazy de la atención (negocio, sucursal, profesional, servicio, cliente),
  * así que hay que llamarlo dentro de una transacción.
  */
 @Component
@@ -47,10 +49,11 @@ public class MensajeBuilder {
 
     private String detalle(Atencion a) {
         ZonedDateTime inicio = a.getInicio().atZone(ZoneId.of(a.getNegocio().getZonaHoraria()));
+        Rubro rubro = a.getNegocio().getRubro();
         return "Fecha: " + inicio.format(DIA) + "\n"
                 + "Hora: " + inicio.format(HORA) + " hs\n"
-                + "Barbero: " + a.getProfesional().getNombre() + " " + a.getProfesional().getApellido() + "\n"
-                + "Servicio: " + a.getServicio().getNombre() + "\n"
+                + rubro.profesional().capitalizado() + ": " + a.getProfesional().getNombre() + " " + a.getProfesional().getApellido() + "\n"
+                + rubro.servicio().capitalizado() + ": " + a.getServicio().getNombre() + "\n"
                 + "Dirección: " + a.getSucursal().getDireccion() + ", " + a.getSucursal().getCiudad() + "\n";
     }
 

@@ -15,6 +15,7 @@ import {
 } from './registroCorte'
 import { useOpcionesRegistro } from './useOpcionesRegistro'
 import './registro.css'
+import { useTerminos } from '../terminos/useTerminos'
 
 interface Props {
   onCerrar: () => void
@@ -22,6 +23,7 @@ interface Props {
 }
 
 export function RegistrarCorte({ onCerrar, onRegistrado }: Props) {
+  const t = useTerminos()
   const ref = useRef<HTMLDialogElement>(null)
   const { data, isPending, error, refetch } = useOpcionesRegistro()
 
@@ -45,7 +47,7 @@ export function RegistrarCorte({ onCerrar, onRegistrado }: Props) {
     >
       <div className="registro-contenido">
         <header className="registro-encabezado">
-          <h2 id="registro-titulo">Registrar corte</h2>
+          <h2 id="registro-titulo">Registrar {t.atencion.s}</h2>
           <button type="button" className="boton-texto" onClick={onCerrar}>
             Cerrar
           </button>
@@ -61,7 +63,7 @@ export function RegistrarCorte({ onCerrar, onRegistrado }: Props) {
           </div>
         )}
         {data && data.servicios.length === 0 && (
-          <p className="registro-estado">Todavía no hay servicios cargados.</p>
+          <p className="registro-estado">Todavía no hay {t.servicio.p} cargad{t.servicio.o}s.</p>
         )}
         {data && data.servicios.length > 0 && <FormularioCorte opciones={data} onRegistrado={onRegistrado} />}
       </div>
@@ -75,6 +77,7 @@ interface FormularioProps {
 }
 
 function FormularioCorte({ opciones, onRegistrado }: FormularioProps) {
+  const t = useTerminos()
   const queryClient = useQueryClient()
   const [inicial] = useState(() => valoresIniciales(opciones))
 
@@ -137,7 +140,7 @@ function FormularioCorte({ opciones, onRegistrado }: FormularioProps) {
   return (
     <form className="registro-form" onSubmit={enviar}>
       <fieldset className="registro-grupo">
-        <legend>Servicio</legend>
+        <legend>{t.servicio.S}</legend>
         <div className="registro-opciones">
           {opciones.servicios.map((s) => (
             <button
@@ -189,7 +192,7 @@ function FormularioCorte({ opciones, onRegistrado }: FormularioProps) {
 
       {opciones.profesionales.length > 1 && (
         <fieldset className="registro-grupo">
-          <legend>Barbero</legend>
+          <legend>{t.profesional.S}</legend>
           <div className="registro-opciones">
             {opciones.profesionales.map((b) => (
               <button
@@ -229,7 +232,7 @@ function FormularioCorte({ opciones, onRegistrado }: FormularioProps) {
       )}
 
       <fieldset className="registro-grupo">
-        <legend>Cliente (opcional)</legend>
+        <legend>{t.cliente.S} (opcional)</legend>
         <BuscadorCliente seleccionado={cliente} onSeleccionar={setCliente} />
       </fieldset>
 
@@ -256,7 +259,7 @@ function FormularioCorte({ opciones, onRegistrado }: FormularioProps) {
             className="registro-input"
             value={notas}
             maxLength={2000}
-            placeholder="Ej: degradé en 2, arriba tijera"
+            placeholder={t.ejemploNotaFicha}
             onChange={(e) => setNotas(e.target.value)}
           />
         </label>
@@ -269,7 +272,7 @@ function FormularioCorte({ opciones, onRegistrado }: FormularioProps) {
           </p>
         )}
         <button type="submit" className="boton-principal" disabled={!listo || registro.isPending}>
-          {registro.isPending ? 'Registrando…' : 'Registrar corte · ' + formatearPrecio(precioCentavos ?? 0)}
+          {registro.isPending ? 'Registrando…' : `Registrar ${t.atencion.s} · ` + formatearPrecio(precioCentavos ?? 0)}
         </button>
       </div>
     </form>

@@ -24,7 +24,7 @@ public record CrearReservaRequest(
         UUID servicioId,
 
         // "barberoId": nombre del campo antes del issue #64 (páginas de reserva viejas abiertas)
-        @NotNull(message = "El barbero es obligatorio")
+        @NotNull(message = "El profesional es obligatorio")
         @JsonAlias("barberoId")
         UUID profesionalId,
 

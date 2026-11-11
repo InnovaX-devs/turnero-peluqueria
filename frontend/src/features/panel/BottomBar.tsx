@@ -5,6 +5,7 @@ import { useCerrarAfuera } from '../../hooks/useCerrarAfuera'
 import { etiquetaRol } from '../../lib/roles'
 import type { Usuario } from '../../types/auth'
 import { ITEMS_GESTION, ITEMS_NEGOCIO, ITEMS_PRINCIPALES, ITEM_CUENTA, visibles, type ItemNav } from './navegacion'
+import { useTerminos } from '../terminos/useTerminos'
 
 interface Props {
   usuario: Usuario | null
@@ -29,6 +30,7 @@ function IconoTab({ activo, children }: { activo: boolean; children: React.React
 }
 
 function Tab({ item }: { item: ItemNav }) {
+  const t = useTerminos()
   const Icono = item.icono
   return (
     <NavLink
@@ -45,7 +47,7 @@ function Tab({ item }: { item: ItemNav }) {
           <IconoTab activo={isActive}>
             <Icono size={21} strokeWidth={1.8} aria-hidden="true" />
           </IconoTab>
-          {item.etiqueta}
+          {item.etiqueta(t)}
         </>
       )}
     </NavLink>
@@ -53,6 +55,7 @@ function Tab({ item }: { item: ItemNav }) {
 }
 
 export function BottomBar({ usuario, onRegistrar, onCerrarSesion }: Props) {
+  const t = useTerminos()
   const [masAbierto, setMasAbierto] = useState(false)
   const hojaRef = useRef<HTMLDivElement>(null)
   const { pathname } = useLocation()
@@ -81,7 +84,7 @@ export function BottomBar({ usuario, onRegistrar, onCerrarSesion }: Props) {
           <button
             type="button"
             onClick={onRegistrar}
-            aria-label="Registrar corte"
+            aria-label={`Registrar ${t.atencion.s}`}
             className="bg-grad shadow-marca -mt-6 mb-1.5 grid size-14 cursor-pointer place-items-center rounded-full border-4 border-fondo
               text-sobre-acento active:scale-95"
           >
@@ -118,7 +121,7 @@ export function BottomBar({ usuario, onRegistrar, onCerrarSesion }: Props) {
             <div className="mb-2 flex items-center justify-between">
               <div className="min-w-0">
                 <p className="m-0 truncate text-sm font-semibold">{usuario?.email}</p>
-                <p className="etiqueta-mono m-0 mt-0.5 text-texto-suave">{etiquetaRol(usuario?.rol)}</p>
+                <p className="etiqueta-mono m-0 mt-0.5 text-texto-suave">{etiquetaRol(usuario?.rol, t)}</p>
               </div>
               <button
                 type="button"
@@ -146,7 +149,7 @@ export function BottomBar({ usuario, onRegistrar, onCerrarSesion }: Props) {
                     }
                   >
                     <i.icono size={22} aria-hidden="true" />
-                    {i.etiqueta}
+                    {i.etiqueta(t)}
                   </NavLink>
                 </li>
               ))}

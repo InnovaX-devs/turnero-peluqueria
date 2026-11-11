@@ -8,6 +8,7 @@ import { fechaLarga } from '../../lib/fechas'
 import { formatearDuracion, formatearPrecio } from '../../lib/formato'
 import { armarTelefono, PAISES } from '../../lib/telefono'
 import type { ReservaCreada, SucursalPublica } from '../../types/reserva'
+import { useTerminos } from '../terminos/useTerminos'
 
 interface Props {
   slug: string
@@ -23,6 +24,7 @@ interface Props {
 const esHorarioOcupado = (e: unknown) => axios.isAxiosError(e) && e.response?.status === 409
 
 export function PasoDatos({ slug, sucursal, servicioId, profesionalId, fecha, hora, onConfirmada, onElegirOtroHorario }: Props) {
+  const t = useTerminos()
   const queryClient = useQueryClient()
   const [nombre, setNombre] = useState('')
   const [codigoPais, setCodigoPais] = useState('AR')
@@ -60,7 +62,7 @@ export function PasoDatos({ slug, sucursal, servicioId, profesionalId, fecha, ho
     },
   })
 
-  // El barbero puede venir de "cualquiera": se busca por el id asignado
+  // El profesional puede venir de "cualquiera": se busca por el id asignado
   const { data: profesionales } = useQuery({
     queryKey: ['profesionales-publicos', slug, sucursal.id, servicioId],
     queryFn: () => obtenerProfesionalesPublicos(slug, sucursal.id, servicioId),
@@ -106,13 +108,13 @@ export function PasoDatos({ slug, sucursal, servicioId, profesionalId, fecha, ho
     <div className="reserva-datos">
       <dl className="reserva-resumen">
         <div>
-          <dt>Servicio</dt>
+          <dt>{t.servicio.S}</dt>
           <dd>
             {servicio ? `${servicio.nombre} · ${formatearDuracion(servicio.duracionMin)}` : '…'}
           </dd>
         </div>
         <div>
-          <dt>Barbero</dt>
+          <dt>{t.profesional.S}</dt>
           <dd>{profesional ? `${profesional.nombre} ${profesional.apellido}` : '…'}</dd>
         </div>
         <div>
@@ -182,17 +184,17 @@ export function PasoDatos({ slug, sucursal, servicioId, profesionalId, fecha, ho
           </div>
 
           <label className="reserva-campo">
-            <span>Notas para el barbero (opcional)</span>
+            <span>Notas para {t.profesional.el} (opcional)</span>
             <textarea
               rows={2}
               maxLength={500}
               value={notas}
               onChange={(e) => setNotas(e.target.value)}
-              placeholder="Ej: quiero el mismo corte que la última vez"
+              placeholder={t.ejemploNota}
             />
           </label>
 
-          <p className="reserva-pago">💵 El pago se hace en la barbería.</p>
+          <p className="reserva-pago">💵 El pago se hace en {t.negocio.el}.</p>
 
           {errorGeneral && (
             <p className="reserva-campo-error" role="alert">{errorGeneral}</p>
@@ -203,7 +205,7 @@ export function PasoDatos({ slug, sucursal, servicioId, profesionalId, fecha, ho
           </button>
 
           <p className="reserva-legal">
-            Al confirmar, aceptás que la barbería use tu nombre y teléfono para gestionar este turno.
+            Al confirmar, aceptás que {t.negocio.el} use tu nombre y teléfono para gestionar este turno.
           </p>
         </form>
       )}

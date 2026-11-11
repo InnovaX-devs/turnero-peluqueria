@@ -4,6 +4,7 @@ import { mensajeDeError } from '../../lib/errores'
 import { formatearProximoDia } from '../../lib/formato'
 import type { ProfesionalPublico } from '../../types/reserva'
 import { PROFESIONAL_CUALQUIERA } from './flujo'
+import { useTerminos } from '../terminos/useTerminos'
 
 interface Props {
   slug: string
@@ -22,6 +23,7 @@ function iniciales(b: ProfesionalPublico): string {
 }
 
 export function PasoProfesional({ slug, sucursalId, servicioId, elegido, onElegir }: Props) {
+  const t = useTerminos()
   const { data: profesionales, isPending, error, refetch } = useQuery({
     queryKey: ['profesionales-publicos', slug, sucursalId, servicioId],
     queryFn: () => obtenerProfesionalesPublicos(slug, sucursalId, servicioId),
@@ -29,7 +31,7 @@ export function PasoProfesional({ slug, sucursalId, servicioId, elegido, onElegi
   })
 
   if (isPending) {
-    return <p className="reserva-cargando">Cargando barberos…</p>
+    return <p className="reserva-cargando">Cargando {t.profesional.p}…</p>
   }
 
   if (error) {
@@ -48,12 +50,12 @@ export function PasoProfesional({ slug, sucursalId, servicioId, elegido, onElegi
   if (conTurnos.length === 0) {
     return (
       <p className="reserva-vacio">
-        Por ahora no hay turnos disponibles para este servicio. Probá con otro servicio o volvé más tarde.
+        Por ahora no hay turnos disponibles para {t.servicio.este}. Probá con {t.servicio.otro} o volvé más tarde.
       </p>
     )
   }
 
-  // "Cualquiera" está disponible desde el primer día en que alguno de los barberos lo está
+  // "Cualquiera" está disponible desde el primer día en que alguno de los profesionales lo está
   const primerDia = conTurnos
     .map((b) => b.proximoDiaDisponible as string)
     .sort()[0]
@@ -69,7 +71,7 @@ export function PasoProfesional({ slug, sucursalId, servicioId, elegido, onElegi
             onClick={() => onElegir(PROFESIONAL_CUALQUIERA)}
           >
             <span className="reserva-avatar reserva-avatar-cualquiera" aria-hidden="true">✦</span>
-            <strong>Cualquier barbero</strong>
+            <strong>Cualquier {t.profesional.s}</strong>
             <span className="reserva-profesional-dispo">{disponibilidad(primerDia)}</span>
           </button>
         </li>
