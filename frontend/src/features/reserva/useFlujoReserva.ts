@@ -4,14 +4,17 @@ import type { SucursalPublica } from '../../types/reserva'
 import { useTerminos } from '../terminos/useTerminos'
 import { SELECCIONES_VACIAS, aplicarEleccion, esPaso, pasoAlcanzable, pasosDelFlujo, type Selecciones } from './flujo'
 
-export function useFlujoReserva(slug: string, sucursales: SucursalPublica[]) {
+/** {@code porEspecialidad}: rubro salud con especialidades (especialidad → profesional → prestación → horario). */
+export function useFlujoReserva(slug: string, sucursales: SucursalPublica[], porEspecialidad = false) {
   const [searchParams, setSearchParams] = useSearchParams()
   const navigate = useNavigate()
   const location = useLocation()
   const terminos = useTerminos()
   const clave = `reserva.${slug}`
 
-  const [selecciones, setSelecciones] = useState<Selecciones>(() => normalizar(leerGuardadas(clave), sucursales))
+  const [selecciones, setSelecciones] = useState<Selecciones>(() =>
+    normalizar(leerGuardadas(clave), sucursales, porEspecialidad),
+  )
 
   useEffect(() => {
     try {
@@ -21,7 +24,7 @@ export function useFlujoReserva(slug: string, sucursales: SucursalPublica[]) {
     }
   }, [clave, selecciones])
 
-  const pasos = useMemo(() => pasosDelFlujo(sucursales.length), [sucursales.length])
+  const pasos = useMemo(() => pasosDelFlujo(sucursales.length, porEspecialidad), [sucursales.length, porEspecialidad])
   // Los links viejos decían ?paso=barbero
   const pasoEnUrl = searchParams.get('paso') === 'barbero' ? 'profesional' : searchParams.get('paso')
   const indice = pasoAlcanzable(pasos, esPaso(pasoEnUrl) ? pasoEnUrl : null, selecciones)
@@ -36,14 +39,14 @@ export function useFlujoReserva(slug: string, sucursales: SucursalPublica[]) {
 
   const avanzar = useCallback(
     (cambios: Partial<Selecciones>) => {
-      setSelecciones((prev) => aplicarEleccion(prev, cambios))
+      setSelecciones((prev) => aplicarEleccion(prev, cambios, porEspecialidad))
       const siguiente = pasos[indice + 1]
       if (siguiente) {
         navigate({ search: `?paso=${siguiente.paso}` }, { state: { dentroDelFlujo: true } })
         window.scrollTo(0, 0)
       }
     },
-    [indice, navigate, pasos],
+    [indice, navigate, pasos, porEspecialidad],
   )
 
   /** Si se llegó navegando el flujo, igual que el atrás del navegador; si se entró por link, reemplaza la URL. */
@@ -55,8 +58,8 @@ export function useFlujoReserva(slug: string, sucursales: SucursalPublica[]) {
 
   /** Después de confirmar: borra lo elegido para que un reload no muestre el turno ya reservado. */
   const reiniciar = useCallback(() => {
-    setSelecciones(normalizar({}, sucursales))
-  }, [sucursales])
+    setSelecciones(normalizar({}, sucursales, porEspecialidad))
+  }, [sucursales, porEspecialidad])
 
   return { pasos, indice, paso: actual.paso, titulo: actual.titulo(terminos), selecciones, avanzar, volver, reiniciar }
 }
@@ -71,13 +74,15 @@ function leerGuardadas(clave: string): Partial<Selecciones> {
 }
 
 /** Descarta lo guardado que ya no aplica y autoelige la sucursal si hay una sola. */
-function normalizar(guardadas: Partial<Selecciones>, sucursales: SucursalPublica[]): Selecciones {
+function normalizar(guardadas: Partial<Selecciones>, sucursales: SucursalPublica[], porEspecialidad: boolean): Selecciones {
   const sel: Selecciones = { ...SELECCIONES_VACIAS }
   for (const campo of Object.keys(SELECCIONES_VACIAS) as (keyof Selecciones)[]) {
     const v = guardadas[campo]
     if (typeof v === 'string') sel[campo] = v
   }
-  if (sucursales.length === 1) return aplicarEleccion(sel, { sucursalId: sucursales[0].id })
+  // Si el negocio dejó de reservar por especialidad, una guardada de antes ya no aplica
+  if (!porEspecialidad) sel.especialidadId = null
+  if (sucursales.length === 1) return aplicarEleccion(sel, { sucursalId: sucursales[0].id }, porEspecialidad)
   if (sel.sucursalId !== null && !sucursales.some((s) => s.id === sel.sucursalId)) return { ...SELECCIONES_VACIAS }
   return sel
 }

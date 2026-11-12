@@ -2,16 +2,21 @@ import { useState } from 'react'
 import type { NegocioPublico, ReservaCreada } from '../../types/reserva'
 import { PasoProfesional } from './PasoProfesional'
 import { PasoDatos } from './PasoDatos'
+import { PasoEspecialidad } from './PasoEspecialidad'
 import { PasoHorario } from './PasoHorario'
 import { PasoServicio } from './PasoServicio'
 import { PasoSucursal } from './PasoSucursal'
 import { ReservaConfirmada } from './ReservaConfirmada'
+import { PROFESIONAL_CUALQUIERA } from './flujo'
 import { useFlujoReserva } from './useFlujoReserva'
 
 export function FlujoReserva({ negocio }: { negocio: NegocioPublico }) {
+  // Rubro salud con especialidades: especialidad → profesional (o cualquiera) → prestación → horario
+  const porEspecialidad = negocio.reservaPorEspecialidad
   const { pasos, indice, paso, titulo, selecciones, avanzar, volver, reiniciar } = useFlujoReserva(
     negocio.slug,
     negocio.sucursales,
+    porEspecialidad,
   )
   const [confirmada, setConfirmada] = useState<{ reserva: ReservaCreada; sucursalId: string } | null>(null)
 
@@ -68,7 +73,15 @@ export function FlujoReserva({ negocio }: { negocio: NegocioPublico }) {
           onElegir={(sucursalId) => avanzar({ sucursalId })}
         />
       )}
-      {paso === 'servicio' && selecciones.sucursalId && (
+      {paso === 'especialidad' && selecciones.sucursalId && (
+        <PasoEspecialidad
+          slug={negocio.slug}
+          sucursalId={selecciones.sucursalId}
+          elegida={selecciones.especialidadId}
+          onElegir={(especialidadId) => avanzar({ especialidadId })}
+        />
+      )}
+      {paso === 'servicio' && selecciones.sucursalId && !porEspecialidad && (
         <PasoServicio
           slug={negocio.slug}
           sucursalId={selecciones.sucursalId}
@@ -76,11 +89,35 @@ export function FlujoReserva({ negocio }: { negocio: NegocioPublico }) {
           onElegir={(servicioId) => avanzar({ servicioId })}
         />
       )}
-      {paso === 'profesional' && selecciones.sucursalId && selecciones.servicioId && (
+      {paso === 'servicio' && selecciones.sucursalId && porEspecialidad
+        && selecciones.especialidadId && selecciones.profesionalId && (
+        <PasoServicio
+          slug={negocio.slug}
+          sucursalId={selecciones.sucursalId}
+          filtro={
+            selecciones.profesionalId === PROFESIONAL_CUALQUIERA
+              ? { especialidadId: selecciones.especialidadId }
+              : { profesionalId: selecciones.profesionalId }
+          }
+          elegido={selecciones.servicioId}
+          onElegir={(servicioId) => avanzar({ servicioId })}
+        />
+      )}
+      {paso === 'profesional' && selecciones.sucursalId && !porEspecialidad && selecciones.servicioId && (
         <PasoProfesional
           slug={negocio.slug}
           sucursalId={selecciones.sucursalId}
           servicioId={selecciones.servicioId}
+          elegido={selecciones.profesionalId}
+          onElegir={(profesionalId) => avanzar({ profesionalId })}
+        />
+      )}
+      {paso === 'profesional' && selecciones.sucursalId && porEspecialidad && selecciones.especialidadId && (
+        <PasoProfesional
+          slug={negocio.slug}
+          sucursalId={selecciones.sucursalId}
+          servicioId={null}
+          especialidadId={selecciones.especialidadId}
           elegido={selecciones.profesionalId}
           onElegir={(profesionalId) => avanzar({ profesionalId })}
         />
@@ -92,6 +129,7 @@ export function FlujoReserva({ negocio }: { negocio: NegocioPublico }) {
           sucursalId={selecciones.sucursalId}
           servicioId={selecciones.servicioId}
           profesionalId={selecciones.profesionalId}
+          especialidadId={porEspecialidad ? selecciones.especialidadId : null}
           fechaElegida={selecciones.fecha}
           horaElegida={selecciones.hora}
           onElegir={(eleccion) => avanzar(eleccion)}

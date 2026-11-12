@@ -1,12 +1,14 @@
 import type { Terminos } from '../../lib/terminos'
 
-export type Paso = 'sucursal' | 'servicio' | 'profesional' | 'horario' | 'datos'
+export type Paso = 'sucursal' | 'especialidad' | 'servicio' | 'profesional' | 'horario' | 'datos'
 
 /** Valor de profesionalId cuando el cliente elige "Cualquier profesional". */
 export const PROFESIONAL_CUALQUIERA = 'cualquiera'
 
 export interface Selecciones {
   sucursalId: string | null
+  /** Solo en la reserva por especialidad (rubro salud) */
+  especialidadId: string | null
   servicioId: string | null
   profesionalId: string | null // 'cualquiera' = primer profesional disponible
   fecha: string | null // YYYY-MM-DD
@@ -16,7 +18,7 @@ export interface Selecciones {
 }
 
 export const SELECCIONES_VACIAS: Selecciones = {
-  sucursalId: null, servicioId: null, profesionalId: null, fecha: null, hora: null, profesionalAsignadoId: null,
+  sucursalId: null, especialidadId: null, servicioId: null, profesionalId: null, fecha: null, hora: null, profesionalAsignadoId: null,
 }
 
 interface DefinicionPaso {
@@ -26,21 +28,36 @@ interface DefinicionPaso {
   campos: (keyof Selecciones)[]
 }
 
-const TODOS_LOS_PASOS: DefinicionPaso[] = [
-  { paso: 'sucursal', titulo: () => 'Elegí la sucursal', campos: ['sucursalId'] },
-  { paso: 'servicio', titulo: (t) => `Elegí ${t.servicio.el}`, campos: ['servicioId'] },
-  { paso: 'profesional', titulo: (t) => `Elegí ${t.profesional.el}`, campos: ['profesionalId'] },
-  { paso: 'horario', titulo: () => 'Elegí día y horario', campos: ['fecha', 'hora', 'profesionalAsignadoId'] },
-  { paso: 'datos', titulo: () => 'Tus datos', campos: [] },
-]
+const SUCURSAL: DefinicionPaso = { paso: 'sucursal', titulo: () => 'Elegí la sucursal', campos: ['sucursalId'] }
+const ESPECIALIDAD: DefinicionPaso = { paso: 'especialidad', titulo: () => 'Elegí la especialidad', campos: ['especialidadId'] }
+const SERVICIO: DefinicionPaso = { paso: 'servicio', titulo: (t) => `Elegí ${t.servicio.el}`, campos: ['servicioId'] }
+const PROFESIONAL: DefinicionPaso = { paso: 'profesional', titulo: (t) => `Elegí ${t.profesional.el}`, campos: ['profesionalId'] }
+const HORARIO: DefinicionPaso = {
+  paso: 'horario', titulo: () => 'Elegí día y horario', campos: ['fecha', 'hora', 'profesionalAsignadoId'],
+}
+const DATOS: DefinicionPaso = { paso: 'datos', titulo: () => 'Tus datos', campos: [] }
+
+/** Flujo de siempre: servicio → profesional → horario. */
+const PASOS_GENERAL: DefinicionPaso[] = [SUCURSAL, SERVICIO, PROFESIONAL, HORARIO, DATOS]
+
+/**
+ * Rubro salud con especialidades (issue #68): el paciente busca "Kinesiología" sin conocer al profesional.
+ * especialidad → profesional (o cualquiera) → prestación → horario.
+ */
+const PASOS_POR_ESPECIALIDAD: DefinicionPaso[] = [SUCURSAL, ESPECIALIDAD, PROFESIONAL, SERVICIO, HORARIO, DATOS]
+
+function todosLosPasos(porEspecialidad: boolean): DefinicionPaso[] {
+  return porEspecialidad ? PASOS_POR_ESPECIALIDAD : PASOS_GENERAL
+}
 
 /** Con una sola sucursal, el paso se saltea y se elige sola. */
-export function pasosDelFlujo(cantidadSucursales: number): DefinicionPaso[] {
-  return cantidadSucursales <= 1 ? TODOS_LOS_PASOS.filter((p) => p.paso !== 'sucursal') : TODOS_LOS_PASOS
+export function pasosDelFlujo(cantidadSucursales: number, porEspecialidad = false): DefinicionPaso[] {
+  const pasos = todosLosPasos(porEspecialidad)
+  return cantidadSucursales <= 1 ? pasos.filter((p) => p.paso !== 'sucursal') : pasos
 }
 
 export function esPaso(valor: string | null): valor is Paso {
-  return TODOS_LOS_PASOS.some((p) => p.paso === valor)
+  return PASOS_POR_ESPECIALIDAD.some((p) => p.paso === valor)
 }
 
 /** El paso pedido en la URL, salvo que le falte algo de un paso anterior: entonces, el primero incompleto. */
@@ -53,11 +70,18 @@ export function pasoAlcanzable(pasos: DefinicionPaso[], pedido: Paso | null, sel
   return objetivo
 }
 
-/** Si el cliente vuelve y cambia algo, se borra lo elegido después. Si elige lo mismo, se conserva todo. */
-export function aplicarEleccion(sel: Selecciones, cambios: Partial<Selecciones>): Selecciones {
+/**
+ * Si el cliente vuelve y cambia algo, se borra lo elegido después. Si elige lo mismo, se conserva todo.
+ * "Después" depende del flujo: en el de especialidad el profesional va antes que la prestación.
+ */
+export function aplicarEleccion(
+  sel: Selecciones,
+  cambios: Partial<Selecciones>,
+  porEspecialidad = false,
+): Selecciones {
   const cambiados = (Object.keys(cambios) as (keyof Selecciones)[]).filter((c) => cambios[c] !== sel[c])
   if (cambiados.length === 0) return sel
-  const orden = TODOS_LOS_PASOS.flatMap((p) => p.campos)
+  const orden = todosLosPasos(porEspecialidad).flatMap((p) => p.campos)
   const primero = Math.min(...cambiados.map((c) => orden.indexOf(c)))
   const resultado = { ...sel, ...cambios }
   for (const campo of orden.slice(primero + 1)) {

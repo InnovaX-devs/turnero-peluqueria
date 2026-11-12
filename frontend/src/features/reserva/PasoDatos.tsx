@@ -76,7 +76,7 @@ export function PasoDatos({ slug, sucursal, servicioId, profesionalId, fecha, ho
 
   // El profesional puede venir de "cualquiera": se busca por el id asignado
   const { data: profesionales } = useQuery({
-    queryKey: ['profesionales-publicos', slug, sucursal.id, servicioId],
+    queryKey: ['profesionales-publicos', slug, sucursal.id, servicioId, null],
     queryFn: () => obtenerProfesionalesPublicos(slug, sucursal.id, servicioId),
     staleTime: 60 * 1000,
   })
@@ -135,7 +135,10 @@ export function PasoDatos({ slug, sucursal, servicioId, profesionalId, fecha, ho
         </div>
         <div>
           <dt>{t.profesional.S}</dt>
-          <dd>{profesional ? `${profesional.nombre} ${profesional.apellido}` : '…'}</dd>
+          <dd>
+            {profesional ? `${profesional.nombre} ${profesional.apellido}` : '…'}
+            {profesional?.matricula && <small> · Matrícula {profesional.matricula}</small>}
+          </dd>
         </div>
         <div>
           <dt>Cuándo</dt>
