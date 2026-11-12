@@ -3,15 +3,20 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { guardarHorarios, obtenerHorarios } from '../../api/profesionales'
 import { erroresDeCampos, mensajeDeError } from '../../lib/errores'
 import { Selector } from '../../components/Selector'
-import type { Profesional, Horario, SucursalOpcion } from '../../types/profesional'
+import type { ConsultorioOpcion, Profesional, Horario, SucursalOpcion } from '../../types/profesional'
 import { DIAS, normalizarHorarios, ordenarHorarios, validarHorarios } from './profesionales'
 
 interface Props {
   profesional: Profesional
   sucursales: SucursalOpcion[] // todas las opciones, para resolver nombres
+  /** Consultorios activos (rubro salud, issue #69). Vacío = no se muestra el campo */
+  consultorios?: ConsultorioOpcion[]
 }
 
-export function EditorHorarios({ profesional, sucursales }: Props) {
+/** Valor del selector para "sin consultorio" (el Selector trabaja con strings). */
+const SIN_CONSULTORIO = ''
+
+export function EditorHorarios({ profesional, sucursales, consultorios = [] }: Props) {
   const { data, isPending, error, refetch } = useQuery({
     queryKey: ['horarios', profesional.id],
     queryFn: () => obtenerHorarios(profesional.id),
@@ -37,17 +42,19 @@ export function EditorHorarios({ profesional, sucursales }: Props) {
     nombre: sucursales.find((s) => s.id === id)?.nombre ?? 'Sucursal',
   }))
 
-  return <Editor profesional={profesional} inicial={data} sucursales={propias} />
+  return <Editor profesional={profesional} inicial={data} sucursales={propias} consultorios={consultorios} />
 }
 
 function Editor({
   profesional,
   inicial,
   sucursales,
+  consultorios,
 }: {
   profesional: Profesional
   inicial: Horario[]
   sucursales: { id: string; nombre: string }[]
+  consultorios: ConsultorioOpcion[]
 }) {
   const queryClient = useQueryClient()
   const [tramos, setTramos] = useState<Horario[]>(() => normalizarHorarios(inicial))
@@ -77,6 +84,22 @@ function Editor({
     tocar()
   }
 
+  /** Los consultorios son de una sucursal: al cambiarla, el consultorio elegido deja de valer. */
+  function cambiarSucursal(indice: number, sucursalId: string) {
+    setTramos((ts) =>
+      ts.map((t, i) => {
+        if (i !== indice) return t
+        const sigueValiendo = consultorios.some((c) => c.id === t.consultorioId && c.sucursalId === sucursalId)
+        return { ...t, sucursalId, consultorioId: sigueValiendo ? t.consultorioId : null }
+      }),
+    )
+    tocar()
+  }
+
+  function consultoriosDe(sucursalId: string): ConsultorioOpcion[] {
+    return consultorios.filter((c) => c.sucursalId === sucursalId)
+  }
+
   function quitar(indice: number) {
     setTramos((ts) => ts.filter((_, i) => i !== indice))
     tocar()
@@ -91,6 +114,7 @@ function Editor({
         diaSemana: dia,
         horaInicio: ultimo ? '16:00' : '10:00',
         horaFin: ultimo ? '21:00' : '13:00',
+        consultorioId: ultimo?.consultorioId ?? null,
       },
     ])
     tocar()
@@ -137,8 +161,20 @@ function Editor({
                       variante="compacto"
                       etiqueta={`Sucursal, ${dia.nombre}`}
                       valor={t.sucursalId}
-                      onChange={(v) => modificar(i, { sucursalId: v })}
+                      onChange={(v) => cambiarSucursal(i, v)}
                       opciones={sucursales.map((s) => ({ valor: s.id, etiqueta: s.nombre }))}
+                    />
+                  )}
+                  {consultoriosDe(t.sucursalId).length > 0 && (
+                    <Selector
+                      variante="compacto"
+                      etiqueta={`Consultorio, ${dia.nombre}`}
+                      valor={t.consultorioId ?? SIN_CONSULTORIO}
+                      onChange={(v) => modificar(i, { consultorioId: v === SIN_CONSULTORIO ? null : v })}
+                      opciones={[
+                        { valor: SIN_CONSULTORIO, etiqueta: 'Sin consultorio' },
+                        ...consultoriosDe(t.sucursalId).map((c) => ({ valor: c.id, etiqueta: c.nombre })),
+                      ]}
                     />
                   )}
                   <input

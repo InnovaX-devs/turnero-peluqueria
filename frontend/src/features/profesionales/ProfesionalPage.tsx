@@ -81,7 +81,7 @@ export function ProfesionalEditarPage() {
 
           <div className="config-grupo profesional-bloque">
             <h2>Horario semanal</h2>
-            <EditorHorarios profesional={b} sucursales={o.sucursales} />
+            <EditorHorarios profesional={b} sucursales={o.sucursales} consultorios={o.consultorios ?? []} />
           </div>
         </>
       )}

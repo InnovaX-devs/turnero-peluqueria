@@ -21,7 +21,12 @@ export function iniciales(b: Pick<Profesional, 'nombre' | 'apellido'>): string {
 
 export function normalizarHorarios(horarios: Horario[]): Horario[] {
   return ordenarHorarios(
-    horarios.map((h) => ({ ...h, horaInicio: hhmm(h.horaInicio), horaFin: hhmm(h.horaFin) })),
+    horarios.map((h) => ({
+      ...h,
+      horaInicio: hhmm(h.horaInicio),
+      horaFin: hhmm(h.horaFin),
+      consultorioId: h.consultorioId ?? null,
+    })),
   )
 }
 
