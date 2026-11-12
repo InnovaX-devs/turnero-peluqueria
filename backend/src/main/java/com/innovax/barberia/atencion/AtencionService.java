@@ -17,6 +17,8 @@ import com.innovax.barberia.cliente.ClienteRepository;
 import com.innovax.barberia.common.ConflictoException;
 import com.innovax.barberia.common.DatosInvalidosException;
 import com.innovax.barberia.common.RecursoNoEncontradoException;
+import com.innovax.barberia.consultorio.AsignadorConsultorio;
+import com.innovax.barberia.consultorio.Consultorio;
 import com.innovax.barberia.disponibilidad.DisponibilidadService;
 import com.innovax.barberia.servicio.Servicio;
 import com.innovax.barberia.servicio.ServicioRepository;
@@ -47,7 +49,9 @@ import java.util.UUID;
  *   <li>La restricción de la base ({@code excl_atencion_superpuesta}, EXCLUDE USING gist),
  *       que es la que de verdad impide que dos atenciones activas del mismo barbero se
  *       solapen aunque dos requests pasen el chequeo anterior al mismo tiempo. Si la base la
- *       dispara, se traduce a un 409 con el mismo mensaje que el chequeo rápido.</li>
+ *       dispara, se traduce a un 409 con el mismo mensaje que el chequeo rápido. Con consultorio
+ *       compartido (issue #69), {@code excl_atencion_consultorio} hace lo mismo entre profesionales distintos
+ *       que atienden en el mismo consultorio.</li>
  * </ol>
  */
 @Service
@@ -66,6 +70,7 @@ public class AtencionService {
     private final UsuarioRepository usuarios;
     private final NotificacionService notificaciones;
     private final ListaEsperaService listaEspera;
+    private final AsignadorConsultorio asignadorConsultorio;
 
     @Transactional
     public AtencionResponse reservarOnline(CrearReservaRequest request) {
@@ -114,13 +119,17 @@ public class AtencionService {
         atencion.setOrigen(OrigenAtencion.ONLINE);
         atencion.setPrecioFinal(servicio.getPrecio());
         atencion.setNotas(request.notas());
+        atencion.setConsultorio(asignadorConsultorio.paraTurno(profesional.getId(), sucursal.getId(), inicio, zonaHoraria));
 
         try {
             // 2) Flush ahora, dentro de esta misma llamada: si otra transacción reservó este
             // mismo horario justo en el medio, la EXCLUDE constraint lo va a rechazar acá.
             atenciones.saveAndFlush(atencion);
         } catch (DataIntegrityViolationException e) {
-            if (e.getMessage() != null && e.getMessage().contains("excl_atencion_superpuesta")) {
+            // Mismo mensaje si lo ganó otro turno del profesional o de otro profesional en el mismo consultorio:
+            // para quien reserva es lo mismo, el horario ya no está.
+            if ((e.getMessage() != null && e.getMessage().contains("excl_atencion_superpuesta"))
+                    || Consultorio.esChoqueDeTurnos(e)) {
                 throw new ConflictoException("horario", MENSAJE_HORARIO_OCUPADO);
             }
             throw e;

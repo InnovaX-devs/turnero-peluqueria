@@ -5,6 +5,7 @@ import { cambiarActivoProfesional, listarProfesionales, obtenerOpcionesProfesion
 import { mensajeDeError } from '../../lib/errores'
 import { Avatar } from './FotoProfesional'
 import { GestionEspecialidades } from './GestionEspecialidades'
+import { GestionConsultorios } from './GestionConsultorios'
 import '../admin/configuracion.css'
 import './profesionales.css'
 import { useTerminos } from '../terminos/useTerminos'
@@ -161,6 +162,7 @@ export function ProfesionalesPage() {
       </ul>
 
       {esSalud && <GestionEspecialidades />}
+      {esSalud && opciones.data && <GestionConsultorios sucursales={opciones.data.sucursales} />}
     </section>
   )
 }

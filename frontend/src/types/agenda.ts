@@ -33,6 +33,8 @@ export interface Turno {
   llegadaEn: string | null
   /** Cargado a propósito encima de otro turno o fuera de horario (solo admin/recepción). */
   sobreturno: boolean
+  /** Consultorio donde se atiende (rubro salud). null = sin consultorio. Puede faltar en backends anteriores */
+  consultorioNombre?: string | null
 }
 
 /** Turno dado desde el panel. Fecha (YYYY-MM-DD) y hora (HH:mm) en la zona del negocio. */

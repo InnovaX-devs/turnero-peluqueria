@@ -5,10 +5,12 @@ import com.innovax.barberia.horario.HorarioLaboral;
 import java.time.LocalTime;
 import java.util.UUID;
 
-public record HorarioResponse(UUID sucursalId, int diaSemana, LocalTime horaInicio, LocalTime horaFin) {
+/** {@code consultorioId}: null si el tramo no tiene consultorio asignado (issue #69). */
+public record HorarioResponse(UUID sucursalId, int diaSemana, LocalTime horaInicio, LocalTime horaFin, UUID consultorioId) {
 
     public static HorarioResponse de(HorarioLaboral h) {
         return new HorarioResponse(h.getSucursal().getId(), h.getDiaSemana().getValue(),
-                h.getHoraInicio(), h.getHoraFin());
+                h.getHoraInicio(), h.getHoraFin(),
+                h.getConsultorio() != null ? h.getConsultorio().getId() : null);
     }
 }

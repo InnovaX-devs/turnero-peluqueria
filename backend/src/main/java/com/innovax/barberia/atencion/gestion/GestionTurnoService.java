@@ -8,6 +8,8 @@ import com.innovax.barberia.atencion.gestion.dto.TurnoPublicoResponse;
 import com.innovax.barberia.common.ConflictoException;
 import com.innovax.barberia.common.DatosInvalidosException;
 import com.innovax.barberia.common.RecursoNoEncontradoException;
+import com.innovax.barberia.consultorio.AsignadorConsultorio;
+import com.innovax.barberia.consultorio.Consultorio;
 import com.innovax.barberia.disponibilidad.DisponibilidadService;
 import com.innovax.barberia.listaespera.ListaEsperaService;
 import lombok.RequiredArgsConstructor;
@@ -36,6 +38,7 @@ public class GestionTurnoService {
     private final AtencionRepository atenciones;
     private final DisponibilidadService disponibilidadService;
     private final ListaEsperaService listaEspera;
+    private final AsignadorConsultorio asignadorConsultorio;
 
     @Transactional(readOnly = true)
     public TurnoPublicoResponse obtener(UUID token) {
@@ -100,12 +103,16 @@ public class GestionTurnoService {
         // El horario nuevo salió de la grilla normal: deja de ser sobreturno y vuelve a respetar la regla
         // de turnos superpuestos (si no, quedaría "libre de la regla" en un horario cualquiera).
         atencion.setSobreturno(false);
+        // En el horario nuevo puede tocar otro consultorio (o ninguno): se toma el del tramo nuevo
+        atencion.setConsultorio(asignadorConsultorio.paraTurno(atencion.getProfesional().getId(),
+                atencion.getSucursal().getId(), inicio, zona));
         atencion.setEstado(EstadoAtencion.RESERVADA);
         try {
             // Si otra reserva ganó ese horario justo en el medio, la EXCLUDE constraint lo rechaza acá
             atenciones.saveAndFlush(atencion);
         } catch (DataIntegrityViolationException e) {
-            if (e.getMessage() != null && e.getMessage().contains("excl_atencion_superpuesta")) {
+            if ((e.getMessage() != null && e.getMessage().contains("excl_atencion_superpuesta"))
+                    || Consultorio.esChoqueDeTurnos(e)) {
                 throw new ConflictoException("horario", MENSAJE_HORARIO_OCUPADO);
             }
             throw e;

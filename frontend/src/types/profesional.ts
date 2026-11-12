@@ -30,11 +30,28 @@ export interface ServicioOpcion {
   duracionMin: number
 }
 
+/** Consultorio activo de una sucursal activa, para asignar en los tramos del horario (rubro salud). */
+export interface ConsultorioOpcion {
+  id: string
+  sucursalId: string
+  nombre: string
+}
+
+/** Consultorio de una sucursal (rubro salud, issue #69): lo comparten varios profesionales en distintos horarios. */
+export interface Consultorio {
+  id: string
+  sucursalId: string
+  nombre: string
+  activo: boolean
+}
+
 export interface OpcionesProfesional {
   sucursales: SucursalOpcion[]
   servicios: ServicioOpcion[]
   /** Todas las del negocio (rubro salud) */
   especialidades: Especialidad[]
+  /** Los activos (rubro salud). Puede faltar si el backend es anterior al issue #69 */
+  consultorios?: ConsultorioOpcion[]
 }
 
 /** diaSemana: 1 = lunes ... 7 = domingo. Horas en formato "HH:mm". */
@@ -43,6 +60,8 @@ export interface Horario {
   diaSemana: number
   horaInicio: string
   horaFin: string
+  /** Consultorio donde atiende en ese tramo. null = sin consultorio */
+  consultorioId: string | null
 }
 
 /** Solo el email: la contraseña la elige el barbero desde el link que le llega por mail. */

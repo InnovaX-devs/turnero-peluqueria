@@ -14,6 +14,8 @@ import com.innovax.barberia.profesional.dto.OpcionesProfesionalResponse;
 import com.innovax.barberia.common.ConflictoException;
 import com.innovax.barberia.common.DatosInvalidosException;
 import com.innovax.barberia.common.RecursoNoEncontradoException;
+import com.innovax.barberia.consultorio.Consultorio;
+import com.innovax.barberia.consultorio.ConsultorioRepository;
 import com.innovax.barberia.especialidad.Especialidad;
 import com.innovax.barberia.especialidad.EspecialidadRepository;
 import com.innovax.barberia.especialidad.dto.EspecialidadResponse;
@@ -33,6 +35,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.security.SecureRandom;
 import java.time.DayOfWeek;
 import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
 import java.time.format.TextStyle;
 import java.util.Base64;
 import java.util.Comparator;
@@ -52,6 +55,7 @@ public class ProfesionalService {
 
     private static final Locale ES = Locale.of("es", "AR");
     private static final SecureRandom RANDOM = new SecureRandom();
+    private static final DateTimeFormatter HORA = DateTimeFormatter.ofPattern("HH:mm");
 
     private final ProfesionalRepository profesionales;
     private final NegocioRepository negocios;
@@ -59,6 +63,7 @@ public class ProfesionalService {
     private final ServicioRepository servicios;
     private final EspecialidadRepository especialidades;
     private final HorarioLaboralRepository horarios;
+    private final ConsultorioRepository consultorios;
     private final UsuarioRepository usuarios;
     private final PasswordEncoder passwordEncoder;
     private final UsuarioActual usuarioActual;
@@ -80,7 +85,7 @@ public class ProfesionalService {
         return ProfesionalResponse.de(buscar(id));
     }
 
-    /** Sucursales y servicios activos, y especialidades del negocio, que se pueden asignar. */
+    /** Sucursales y servicios activos, especialidades del negocio y consultorios activos, que se pueden asignar. */
     @Transactional(readOnly = true)
     public OpcionesProfesionalResponse opciones() {
         UUID negocioId = usuarioActual.negocioId();
@@ -93,6 +98,10 @@ public class ProfesionalService {
                         .toList(),
                 especialidades.findByNegocioIdOrderByNombreAsc(negocioId).stream()
                         .map(EspecialidadResponse::de)
+                        .toList(),
+                consultorios.findDelNegocio(negocioId).stream()
+                        .filter(c -> c.isActivo() && c.getSucursal().isActiva())
+                        .map(c -> new OpcionesProfesionalResponse.ConsultorioOpcion(c.getId(), c.getSucursal().getId(), c.getNombre()))
                         .toList());
     }
 
@@ -224,13 +233,19 @@ public class ProfesionalService {
                 .toList();
     }
 
-    /** Reemplaza todo el horario semanal. Los turnos ya reservados no se tocan. */
+    /**
+     * Reemplaza todo el horario semanal. Los turnos ya reservados no se tocan (conservan el consultorio que
+     * tenían). Un tramo con consultorio no puede superponerse con el de otro profesional en el mismo
+     * consultorio el mismo día (issue #69).
+     */
     @Transactional
     public List<HorarioResponse> guardarHorarios(UUID id, ProfesionalRequests.GuardarHorarios request) {
         Profesional profesional = buscar(id);
         Map<UUID, Sucursal> asignadas = profesional.getSucursales().stream()
                 .collect(Collectors.toMap(Sucursal::getId, Function.identity()));
         validarHorarios(request.horarios(), asignadas.keySet());
+        Map<UUID, Consultorio> consultoriosPedidos = resolverConsultorios(request.horarios());
+        validarConsultoriosLibres(id, request.horarios(), consultoriosPedidos);
 
         horarios.borrarDeProfesional(id);
         List<HorarioLaboral> nuevos = request.horarios().stream().map(h -> {
@@ -240,10 +255,23 @@ public class ProfesionalService {
             nuevo.setDiaSemana(DayOfWeek.of(h.diaSemana()));
             nuevo.setHoraInicio(h.horaInicio());
             nuevo.setHoraFin(h.horaFin());
+            nuevo.setConsultorio(h.consultorioId() != null ? consultoriosPedidos.get(h.consultorioId()) : null);
             return nuevo;
         }).toList();
 
-        return horarios.saveAll(nuevos).stream()
+        List<HorarioLaboral> guardados;
+        try {
+            // Flush acá: si otro admin ocupó el consultorio en el medio, la regla de la base lo rechaza ahora
+            guardados = horarios.saveAllAndFlush(nuevos);
+        } catch (DataIntegrityViolationException e) {
+            if (e.getMessage() != null && e.getMessage().contains(Consultorio.RESTRICCION_HORARIOS)) {
+                throw new ConflictoException("horarios",
+                        "Algún consultorio ya está ocupado por otro profesional en esos horarios. Volvé a cargar y revisalo.");
+            }
+            throw e;
+        }
+
+        return guardados.stream()
                 .sorted(Comparator.comparing((HorarioLaboral h) -> h.getDiaSemana().getValue())
                         .thenComparing(HorarioLaboral::getHoraInicio))
                 .map(HorarioResponse::de)
@@ -275,6 +303,57 @@ public class ProfesionalService {
                 }
                 finMaximo = finMaximo == null || h.horaFin().isAfter(finMaximo) ? h.horaFin() : finMaximo;
             }
+        }
+    }
+
+    /** Los consultorios pedidos tienen que existir, ser del negocio, estar activos y ser de la sucursal del tramo. */
+    private Map<UUID, Consultorio> resolverConsultorios(List<ProfesionalRequests.Horario> tramos) {
+        UUID negocioId = usuarioActual.negocioId();
+        Map<UUID, Consultorio> resueltos = new HashMap<>();
+        for (ProfesionalRequests.Horario h : tramos) {
+            if (h.consultorioId() == null) {
+                continue;
+            }
+            Consultorio consultorio = resueltos.computeIfAbsent(h.consultorioId(), cid ->
+                    consultorios.findByIdAndNegocioId(cid, negocioId)
+                            .filter(Consultorio::isActivo)
+                            .orElseThrow(() -> new DatosInvalidosException("horarios",
+                                    "Algún consultorio elegido no existe o está inactivo")));
+            if (!consultorio.getSucursal().getId().equals(h.sucursalId())) {
+                throw new DatosInvalidosException("horarios",
+                        consultorio.getNombre() + " no es de la sucursal de ese tramo");
+            }
+        }
+        return resueltos;
+    }
+
+    /**
+     * Dos profesionales no pueden usar el mismo consultorio a la misma hora: cada tramo con consultorio se
+     * compara con los tramos de los OTROS profesionales en ese consultorio, el mismo día. Entre los tramos
+     * del propio profesional ya no puede haber superposición (ver {@link #validarHorarios}).
+     */
+    private void validarConsultoriosLibres(UUID profesionalId, List<ProfesionalRequests.Horario> tramos,
+                                           Map<UUID, Consultorio> consultoriosPedidos) {
+        if (consultoriosPedidos.isEmpty()) {
+            return;
+        }
+        List<HorarioLaboral> deOtros = horarios.findEnConsultoriosDeOtros(consultoriosPedidos.keySet(), profesionalId);
+        for (ProfesionalRequests.Horario h : tramos) {
+            if (h.consultorioId() == null) {
+                continue;
+            }
+            deOtros.stream()
+                    .filter(o -> o.getConsultorio().getId().equals(h.consultorioId()))
+                    .filter(o -> o.getDiaSemana().getValue() == h.diaSemana())
+                    .filter(o -> h.horaInicio().isBefore(o.getHoraFin()) && o.getHoraInicio().isBefore(h.horaFin()))
+                    .findFirst()
+                    .ifPresent(o -> {
+                        String nombreDia = DayOfWeek.of(h.diaSemana()).getDisplayName(TextStyle.FULL, ES);
+                        throw new ConflictoException("horarios", "%s ya está ocupado el %s de %s a %s por %s %s"
+                                .formatted(o.getConsultorio().getNombre(), nombreDia,
+                                        HORA.format(o.getHoraInicio()), HORA.format(o.getHoraFin()),
+                                        o.getProfesional().getNombre(), o.getProfesional().getApellido()));
+                    });
         }
     }
 

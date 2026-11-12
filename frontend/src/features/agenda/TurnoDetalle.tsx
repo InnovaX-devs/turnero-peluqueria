@@ -158,6 +158,12 @@ export function TurnoDetalle({ turno, onCerrar }: { turno: Turno; onCerrar: () =
             <dt>{t.profesional.S}</dt>
             <dd>{turnoActual.profesionalNombre}</dd>
           </div>
+          {turnoActual.consultorioNombre && (
+            <div>
+              <dt>Consultorio</dt>
+              <dd>{turnoActual.consultorioNombre}</dd>
+            </div>
+          )}
           <div>
             <dt>Estado</dt>
             <dd>

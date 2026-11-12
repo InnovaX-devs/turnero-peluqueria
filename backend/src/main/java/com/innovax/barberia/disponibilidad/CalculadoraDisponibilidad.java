@@ -20,9 +20,31 @@ public final class CalculadoraDisponibilidad {
     private CalculadoraDisponibilidad() {
     }
 
+    /** Sin consultorios compartidos (o ninguno ocupado por otros profesionales). */
     public static List<LocalTime> slotsLibresDeUnProfesional(
             List<HorarioLaboral> horariosDelDia,
             List<Intervalo> ocupados,
+            int duracionServicioMin,
+            int intervaloSlotsMin,
+            LocalDate fecha,
+            ZoneId zonaHoraria,
+            Instant ahora,
+            int anticipacionMinimaMin) {
+        return slotsLibresDeUnProfesional(horariosDelDia, ocupados, Map.of(), duracionServicioMin, intervaloSlotsMin,
+                fecha, zonaHoraria, ahora, anticipacionMinimaMin);
+    }
+
+    /**
+     * @param ocupados                 turnos y bloqueos del propio profesional
+     * @param ocupadosPorConsultorio   por id de consultorio, lo que tienen ocupado OTROS profesionales ese día
+     *                                 (issue #69). Solo se mira para los tramos del horario que tienen consultorio:
+     *                                 un slot de un tramo en el "Consultorio 2" se descarta si otro profesional
+     *                                 tiene un turno en el Consultorio 2 que se superpone.
+     */
+    public static List<LocalTime> slotsLibresDeUnProfesional(
+            List<HorarioLaboral> horariosDelDia,
+            List<Intervalo> ocupados,
+            Map<UUID, List<Intervalo>> ocupadosPorConsultorio,
             int duracionServicioMin,
             int intervaloSlotsMin,
             LocalDate fecha,
@@ -34,6 +56,10 @@ public final class CalculadoraDisponibilidad {
 
         List<LocalTime> libres = new ArrayList<>();
         for (HorarioLaboral horario : horariosDelDia) {
+            List<Intervalo> ocupadosDelConsultorio = horario.getConsultorio() == null
+                    ? List.of()
+                    : ocupadosPorConsultorio.getOrDefault(horario.getConsultorio().getId(), List.of());
+
             for (LocalTime horaCandidata : candidatosDelBloque(horario, duracionServicioMin, intervaloSlotsMin)) {
                 Instant inicio = ZonedDateTime.of(fecha, horaCandidata, zonaHoraria).toInstant();
                 Instant fin = inicio.plus(Duration.ofMinutes(duracionServicioMin));
@@ -42,6 +68,9 @@ public final class CalculadoraDisponibilidad {
                     continue;
                 }
                 if (seSuperponeConAlguno(inicio, fin, ocupados)) {
+                    continue;
+                }
+                if (seSuperponeConAlguno(inicio, fin, ocupadosDelConsultorio)) {
                     continue;
                 }
                 libres.add(horaCandidata);
