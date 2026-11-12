@@ -17,6 +17,11 @@ public record NegocioPublicoResponse(
         boolean reservasOnline,
         /** Hasta cuántos días adelante se puede reservar: el calendario no deja avanzar más. */
         int anticipacionMaximaDias,
+        /**
+         * Rubro salud con especialidades cargadas: la reserva arranca por la especialidad
+         * ("elegir especialidad → profesional → prestación → horario"). Si no, el flujo de siempre.
+         */
+        boolean reservaPorEspecialidad,
         List<SucursalPublica> sucursales
 ) {
 
@@ -26,8 +31,8 @@ public record NegocioPublicoResponse(
         }
     }
 
-    public static NegocioPublicoResponse de(Negocio b, List<Sucursal> sucursales) {
+    public static NegocioPublicoResponse de(Negocio b, List<Sucursal> sucursales, boolean reservaPorEspecialidad) {
         return new NegocioPublicoResponse(b.getNombre(), b.getSlug(), b.getLogoUrl(), b.getRubro(), b.isReservasOnline(), b.getAnticipacionMaximaDias(),
-                sucursales.stream().map(SucursalPublica::de).toList());
+                reservaPorEspecialidad, sucursales.stream().map(SucursalPublica::de).toList());
     }
 }
