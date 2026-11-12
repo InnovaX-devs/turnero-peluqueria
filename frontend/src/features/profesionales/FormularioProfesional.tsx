@@ -1,8 +1,9 @@
 import { useState, type FormEvent } from 'react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { actualizarProfesional, crearProfesional } from '../../api/profesionales'
+import { crearEspecialidad } from '../../api/especialidades'
 import { erroresDeCampos, mensajeDeError } from '../../lib/errores'
-import type { Profesional, OpcionesProfesional } from '../../types/profesional'
+import type { Especialidad, Profesional, OpcionesProfesional } from '../../types/profesional'
 import { mismoConjunto } from './profesionales'
 import { useTerminos } from '../terminos/useTerminos'
 
@@ -11,6 +12,8 @@ interface Form {
   apellido: string
   sucursalIds: string[]
   servicioIds: string[]
+  matricula: string
+  especialidadIds: string[]
   conUsuario: boolean
   email: string
 }
@@ -21,24 +24,62 @@ interface Props {
   onGuardado?: (b: Profesional) => void
 }
 
+function ordenarEspecialidades(lista: Especialidad[]): Especialidad[] {
+  return [...lista].sort((a, b) => a.nombre.localeCompare(b.nombre, 'es'))
+}
+
 function alternar(lista: string[], id: string): string[] {
   return lista.includes(id) ? lista.filter((x) => x !== id) : [...lista, id]
 }
 
 export function FormularioProfesional({ profesional, opciones, onGuardado }: Props) {
   const t = useTerminos()
+  // Matrícula y especialidades (issue #68) solo tienen sentido en salud
+  const esSalud = t.rubro === 'SALUD'
   const queryClient = useQueryClient()
   const [form, setForm] = useState<Form>({
     nombre: profesional?.nombre ?? '',
     apellido: profesional?.apellido ?? '',
     sucursalIds: profesional?.sucursalIds ?? [],
     servicioIds: profesional?.servicioIds ?? [],
+    matricula: profesional?.matricula ?? '',
+    especialidadIds: profesional?.especialidadIds ?? [],
     conUsuario: false,
     email: '',
   })
   const [errores, setErrores] = useState<Record<string, string>>({})
   const [errorGeneral, setErrorGeneral] = useState<string | null>(null)
   const [guardado, setGuardado] = useState(false)
+  const [nuevaEspecialidad, setNuevaEspecialidad] = useState('')
+  const [errorEspecialidad, setErrorEspecialidad] = useState<string | null>(null)
+
+  // Alta rápida desde el formulario: queda en las opciones y ya tildada para este profesional
+  const agregarEspecialidad = useMutation({
+    mutationFn: (nombre: string) => crearEspecialidad(nombre),
+    onSuccess: (creada) => {
+      queryClient.setQueryData<OpcionesProfesional>(['barberos', 'opciones'], (o) =>
+        o ? { ...o, especialidades: ordenarEspecialidades([...o.especialidades, creada]) } : o,
+      )
+      queryClient.invalidateQueries({ queryKey: ['especialidades'] })
+      setNuevaEspecialidad('')
+      setErrorEspecialidad(null)
+      setForm((f) => ({ ...f, especialidadIds: [...f.especialidadIds, creada.id] }))
+      setGuardado(false)
+    },
+    onError: (err) => {
+      const deCampos = erroresDeCampos(err)
+      setErrorEspecialidad(deCampos.nombre ?? mensajeDeError(err))
+    },
+  })
+
+  function agregar() {
+    const nombre = nuevaEspecialidad.trim()
+    if (nombre === '') {
+      setErrorEspecialidad('Escribí el nombre de la especialidad')
+      return
+    }
+    agregarEspecialidad.mutate(nombre)
+  }
 
   const guardar = useMutation({
     mutationFn: (): Promise<Profesional> => {
@@ -47,6 +88,8 @@ export function FormularioProfesional({ profesional, opciones, onGuardado }: Pro
         apellido: form.apellido.trim(),
         sucursalIds: form.sucursalIds,
         servicioIds: form.servicioIds,
+        // Fuera de salud no se mandan: el backend conserva lo que hubiera
+        ...(esSalud ? { matricula: form.matricula.trim(), especialidadIds: form.especialidadIds } : {}),
       }
       if (profesional) return actualizarProfesional(profesional.id, datos)
       return crearProfesional({
@@ -61,7 +104,7 @@ export function FormularioProfesional({ profesional, opciones, onGuardado }: Pro
       if (profesional && !mismoConjunto(profesional.sucursalIds, res.sucursalIds)) {
         queryClient.removeQueries({ queryKey: ['horarios', res.id] })
       }
-      setForm((f) => ({ ...f, nombre: res.nombre, apellido: res.apellido }))
+      setForm((f) => ({ ...f, nombre: res.nombre, apellido: res.apellido, matricula: res.matricula ?? '' }))
       setGuardado(true)
       onGuardado?.(res)
     },
@@ -107,7 +150,9 @@ export function FormularioProfesional({ profesional, opciones, onGuardado }: Pro
     form.nombre.trim() === profesional.nombre &&
     form.apellido.trim() === profesional.apellido &&
     mismoConjunto(form.sucursalIds, profesional.sucursalIds) &&
-    mismoConjunto(form.servicioIds, profesional.servicioIds)
+    mismoConjunto(form.servicioIds, profesional.servicioIds) &&
+    form.matricula.trim() === (profesional.matricula ?? '') &&
+    mismoConjunto(form.especialidadIds, profesional.especialidadIds)
 
   const errEmail = errores['usuario.email'] ?? errores.email
 
@@ -137,6 +182,80 @@ export function FormularioProfesional({ profesional, opciones, onGuardado }: Pro
           {errores.apellido && <span className="config-campo-error" role="alert">{errores.apellido}</span>}
         </label>
       </div>
+
+      {esSalud && (
+        <div className="config-fila">
+          <label className="config-campo">
+            <span className="config-etiqueta">Matrícula (opcional)</span>
+            <input
+              type="text"
+              value={form.matricula}
+              maxLength={30}
+              placeholder="Ej. MP 12345"
+              onChange={(e) => cambiar('matricula', e.target.value)}
+              aria-invalid={!!errores.matricula}
+            />
+            <span className="config-ayuda">Se muestra en la página de reservas, junto a su nombre.</span>
+            {errores.matricula && <span className="config-campo-error" role="alert">{errores.matricula}</span>}
+          </label>
+        </div>
+      )}
+
+      {esSalud && (
+        <fieldset className="config-grupo">
+          <legend>Especialidades</legend>
+          <p className="config-ayuda">
+            Los pacientes pueden buscar turno por especialidad sin conocer el nombre del profesional.
+          </p>
+          {opciones.especialidades.length > 0 && (
+            <div className="checks">
+              {opciones.especialidades.map((e) => (
+                <label key={e.id} className="check">
+                  <input
+                    type="checkbox"
+                    checked={form.especialidadIds.includes(e.id)}
+                    onChange={() => cambiar('especialidadIds', alternar(form.especialidadIds, e.id))}
+                  />
+                  <span>{e.nombre}</span>
+                </label>
+              ))}
+            </div>
+          )}
+          <div className="especialidad-nueva">
+            <input
+              type="text"
+              value={nuevaEspecialidad}
+              maxLength={80}
+              placeholder="Nueva especialidad (ej. Kinesiología)"
+              aria-label="Nueva especialidad"
+              aria-invalid={!!errorEspecialidad}
+              onChange={(e) => {
+                setNuevaEspecialidad(e.target.value)
+                setErrorEspecialidad(null)
+              }}
+              onKeyDown={(e) => {
+                // Enter acá agrega la especialidad, no guarda todo el formulario
+                if (e.key === 'Enter') {
+                  e.preventDefault()
+                  agregar()
+                }
+              }}
+            />
+            <button
+              type="button"
+              className="boton-secundario"
+              disabled={agregarEspecialidad.isPending}
+              onClick={agregar}
+            >
+              {agregarEspecialidad.isPending ? 'Agregando…' : 'Agregar'}
+            </button>
+          </div>
+          {errorEspecialidad && <span className="config-campo-error" role="alert">{errorEspecialidad}</span>}
+          {errores.especialidadIds && (
+            <span className="config-campo-error" role="alert">{errores.especialidadIds}</span>
+          )}
+        </fieldset>
+      )}
 
       <fieldset className="config-grupo">
         <legend>Sucursales donde trabaja</legend>
