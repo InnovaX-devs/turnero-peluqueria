@@ -53,6 +53,7 @@ public class DisponibilidadService {
     private final HorarioLaboralRepository horarioLaboralRepository;
     private final AtencionRepository atencionRepository;
     private final BloqueoRepository bloqueoRepository;
+    private final OcupacionConsultorios ocupacionConsultorios;
 
     @Transactional(readOnly = true)
     public DisponibilidadResponse consultar(UUID sucursalId, UUID servicioId, UUID profesionalId, LocalDate fecha) {
@@ -170,9 +171,14 @@ public class DisponibilidadService {
             bloqueoRepository.findSolapados(profesional.getId(), inicioDia, finDia)
                     .forEach(b -> ocupados.add(new Intervalo(b.getInicio(), b.getFin())));
 
+            // Consultorio compartido (issue #69): los turnos de otros profesionales en el mismo consultorio también ocupan
+            Map<UUID, List<Intervalo>> ocupadosPorConsultorio =
+                    ocupacionConsultorios.ocupadosPorOtros(horarios, profesional.getId(), inicioDia, finDia);
+
             List<LocalTime> libres = CalculadoraDisponibilidad.slotsLibresDeUnProfesional(
                     horarios,
                     ocupados,
+                    ocupadosPorConsultorio,
                     ctx.servicio().getDuracionMin(),
                     ctx.negocio().getIntervaloSlotsMin(),
                     fecha,

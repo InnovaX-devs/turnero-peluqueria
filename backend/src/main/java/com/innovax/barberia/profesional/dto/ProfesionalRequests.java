@@ -83,7 +83,10 @@ public final class ProfesionalRequests {
             Boolean activo) {
     }
 
-    /** Un tramo de horario. diaSemana: 1 = lunes ... 7 = domingo. */
+    /**
+     * Un tramo de horario. diaSemana: 1 = lunes ... 7 = domingo.
+     * {@code consultorioId} es opcional (issue #69): el consultorio de la sucursal donde atiende en ese tramo.
+     */
     public record Horario(
             @NotNull(message = "La sucursal es obligatoria")
             UUID sucursalId,
@@ -97,7 +100,9 @@ public final class ProfesionalRequests {
             LocalTime horaInicio,
 
             @NotNull(message = "La hora de fin es obligatoria")
-            LocalTime horaFin) {
+            LocalTime horaFin,
+
+            UUID consultorioId) {
     }
 
     public record GuardarHorarios(

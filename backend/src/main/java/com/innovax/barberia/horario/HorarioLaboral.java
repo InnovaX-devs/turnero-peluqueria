@@ -2,6 +2,7 @@ package com.innovax.barberia.horario;
 
 import com.innovax.barberia.profesional.Profesional;
 import com.innovax.barberia.common.DiaSemanaConverter;
+import com.innovax.barberia.consultorio.Consultorio;
 import com.innovax.barberia.sucursal.Sucursal;
 import jakarta.persistence.*;
 import lombok.Getter;
@@ -41,4 +42,13 @@ public class HorarioLaboral {
 
     @Column(nullable = false)
     private LocalTime horaFin;
+
+    /**
+     * Consultorio donde atiende en este tramo (issue #69). Null = sin consultorio asignado.
+     * Tiene que ser de la misma sucursal (la base lo exige) y no puede estar ocupado por otro
+     * profesional el mismo día en un tramo superpuesto.
+     */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "consultorio_id")
+    private Consultorio consultorio;
 }

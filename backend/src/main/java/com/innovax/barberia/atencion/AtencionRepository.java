@@ -26,6 +26,27 @@ public interface AtencionRepository extends JpaRepository<Atencion, UUID> {
             @Param("finRango") Instant finRango);
 
     /**
+     * Atenciones de OTROS profesionales, en alguno de los estados dados, que ocupan alguno de esos
+     * consultorios en [inicioRango, finRango) (issue #69). Las del propio profesional no se traen:
+     * ya cuentan en {@link #findOcupadas}.
+     */
+    @Query("""
+            select a from Atencion a
+            join fetch a.consultorio
+            where a.consultorio.id in :consultorioIds
+              and a.profesional.id <> :profesionalId
+              and a.estado in :estados
+              and a.inicio < :finRango
+              and a.fin > :inicioRango
+            """)
+    List<Atencion> findOcupadasEnConsultoriosPorOtros(
+            @Param("consultorioIds") Collection<UUID> consultorioIds,
+            @Param("profesionalId") UUID profesionalId,
+            @Param("estados") Collection<EstadoAtencion> estados,
+            @Param("inicioRango") Instant inicioRango,
+            @Param("finRango") Instant finRango);
+
+    /**
      * Turnos de la agenda del panel: todos los de la barbería (en cualquier estado, para que
      * admin/barbero vean también cancelados y ausentes) que se solapan con [inicioRango, finRango),
      * opcionalmente acotados a un barbero puntual.

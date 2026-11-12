@@ -13,6 +13,8 @@ import com.innovax.barberia.cliente.ClienteRepository;
 import com.innovax.barberia.common.ConflictoException;
 import com.innovax.barberia.common.DatosInvalidosException;
 import com.innovax.barberia.common.RecursoNoEncontradoException;
+import com.innovax.barberia.consultorio.AsignadorConsultorio;
+import com.innovax.barberia.consultorio.Consultorio;
 import com.innovax.barberia.servicio.Servicio;
 import com.innovax.barberia.servicio.ServicioRepository;
 import com.innovax.barberia.sucursal.Sucursal;
@@ -55,6 +57,7 @@ public class RegistroCorteService {
     private final SucursalRepository sucursales;
     private final ClienteRepository clientes;
     private final AtencionRepository atenciones;
+    private final AsignadorConsultorio asignadorConsultorio;
 
     @Transactional(readOnly = true)
     public OpcionesRegistroResponse opciones() {
@@ -106,12 +109,18 @@ public class RegistroCorteService {
         atencion.setPrecioFinal(request.precioFinal());
         atencion.setMetodoPago(request.metodoPago());
         atencion.setNotas(request.notas() == null || request.notas().isBlank() ? null : request.notas().trim());
+        Consultorio consultorio = asignadorConsultorio.paraTurno(profesional.getId(), sucursal.getId(), inicio, zona);
+        atencion.setConsultorio(consultorio);
 
         try {
             atenciones.saveAndFlush(atencion);
         } catch (DataIntegrityViolationException e) {
             if (e.getMessage() != null && e.getMessage().contains("excl_atencion_superpuesta")) {
                 throw new ConflictoException("horario", "Ese profesional ya tiene otra atención en ese horario");
+            }
+            if (Consultorio.esChoqueDeTurnos(e)) {
+                throw new ConflictoException("horario",
+                        consultorio.getNombre() + " está ocupado por otro profesional en ese horario");
             }
             throw e;
         }

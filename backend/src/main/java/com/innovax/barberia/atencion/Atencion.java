@@ -4,6 +4,7 @@ import com.innovax.barberia.auth.Usuario;
 import com.innovax.barberia.negocio.Negocio;
 import com.innovax.barberia.profesional.Profesional;
 import com.innovax.barberia.cliente.Cliente;
+import com.innovax.barberia.consultorio.Consultorio;
 import com.innovax.barberia.servicio.Servicio;
 import com.innovax.barberia.sucursal.Sucursal;
 import jakarta.persistence.*;
@@ -18,7 +19,8 @@ import java.util.UUID;
 
 /**
  * Un corte: puede ser un turno reservado online o una atención cargada a mano.
- * La base impide dos atenciones RESERVADA/COMPLETADA superpuestas del mismo barbero (salvo sobreturnos).
+ * La base impide dos atenciones RESERVADA/COMPLETADA superpuestas del mismo barbero (salvo sobreturnos),
+ * y dos de profesionales distintos en el mismo consultorio a la misma hora.
  */
 @Entity
 @Table(name = "atencion")
@@ -100,6 +102,15 @@ public class Atencion {
      */
     @Column(nullable = false)
     private boolean sobreturno = false;
+
+    /**
+     * Consultorio donde se atiende (issue #69). Se copia del tramo del horario al dar el turno; null si el
+     * tramo no tiene consultorio o el turno cae fuera del horario. La base impide dos turnos activos de
+     * profesionales distintos en el mismo consultorio a la misma hora ({@code excl_atencion_consultorio}).
+     */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "consultorio_id")
+    private Consultorio consultorio;
 
     @CreationTimestamp
     @Column(nullable = false, updatable = false)

@@ -13,7 +13,10 @@ import com.innovax.barberia.cliente.ClienteRepository;
 import com.innovax.barberia.common.ConflictoException;
 import com.innovax.barberia.common.DatosInvalidosException;
 import com.innovax.barberia.common.RecursoNoEncontradoException;
+import com.innovax.barberia.consultorio.AsignadorConsultorio;
+import com.innovax.barberia.consultorio.Consultorio;
 import com.innovax.barberia.disponibilidad.CalculadoraDisponibilidad;
+import com.innovax.barberia.disponibilidad.OcupacionConsultorios;
 import com.innovax.barberia.disponibilidad.Intervalo;
 import com.innovax.barberia.horario.BloqueoRepository;
 import com.innovax.barberia.horario.HorarioLaboral;
@@ -76,6 +79,8 @@ public class TurnoPanelService {
     private final BloqueoRepository bloqueos;
     private final HorarioLaboralRepository horarios;
     private final NotificacionService notificaciones;
+    private final OcupacionConsultorios ocupacionConsultorios;
+    private final AsignadorConsultorio asignadorConsultorio;
 
     @Transactional(readOnly = true)
     public HorariosLibresResponse horariosLibres(UUID profesionalId, UUID servicioId, UUID sucursalId, LocalDate fecha) {
@@ -104,8 +109,11 @@ public class TurnoPanelService {
         Instant inicio = ZonedDateTime.of(request.fecha(), request.hora(), zona).toInstant();
         Instant fin = inicio.plus(Duration.ofMinutes(servicio.getDuracionMin()));
 
+        // Consultorio del tramo del horario donde cae el turno (issue #69); null si no tiene o está fuera de horario
+        Consultorio consultorio = asignadorConsultorio.paraTurno(profesional.getId(), sucursal.getId(), inicio, zona);
+
         if (sobreturno) {
-            validarSobreturno(profesional, sucursal, servicio, request.fecha(), request.hora(), inicio, fin);
+            validarSobreturno(profesional, sucursal, servicio, consultorio, request.fecha(), request.hora(), inicio, fin);
         } else if (!libres(negocio, profesional, sucursal, servicio, request.fecha()).contains(request.hora())) {
             throw new ConflictoException("horario", MENSAJE_HORARIO_OCUPADO);
         }
@@ -122,6 +130,7 @@ public class TurnoPanelService {
         atencion.setOrigen(OrigenAtencion.MANUAL);
         atencion.setPrecioFinal(servicio.getPrecio());
         atencion.setSobreturno(sobreturno);
+        atencion.setConsultorio(consultorio);
         String notas = request.notas() == null ? "" : request.notas().trim();
         atencion.setNotas(notas.isEmpty() ? null : notas);
 
@@ -131,6 +140,9 @@ public class TurnoPanelService {
         } catch (DataIntegrityViolationException e) {
             if (e.getMessage() != null && e.getMessage().contains("excl_atencion_superpuesta")) {
                 throw new ConflictoException("horario", MENSAJE_HORARIO_OCUPADO);
+            }
+            if (Consultorio.esChoqueDeTurnos(e)) {
+                throw consultorioOcupado(consultorio);
             }
             throw e;
         }
@@ -154,6 +166,7 @@ public class TurnoPanelService {
         return CalculadoraDisponibilidad.slotsLibresDeUnProfesional(
                 delDia,
                 ocupados(profesional, inicioDia, finDia),
+                ocupacionConsultorios.ocupadosPorOtros(delDia, profesional.getId(), inicioDia, finDia),
                 servicio.getDuracionMin(),
                 negocio.getIntervaloSlotsMin(),
                 fecha,
@@ -162,13 +175,18 @@ public class TurnoPanelService {
                 0);
     }
 
-    private void validarSobreturno(Profesional profesional, Sucursal sucursal, Servicio servicio,
+    private void validarSobreturno(Profesional profesional, Sucursal sucursal, Servicio servicio, Consultorio consultorio,
                                    LocalDate fecha, LocalTime hora, Instant inicio, Instant fin) {
         if (inicio.isBefore(Instant.now().minus(TOLERANCIA_PASADO))) {
             throw new DatosInvalidosException("hora", "Ese horario ya pasó");
         }
         if (!bloqueos.findSolapados(profesional.getId(), inicio, fin).isEmpty()) {
             throw new ConflictoException("horario", "El profesional tiene bloqueado ese horario");
+        }
+        // Un sobreturno puede pisar un turno del mismo profesional, pero nunca meterse en el consultorio de otro
+        if (consultorio != null && !atenciones.findOcupadasEnConsultoriosPorOtros(
+                List.of(consultorio.getId()), profesional.getId(), OCUPAN, inicio, fin).isEmpty()) {
+            throw consultorioOcupado(consultorio);
         }
         boolean pisaOtroTurno = !atenciones.findOcupadas(profesional.getId(), OCUPAN, inicio, fin).isEmpty();
         LocalTime horaFin = hora.plusMinutes(servicio.getDuracionMin());
@@ -180,6 +198,11 @@ public class TurnoPanelService {
             throw new DatosInvalidosException("sobreturno",
                     "Ese horario está libre: cargalo como turno normal, sin marcar sobreturno");
         }
+    }
+
+    private static ConflictoException consultorioOcupado(Consultorio consultorio) {
+        String nombre = consultorio != null ? consultorio.getNombre() : "El consultorio";
+        return new ConflictoException("horario", nombre + " está ocupado por otro profesional en ese horario");
     }
 
     private List<Intervalo> ocupados(Profesional profesional, Instant desde, Instant hasta) {
