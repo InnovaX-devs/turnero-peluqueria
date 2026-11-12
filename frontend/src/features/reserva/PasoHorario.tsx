@@ -27,6 +27,8 @@ interface Props {
   servicioId: string
   /** Un id o PROFESIONAL_CUALQUIERA */
   profesionalId: string
+  /** Rubro salud: con "cualquiera", solo los profesionales de esta especialidad */
+  especialidadId?: string | null
   fechaElegida: string | null
   horaElegida: string | null
   onElegir: (eleccion: EleccionHorario) => void
@@ -35,8 +37,14 @@ interface Props {
 export function PasoHorario(props: Props) {
   const t = useTerminos()
   const { slug, anticipacionMaximaDias, sucursalId, servicioId, profesionalId, fechaElegida, horaElegida, onElegir } = props
+  const especialidadId = props.especialidadId ?? null
   const esCualquiera = profesionalId === PROFESIONAL_CUALQUIERA
-  const consulta = { sucursalId, servicioId, profesionalId: esCualquiera ? null : profesionalId }
+  const consulta = {
+    sucursalId,
+    servicioId,
+    profesionalId: esCualquiera ? null : profesionalId,
+    especialidadId: esCualquiera ? especialidadId : null,
+  }
 
   const hoy = hoyISO()
   const ultimoDia = sumarDias(hoy, anticipacionMaximaDias)
@@ -55,7 +63,7 @@ export function PasoHorario(props: Props) {
   const haySiguiente = sumarDias(inicio, DIAS_POR_SEMANA) <= ultimoDia
 
   const qDias = useQuery({
-    queryKey: ['dias-disponibles', sucursalId, servicioId, consulta.profesionalId, inicio, fin],
+    queryKey: ['dias-disponibles', sucursalId, servicioId, consulta.profesionalId, consulta.especialidadId, inicio, fin],
     queryFn: () => obtenerDiasDisponibles(consulta, inicio, fin),
     staleTime: 30 * 1000,
   })
@@ -65,7 +73,7 @@ export function PasoHorario(props: Props) {
   const diaActivo = diaTocado && diasLibres.includes(diaTocado) ? diaTocado : (diasLibres[0] ?? null)
 
   const qSlots = useQuery({
-    queryKey: ['disponibilidad', sucursalId, servicioId, consulta.profesionalId, diaActivo],
+    queryKey: ['disponibilidad', sucursalId, servicioId, consulta.profesionalId, consulta.especialidadId, diaActivo],
     queryFn: () => obtenerDisponibilidad(consulta, diaActivo as string),
     enabled: diaActivo !== null,
     staleTime: 30 * 1000,
@@ -78,13 +86,14 @@ export function PasoHorario(props: Props) {
     staleTime: 5 * 60 * 1000,
   })
   const { data: profesionales } = useQuery({
-    queryKey: ['profesionales-publicos', slug, sucursalId, servicioId],
+    queryKey: ['profesionales-publicos', slug, sucursalId, servicioId, null],
     queryFn: () => obtenerProfesionalesPublicos(slug, sucursalId, servicioId),
     staleTime: 60 * 1000,
   })
   const servicio = servicios?.find((s) => s.id === servicioId)
   const profesional = profesionales?.find((b) => b.id === profesionalId)
   const nombreProfesional = esCualquiera ? `Cualquier ${t.profesional.s}` : profesional ? `${profesional.nombre} ${profesional.apellido}` : ''
+  const detalleProfesional = !esCualquiera && profesional?.matricula ? `Matrícula ${profesional.matricula}` : null
   const iniciales = esCualquiera ? '✦' : profesional ? `${profesional.nombre[0]}${profesional.apellido[0]}`.toUpperCase() : ''
 
   function cambiarSemana(delta: number) {
@@ -168,6 +177,7 @@ export function PasoHorario(props: Props) {
             )}
             <div>
               <strong>{nombreProfesional}</strong>
+              {detalleProfesional && <span>{detalleProfesional}</span>}
               {servicio && <span>Duración: {formatearDuracion(servicio.duracionMin)}</span>}
             </div>
           </div>

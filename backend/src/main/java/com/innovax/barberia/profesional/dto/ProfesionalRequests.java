@@ -27,7 +27,10 @@ public final class ProfesionalRequests {
             String email) {
     }
 
-    /** {@code usuario} es opcional: si viene, se crea el login con rol PROFESIONAL y se le manda la invitación. */
+    /**
+     * {@code matricula} y {@code especialidadIds} son opcionales (se usan en el rubro salud).
+     * {@code usuario} es opcional: si viene, se crea el login con rol PROFESIONAL y se le manda la invitación.
+     */
     public record Crear(
             @NotBlank(message = "El nombre es obligatorio")
             @Size(max = 80, message = "El nombre puede tener hasta 80 caracteres")
@@ -42,6 +45,11 @@ public final class ProfesionalRequests {
 
             @NotNull(message = "Indicá los servicios")
             Set<UUID> servicioIds,
+
+            @Size(max = 30, message = "La matrícula puede tener hasta 30 caracteres")
+            String matricula,
+
+            Set<UUID> especialidadIds,
 
             @Valid
             CrearUsuario usuario) {
@@ -60,7 +68,14 @@ public final class ProfesionalRequests {
             Set<UUID> sucursalIds,
 
             @NotNull(message = "Indicá los servicios")
-            Set<UUID> servicioIds) {
+            Set<UUID> servicioIds,
+
+            /** null = no se toca la que tiene; vacía = se le quita. */
+            @Size(max = 30, message = "La matrícula puede tener hasta 30 caracteres")
+            String matricula,
+
+            /** null = no se tocan las que tiene; vacío = se le quitan todas. */
+            Set<UUID> especialidadIds) {
     }
 
     public record CambiarActivo(

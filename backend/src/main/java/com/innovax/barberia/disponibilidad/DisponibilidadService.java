@@ -56,17 +56,31 @@ public class DisponibilidadService {
 
     @Transactional(readOnly = true)
     public DisponibilidadResponse consultar(UUID sucursalId, UUID servicioId, UUID profesionalId, LocalDate fecha) {
-        Contexto ctx = cargarContexto(sucursalId, servicioId, profesionalId);
+        return consultar(sucursalId, servicioId, profesionalId, null, fecha);
+    }
+
+    /** {@code especialidadId}: con "cualquier profesional", solo cuentan los que tienen esa especialidad. */
+    @Transactional(readOnly = true)
+    public DisponibilidadResponse consultar(UUID sucursalId, UUID servicioId, UUID profesionalId, UUID especialidadId,
+                                            LocalDate fecha) {
+        Contexto ctx = cargarContexto(sucursalId, servicioId, profesionalId, especialidadId);
         return new DisponibilidadResponse(fecha, slotsDelDia(ctx, fecha));
     }
 
     @Transactional(readOnly = true)
     public DiasDisponiblesResponse consultarDias(UUID sucursalId, UUID servicioId, UUID profesionalId, LocalDate desde, LocalDate hasta) {
+        return consultarDias(sucursalId, servicioId, profesionalId, null, desde, hasta);
+    }
+
+    /** {@code especialidadId}: con "cualquier profesional", solo cuentan los que tienen esa especialidad. */
+    @Transactional(readOnly = true)
+    public DiasDisponiblesResponse consultarDias(UUID sucursalId, UUID servicioId, UUID profesionalId, UUID especialidadId,
+                                                 LocalDate desde, LocalDate hasta) {
         if (hasta.isBefore(desde)) {
             throw new DatosInvalidosException("hasta", "No puede ser anterior a «desde»");
         }
 
-        Contexto ctx = cargarContexto(sucursalId, servicioId, profesionalId);
+        Contexto ctx = cargarContexto(sucursalId, servicioId, profesionalId, especialidadId);
 
         // Tope fijo solo para no hacer consultas enormes. Los días más allá de la anticipación
         // máxima de la barbería no fallan: vuelven sin disponibilidad (ver slotsDelDia).
@@ -175,6 +189,10 @@ public class DisponibilidadService {
     }
 
     private Contexto cargarContexto(UUID sucursalId, UUID servicioId, UUID profesionalId) {
+        return cargarContexto(sucursalId, servicioId, profesionalId, null);
+    }
+
+    private Contexto cargarContexto(UUID sucursalId, UUID servicioId, UUID profesionalId, UUID especialidadId) {
         // Desactivados cuentan como inexistentes: no se pueden consultar ni reservar
         Sucursal sucursal = sucursalRepository.findById(sucursalId)
                 .filter(Sucursal::isActiva)
@@ -195,7 +213,11 @@ public class DisponibilidadService {
 
         List<Profesional> profesionales = profesionalId != null
                 ? profesionalesParaUnoPuntual(profesionalId, sucursal, servicio)
-                : profesionalRepository.findByActivoTrueAndSucursalesContainingAndServiciosContaining(sucursal, servicio);
+                : profesionalRepository.findByActivoTrueAndSucursalesContainingAndServiciosContaining(sucursal, servicio).stream()
+                        // "Cualquier profesional de Kinesiología": los de otras especialidades no cuentan
+                        .filter(p -> especialidadId == null
+                                || p.getEspecialidades().stream().anyMatch(e -> e.getId().equals(especialidadId)))
+                        .toList();
 
         return new Contexto(sucursal, servicio, profesionales, sucursal.getNegocio(), ZoneId.of(sucursal.getNegocio().getZonaHoraria()));
     }

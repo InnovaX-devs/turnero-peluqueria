@@ -9,7 +9,10 @@ import { useTerminos } from '../terminos/useTerminos'
 interface Props {
   slug: string
   sucursalId: string
-  servicioId: string
+  /** Flujo de siempre: los que hacen el servicio. null en el flujo por especialidad (todavía no se eligió). */
+  servicioId: string | null
+  /** Flujo por especialidad (rubro salud): los que tienen esa especialidad. */
+  especialidadId?: string | null
   elegido: string | null
   onElegir: (id: string) => void
 }
@@ -22,11 +25,16 @@ function iniciales(b: ProfesionalPublico): string {
   return `${b.nombre.charAt(0)}${b.apellido.charAt(0)}`.toUpperCase()
 }
 
-export function PasoProfesional({ slug, sucursalId, servicioId, elegido, onElegir }: Props) {
+/** "Kinesiología · Traumatología" */
+function especialidadesDe(b: ProfesionalPublico): string | null {
+  return b.especialidades.length > 0 ? b.especialidades.join(' · ') : null
+}
+
+export function PasoProfesional({ slug, sucursalId, servicioId, especialidadId = null, elegido, onElegir }: Props) {
   const t = useTerminos()
   const { data: profesionales, isPending, error, refetch } = useQuery({
-    queryKey: ['profesionales-publicos', slug, sucursalId, servicioId],
-    queryFn: () => obtenerProfesionalesPublicos(slug, sucursalId, servicioId),
+    queryKey: ['profesionales-publicos', slug, sucursalId, servicioId, especialidadId],
+    queryFn: () => obtenerProfesionalesPublicos(slug, sucursalId, servicioId, especialidadId),
     staleTime: 60 * 1000, // la disponibilidad cambia: se refresca más seguido que los servicios
   })
 
@@ -50,7 +58,9 @@ export function PasoProfesional({ slug, sucursalId, servicioId, elegido, onElegi
   if (conTurnos.length === 0) {
     return (
       <p className="reserva-vacio">
-        Por ahora no hay turnos disponibles para {t.servicio.este}. Probá con {t.servicio.otro} o volvé más tarde.
+        {servicioId
+          ? <>Por ahora no hay turnos disponibles para {t.servicio.este}. Probá con {t.servicio.otro} o volvé más tarde.</>
+          : <>Por ahora no hay turnos disponibles para esta especialidad. Probá con otra o volvé más tarde.</>}
       </p>
     )
   }
@@ -93,6 +103,8 @@ export function PasoProfesional({ slug, sucursalId, servicioId, elegido, onElegi
                 <span className="reserva-avatar" aria-hidden="true">{iniciales(b)}</span>
               )}
               <strong>{b.nombre} {b.apellido}</strong>
+              {especialidadesDe(b) && <span className="reserva-profesional-especialidades">{especialidadesDe(b)}</span>}
+              {b.matricula && <span className="reserva-profesional-matricula">Matrícula {b.matricula}</span>}
               <span className="reserva-profesional-dispo">{disponibilidad(b.proximoDiaDisponible)}</span>
             </button>
           </li>

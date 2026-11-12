@@ -74,6 +74,16 @@
 }
 .reserva-avatar-cualquiera { font-size: 1.5rem; }
 .reserva-profesional-dispo { font-size: 0.875rem; color: var(--texto-suave); }
+/* Rubro salud (issue #68): especialidades y matrícula en la tarjeta del profesional */
+.reserva-profesional-especialidades { font-size: 0.875rem; color: var(--texto); }
+.reserva-profesional-matricula { font-size: 0.8rem; color: var(--texto-suave); }
+
+.reserva-buscador { margin-bottom: 12px; }
+.reserva-buscador input {
+  width: 100%; padding: 12px 16px; font-size: 1rem; border: 1px solid var(--borde); border-radius: 12px;
+  background: var(--fondo-tarjeta); color: var(--texto); font-family: inherit;
+}
+.reserva-buscador input:focus { outline: none; border-color: var(--acento); box-shadow: 0 0 0 3px var(--acento-suave); }
 
 .reserva-calendario-encabezado { margin-bottom: 12px; font-size: 1.05rem; }
 .reserva-semana { display: flex; align-items: center; gap: 4px; }

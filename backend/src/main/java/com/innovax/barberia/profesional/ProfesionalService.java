@@ -14,6 +14,9 @@ import com.innovax.barberia.profesional.dto.OpcionesProfesionalResponse;
 import com.innovax.barberia.common.ConflictoException;
 import com.innovax.barberia.common.DatosInvalidosException;
 import com.innovax.barberia.common.RecursoNoEncontradoException;
+import com.innovax.barberia.especialidad.Especialidad;
+import com.innovax.barberia.especialidad.EspecialidadRepository;
+import com.innovax.barberia.especialidad.dto.EspecialidadResponse;
 import com.innovax.barberia.horario.HorarioLaboral;
 import com.innovax.barberia.horario.HorarioLaboralRepository;
 import com.innovax.barberia.servicio.Servicio;
@@ -54,6 +57,7 @@ public class ProfesionalService {
     private final NegocioRepository negocios;
     private final SucursalRepository sucursales;
     private final ServicioRepository servicios;
+    private final EspecialidadRepository especialidades;
     private final HorarioLaboralRepository horarios;
     private final UsuarioRepository usuarios;
     private final PasswordEncoder passwordEncoder;
@@ -76,7 +80,7 @@ public class ProfesionalService {
         return ProfesionalResponse.de(buscar(id));
     }
 
-    /** Sucursales y servicios activos que se pueden asignar. */
+    /** Sucursales y servicios activos, y especialidades del negocio, que se pueden asignar. */
     @Transactional(readOnly = true)
     public OpcionesProfesionalResponse opciones() {
         UUID negocioId = usuarioActual.negocioId();
@@ -86,6 +90,9 @@ public class ProfesionalService {
                         .toList(),
                 servicios.findByNegocioIdAndActivoTrueOrderByOrdenAscNombreAsc(negocioId).stream()
                         .map(s -> new OpcionesProfesionalResponse.ServicioOpcion(s.getId(), s.getNombre(), s.getDuracionMin()))
+                        .toList(),
+                especialidades.findByNegocioIdOrderByNombreAsc(negocioId).stream()
+                        .map(EspecialidadResponse::de)
                         .toList());
     }
 
@@ -98,6 +105,8 @@ public class ProfesionalService {
         Profesional profesional = new Profesional();
         profesional.setNegocio(negocio);
         aplicarDatos(profesional, request.nombre(), request.apellido(), request.sucursalIds(), request.servicioIds());
+        profesional.setMatricula(normalizarMatricula(request.matricula()));
+        aplicarEspecialidades(profesional, request.especialidadIds() == null ? Set.of() : request.especialidadIds());
 
         Usuario usuario = null;
         if (request.usuario() != null) {
@@ -115,6 +124,13 @@ public class ProfesionalService {
     public ProfesionalResponse actualizar(UUID id, ProfesionalRequests.Actualizar request) {
         Profesional profesional = buscar(id);
         aplicarDatos(profesional, request.nombre(), request.apellido(), request.sucursalIds(), request.servicioIds());
+        // null = el cliente no manda el campo (versión anterior del panel): se conserva lo que había
+        if (request.matricula() != null) {
+            profesional.setMatricula(normalizarMatricula(request.matricula()));
+        }
+        if (request.especialidadIds() != null) {
+            aplicarEspecialidades(profesional, request.especialidadIds());
+        }
 
         // Si le sacaron una sucursal, sus horarios en esa sucursal ya no tienen sentido
         Set<UUID> sucursalesActuales = profesional.getSucursales().stream()
@@ -299,6 +315,31 @@ public class ProfesionalService {
         profesional.getSucursales().addAll(nuevasSucursales);
         profesional.getServicios().clear();
         profesional.getServicios().addAll(nuevosServicios);
+    }
+
+    /** Las especialidades tienen que ser del mismo negocio que el profesional. */
+    private void aplicarEspecialidades(Profesional profesional, Set<UUID> especialidadIds) {
+        Map<UUID, Especialidad> delNegocio = especialidades
+                .findByNegocioIdOrderByNombreAsc(profesional.getNegocio().getId()).stream()
+                .collect(Collectors.toMap(Especialidad::getId, Function.identity()));
+        Set<Especialidad> nuevas = especialidadIds.stream().map(eid -> {
+            Especialidad e = delNegocio.get(eid);
+            if (e == null) {
+                throw new DatosInvalidosException("especialidadIds", "Alguna especialidad elegida no existe");
+            }
+            return e;
+        }).collect(Collectors.toSet());
+        profesional.getEspecialidades().clear();
+        profesional.getEspecialidades().addAll(nuevas);
+    }
+
+    /** "  MP 12345 " → "MP 12345"; vacía → null (sin matrícula). */
+    private static String normalizarMatricula(String matricula) {
+        if (matricula == null) {
+            return null;
+        }
+        String limpia = matricula.trim().replaceAll("\\s+", " ");
+        return limpia.isEmpty() ? null : limpia;
     }
 
     /** El usuario nace con una contraseña aleatoria que nadie conoce: la define el barbero desde la invitación. */

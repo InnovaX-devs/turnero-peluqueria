@@ -1,9 +1,10 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { cambiarActivoProfesional, listarProfesionales } from '../../api/profesionales'
+import { cambiarActivoProfesional, listarProfesionales, obtenerOpcionesProfesional } from '../../api/profesionales'
 import { mensajeDeError } from '../../lib/errores'
 import { Avatar } from './FotoProfesional'
+import { GestionEspecialidades } from './GestionEspecialidades'
 import '../admin/configuracion.css'
 import './profesionales.css'
 import { useTerminos } from '../terminos/useTerminos'
@@ -19,6 +20,20 @@ export function ProfesionalesPage() {
     queryKey: ['barberos', 'lista'],
     queryFn: () => listarProfesionales(true),
   })
+
+  // Rubro salud (issue #68): matrícula y especialidades en la tarjeta. La lista trae ids: los nombres salen de las opciones
+  const esSalud = t.rubro === 'SALUD'
+  const opciones = useQuery({
+    queryKey: ['barberos', 'opciones'],
+    queryFn: obtenerOpcionesProfesional,
+    enabled: esSalud,
+  })
+  function nombresEspecialidades(ids: string[]): string {
+    return (opciones.data?.especialidades ?? [])
+      .filter((e) => ids.includes(e.id))
+      .map((e) => e.nombre)
+      .join(' · ')
+  }
 
   const cambiarActivo = useMutation({
     mutationFn: ({ id, activo }: { id: string; activo: boolean }) => cambiarActivoProfesional(id, activo),
@@ -86,6 +101,13 @@ export function ProfesionalesPage() {
                 {b.sucursalIds.length} sucursal(es) · {b.servicioIds.length} {t.servicio.cantidad(b.servicioIds.length)}
                 {b.usuarioEmail ? ' · con acceso' : ''}
               </span>
+              {esSalud && (b.matricula || nombresEspecialidades(b.especialidadIds)) && (
+                <span className="profesional-detalle-linea">
+                  {[nombresEspecialidades(b.especialidadIds), b.matricula && `Matrícula ${b.matricula}`]
+                    .filter(Boolean)
+                    .join(' · ')}
+                </span>
+              )}
               {!b.activo && <span className="badge badge-inactivo">Inactivo</span>}
             </div>
             {confirmandoBaja !== b.id && (
@@ -137,6 +159,8 @@ export function ProfesionalesPage() {
           </li>
         ))}
       </ul>
+
+      {esSalud && <GestionEspecialidades />}
     </section>
   )
 }

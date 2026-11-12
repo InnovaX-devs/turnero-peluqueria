@@ -18,8 +18,19 @@ export interface NegocioPublico {
   reservasOnline: boolean
   /** Hasta cuántos días adelante se puede reservar */
   anticipacionMaximaDias: number
+  /**
+   * Rubro salud con especialidades cargadas: la reserva arranca por la especialidad
+   * (especialidad → profesional o cualquiera → prestación → horario).
+   */
+  reservaPorEspecialidad: boolean
   sucursales: SucursalPublica[]
 }
+
+export interface EspecialidadPublica {
+  id: string
+  nombre: string
+}
+
 export interface ServicioPublico {
   id: string
   nombre: string
@@ -33,6 +44,10 @@ export interface ProfesionalPublico {
   nombre: string
   apellido: string
   fotoUrl: string | null
+  /** Rubro salud: se muestra en la tarjeta. null si no tiene */
+  matricula: string | null
+  /** Nombres de sus especialidades (rubro salud), ordenados */
+  especialidades: string[]
   /** yyyy-mm-dd, o null si no tiene horarios libres dentro de la anticipación máxima */
   proximoDiaDisponible: string | null
 }

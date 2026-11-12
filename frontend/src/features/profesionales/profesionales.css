@@ -271,3 +271,67 @@
   border-color: var(--error);
   font-weight: 600;
 }
+/* Rubro salud (issue #68) */
+.especialidad-nueva {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.especialidad-nueva input {
+  flex: 1;
+  min-width: 0;
+  padding: 10px 12px;
+  font: inherit;
+  border: 1px solid var(--borde);
+  border-radius: 10px;
+  background: var(--fondo-tarjeta);
+  color: var(--texto);
+}
+
+.especialidad-nueva input[aria-invalid='true'] {
+  border-color: var(--error);
+}
+
+.especialidades-gestion {
+  margin-top: 28px;
+}
+
+.especialidades-gestion h2 {
+  font-size: 1.15rem;
+  margin: 0 0 4px;
+}
+
+.especialidades-lista {
+  list-style: none;
+  margin: 12px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.especialidades-lista li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  background: var(--fondo-tarjeta);
+  border: 1px solid var(--borde);
+  border-radius: 12px;
+}
+
+.especialidades-lista li > span,
+.especialidades-lista li > input {
+  flex: 1;
+  min-width: 0;
+}
+
+.especialidades-lista li > input {
+  padding: 8px 10px;
+  font: inherit;
+  border: 1px solid var(--borde);
+  border-radius: 8px;
+  background: var(--fondo);
+  color: var(--texto);
+}

@@ -1,6 +1,7 @@
 package com.innovax.barberia.profesional;
 
 import com.innovax.barberia.auth.Usuario;
+import com.innovax.barberia.especialidad.Especialidad;
 import com.innovax.barberia.negocio.Negocio;
 import com.innovax.barberia.servicio.Servicio;
 import com.innovax.barberia.sucursal.Sucursal;
@@ -44,6 +45,10 @@ public class Profesional {
     @Column(length = 500)
     private String fotoUrl;
 
+    /** Matrícula profesional (rubro salud). Null si no corresponde o no se cargó. */
+    @Column(length = 30)
+    private String matricula;
+
     @Column(nullable = false)
     private boolean activo = true;
 
@@ -60,6 +65,14 @@ public class Profesional {
             joinColumns = @JoinColumn(name = "profesional_id"),
             inverseJoinColumns = @JoinColumn(name = "servicio_id"))
     private Set<Servicio> servicios = new HashSet<>();
+
+    /** Rubro salud: lo que el paciente busca en la página pública ("Kinesiología"). */
+    @ManyToMany
+    @JoinTable(
+            name = "profesional_especialidad",
+            joinColumns = @JoinColumn(name = "profesional_id"),
+            inverseJoinColumns = @JoinColumn(name = "especialidad_id"))
+    private Set<Especialidad> especialidades = new HashSet<>();
 
     @CreationTimestamp
     @Column(nullable = false, updatable = false)

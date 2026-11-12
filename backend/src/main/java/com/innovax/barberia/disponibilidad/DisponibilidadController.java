@@ -12,6 +12,10 @@ import org.springframework.web.bind.annotation.RestController;
 import java.time.LocalDate;
 import java.util.UUID;
 
+/**
+ * Horarios libres para la reserva pública. Sin {@code profesional} = "cualquiera"; en ese caso
+ * {@code especialidad} (rubro salud) limita a los profesionales que la tienen.
+ */
 @RestController
 @RequestMapping("/api/public/disponibilidad")
 @RequiredArgsConstructor
@@ -25,8 +29,10 @@ public class DisponibilidadController {
             @RequestParam UUID servicio,
             @RequestParam(required = false) UUID profesional,
             @RequestParam(name = "barbero", required = false) UUID profesionalAnterior,
+            @RequestParam(required = false) UUID especialidad,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fecha) {
-        return disponibilidadService.consultar(sucursal, servicio, elegido(profesional, profesionalAnterior), fecha);
+        return disponibilidadService.consultar(
+                sucursal, servicio, elegido(profesional, profesionalAnterior), especialidad, fecha);
     }
 
     @GetMapping("/dias")
@@ -35,10 +41,11 @@ public class DisponibilidadController {
             @RequestParam UUID servicio,
             @RequestParam(required = false) UUID profesional,
             @RequestParam(name = "barbero", required = false) UUID profesionalAnterior,
+            @RequestParam(required = false) UUID especialidad,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate desde,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate hasta) {
         return disponibilidadService.consultarDias(
-                sucursal, servicio, elegido(profesional, profesionalAnterior), desde, hasta);
+                sucursal, servicio, elegido(profesional, profesionalAnterior), especialidad, desde, hasta);
     }
 
     /** ?barbero= es el nombre del parámetro antes del issue #64: se sigue aceptando como alias. */
