@@ -1,5 +1,6 @@
 package com.innovax.barberia.cliente;
 
+import com.innovax.barberia.cliente.dto.ActualizarCoberturaRequest;
 import com.innovax.barberia.cliente.dto.ActualizarNotasRequest;
 import com.innovax.barberia.cliente.dto.ClienteResponse;
 import com.innovax.barberia.cliente.dto.CrearClienteRequest;
@@ -61,5 +62,11 @@ public class ClienteController {
     @PatchMapping("/{id}/notas")
     public FichaClienteResponse actualizarNotas(@PathVariable UUID id, @Valid @RequestBody ActualizarNotasRequest request) {
         return clienteService.actualizarNotas(id, request);
+    }
+
+    /** Issue #67: obra social / prepaga, número de afiliado y plan del paciente. */
+    @PatchMapping("/{id}/cobertura")
+    public FichaClienteResponse actualizarCobertura(@PathVariable UUID id, @Valid @RequestBody ActualizarCoberturaRequest request) {
+        return clienteService.actualizarCobertura(id, request);
     }
 }

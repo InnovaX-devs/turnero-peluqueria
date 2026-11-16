@@ -1,4 +1,5 @@
 import { api } from './client'
+import type { Cobertura } from '../types/cobertura'
 import type {
   EspecialidadPublica,
   NegocioPublico,
@@ -14,11 +15,26 @@ export async function obtenerNegocioPublico(slug: string): Promise<NegocioPublic
   return data
 }
 
-/** Rubro salud: especialidades que se pueden reservar en esa sucursal. */
-export async function obtenerEspecialidadesPublicas(slug: string, sucursalId: string): Promise<EspecialidadPublica[]> {
+/** Rubro salud (issue #67): obras sociales / prepagas activas del negocio. Vacía = no se pregunta cómo paga. */
+export async function obtenerCoberturasPublicas(slug: string): Promise<Cobertura[]> {
+  const { data } = await api.get<Cobertura[]>(`/api/public/negocios/${encodeURIComponent(slug)}/coberturas`)
+  return data
+}
+
+/** Con obra social elegida, el backend deja solo lo que atiende algún profesional que la trabaja. */
+function paramCobertura(coberturaId: string | null | undefined) {
+  return coberturaId ? { cobertura: coberturaId } : {}
+}
+
+/** Rubro salud: especialidades que se pueden reservar en esa sucursal (y con esa obra social, si se eligió). */
+export async function obtenerEspecialidadesPublicas(
+  slug: string,
+  sucursalId: string,
+  coberturaId?: string | null,
+): Promise<EspecialidadPublica[]> {
   const { data } = await api.get<EspecialidadPublica[]>(
     `/api/public/negocios/${encodeURIComponent(slug)}/especialidades`,
-    { params: { sucursal: sucursalId } },
+    { params: { sucursal: sucursalId, ...paramCobertura(coberturaId) } },
   )
   return data
 }
@@ -27,6 +43,8 @@ export async function obtenerEspecialidadesPublicas(slug: string, sucursalId: st
 export interface FiltroServicios {
   profesionalId?: string
   especialidadId?: string
+  /** Obra social elegida (issue #67) */
+  coberturaId?: string
 }
 
 /** Solo los servicios que se pueden reservar en esa sucursal (y, si se indica, con ese profesional o especialidad). */
@@ -40,6 +58,7 @@ export async function obtenerServiciosPublicos(
       sucursal: sucursalId,
       ...(filtro.profesionalId ? { profesional: filtro.profesionalId } : {}),
       ...(filtro.especialidadId ? { especialidad: filtro.especialidadId } : {}),
+      ...paramCobertura(filtro.coberturaId),
     },
   })
   return data
@@ -54,12 +73,14 @@ export async function obtenerProfesionalesPublicos(
   sucursalId: string,
   servicioId: string | null,
   especialidadId?: string | null,
+  coberturaId?: string | null,
 ): Promise<ProfesionalPublico[]> {
   const { data } = await api.get<ProfesionalPublico[]>(`/api/public/negocios/${encodeURIComponent(slug)}/profesionales`, {
     params: {
       sucursal: sucursalId,
       ...(servicioId ? { servicio: servicioId } : {}),
       ...(especialidadId ? { especialidad: especialidadId } : {}),
+      ...paramCobertura(coberturaId),
     },
   })
   return data
@@ -72,14 +93,17 @@ interface ConsultaDisponibilidad {
   profesionalId: string | null
   /** Rubro salud con "cualquier profesional": solo cuentan los de esta especialidad */
   especialidadId?: string | null
+  /** Obra social elegida: solo cuentan los profesionales que la atienden */
+  coberturaId?: string | null
 }
 
-function paramsDe({ sucursalId, servicioId, profesionalId, especialidadId }: ConsultaDisponibilidad) {
+function paramsDe({ sucursalId, servicioId, profesionalId, especialidadId, coberturaId }: ConsultaDisponibilidad) {
   return {
     sucursal: sucursalId,
     servicio: servicioId,
     ...(profesionalId ? { profesional: profesionalId } : {}),
     ...(!profesionalId && especialidadId ? { especialidad: especialidadId } : {}),
+    ...paramCobertura(coberturaId),
   }
 }
 

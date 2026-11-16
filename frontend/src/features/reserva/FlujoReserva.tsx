@@ -1,5 +1,9 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
+import { useQuery } from '@tanstack/react-query'
+import { obtenerCoberturasPublicas } from '../../api/reservaPublica'
+import type { Cobertura } from '../../types/cobertura'
 import type { NegocioPublico, ReservaCreada } from '../../types/reserva'
+import { PasoCobertura } from './PasoCobertura'
 import { PasoProfesional } from './PasoProfesional'
 import { PasoDatos } from './PasoDatos'
 import { PasoEspecialidad } from './PasoEspecialidad'
@@ -7,17 +11,42 @@ import { PasoHorario } from './PasoHorario'
 import { PasoServicio } from './PasoServicio'
 import { PasoSucursal } from './PasoSucursal'
 import { ReservaConfirmada } from './ReservaConfirmada'
-import { PROFESIONAL_CUALQUIERA } from './flujo'
+import { PROFESIONAL_CUALQUIERA, coberturaReal } from './flujo'
 import { useFlujoReserva } from './useFlujoReserva'
 
+/**
+ * Rubro salud (issue #67): antes de armar el flujo se buscan las obras sociales del negocio; si tiene,
+ * se agrega el paso "¿Cómo vas a pagar?". Si la consulta falla, se reserva igual (como particular).
+ */
 export function FlujoReserva({ negocio }: { negocio: NegocioPublico }) {
+  const esSalud = negocio.rubro === 'SALUD'
+  const { data, isPending } = useQuery({
+    queryKey: ['coberturas-publicas', negocio.slug],
+    queryFn: () => obtenerCoberturasPublicas(negocio.slug),
+    enabled: esSalud,
+    staleTime: 5 * 60 * 1000,
+    retry: 1,
+  })
+
+  if (esSalud && isPending) {
+    return <p className="reserva-cargando">Cargando…</p>
+  }
+  return <FlujoReservaPasos negocio={negocio} coberturas={esSalud ? (data ?? []) : []} />
+}
+
+function FlujoReservaPasos({ negocio, coberturas }: { negocio: NegocioPublico; coberturas: Cobertura[] }) {
   // Rubro salud con especialidades: especialidad → profesional (o cualquiera) → prestación → horario
   const porEspecialidad = negocio.reservaPorEspecialidad
+  const coberturaIds = useMemo(() => coberturas.map((c) => c.id), [coberturas])
   const { pasos, indice, paso, titulo, selecciones, avanzar, volver, reiniciar } = useFlujoReserva(
     negocio.slug,
     negocio.sucursales,
     porEspecialidad,
+    coberturaIds,
   )
+  // Id real de la obra social elegida (undefined = particular o el negocio no trabaja con obras sociales)
+  const coberturaId = coberturaReal(selecciones.coberturaId)
+  const cobertura = coberturas.find((c) => c.id === coberturaId)
   const [confirmada, setConfirmada] = useState<{ reserva: ReservaCreada; sucursalId: string } | null>(null)
 
   if (confirmada) {
@@ -73,10 +102,18 @@ export function FlujoReserva({ negocio }: { negocio: NegocioPublico }) {
           onElegir={(sucursalId) => avanzar({ sucursalId })}
         />
       )}
+      {paso === 'cobertura' && (
+        <PasoCobertura
+          coberturas={coberturas}
+          elegida={selecciones.coberturaId}
+          onElegir={(id) => avanzar({ coberturaId: id })}
+        />
+      )}
       {paso === 'especialidad' && selecciones.sucursalId && (
         <PasoEspecialidad
           slug={negocio.slug}
           sucursalId={selecciones.sucursalId}
+          coberturaId={coberturaId}
           elegida={selecciones.especialidadId}
           onElegir={(especialidadId) => avanzar({ especialidadId })}
         />
@@ -85,6 +122,7 @@ export function FlujoReserva({ negocio }: { negocio: NegocioPublico }) {
         <PasoServicio
           slug={negocio.slug}
           sucursalId={selecciones.sucursalId}
+          filtro={coberturaId ? { coberturaId } : undefined}
           elegido={selecciones.servicioId}
           onElegir={(servicioId) => avanzar({ servicioId })}
         />
@@ -96,8 +134,8 @@ export function FlujoReserva({ negocio }: { negocio: NegocioPublico }) {
           sucursalId={selecciones.sucursalId}
           filtro={
             selecciones.profesionalId === PROFESIONAL_CUALQUIERA
-              ? { especialidadId: selecciones.especialidadId }
-              : { profesionalId: selecciones.profesionalId }
+              ? { especialidadId: selecciones.especialidadId, coberturaId }
+              : { profesionalId: selecciones.profesionalId, coberturaId }
           }
           elegido={selecciones.servicioId}
           onElegir={(servicioId) => avanzar({ servicioId })}
@@ -108,6 +146,7 @@ export function FlujoReserva({ negocio }: { negocio: NegocioPublico }) {
           slug={negocio.slug}
           sucursalId={selecciones.sucursalId}
           servicioId={selecciones.servicioId}
+          coberturaId={coberturaId}
           elegido={selecciones.profesionalId}
           onElegir={(profesionalId) => avanzar({ profesionalId })}
         />
@@ -118,6 +157,7 @@ export function FlujoReserva({ negocio }: { negocio: NegocioPublico }) {
           sucursalId={selecciones.sucursalId}
           servicioId={null}
           especialidadId={selecciones.especialidadId}
+          coberturaId={coberturaId}
           elegido={selecciones.profesionalId}
           onElegir={(profesionalId) => avanzar({ profesionalId })}
         />
@@ -130,6 +170,7 @@ export function FlujoReserva({ negocio }: { negocio: NegocioPublico }) {
           servicioId={selecciones.servicioId}
           profesionalId={selecciones.profesionalId}
           especialidadId={porEspecialidad ? selecciones.especialidadId : null}
+          coberturaId={coberturaId}
           fechaElegida={selecciones.fecha}
           horaElegida={selecciones.hora}
           onElegir={(eleccion) => avanzar(eleccion)}
@@ -144,6 +185,7 @@ export function FlujoReserva({ negocio }: { negocio: NegocioPublico }) {
           profesionalId={selecciones.profesionalAsignadoId}
           fecha={selecciones.fecha}
           hora={selecciones.hora}
+          cobertura={cobertura}
           onConfirmada={(reserva) => {
             setConfirmada({ reserva, sucursalId: sucursal.id })
             reiniciar()

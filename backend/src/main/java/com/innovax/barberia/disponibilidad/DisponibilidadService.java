@@ -1,5 +1,7 @@
 package com.innovax.barberia.disponibilidad;
 
+import com.innovax.barberia.cobertura.Cobertura;
+import com.innovax.barberia.cobertura.CoberturaRepository;
 import com.innovax.barberia.atencion.AtencionRepository;
 import com.innovax.barberia.atencion.EstadoAtencion;
 import com.innovax.barberia.negocio.Negocio;
@@ -54,34 +56,38 @@ public class DisponibilidadService {
     private final AtencionRepository atencionRepository;
     private final BloqueoRepository bloqueoRepository;
     private final OcupacionConsultorios ocupacionConsultorios;
+    private final CoberturaRepository coberturaRepository;
 
     @Transactional(readOnly = true)
     public DisponibilidadResponse consultar(UUID sucursalId, UUID servicioId, UUID profesionalId, LocalDate fecha) {
-        return consultar(sucursalId, servicioId, profesionalId, null, fecha);
+        return consultar(sucursalId, servicioId, profesionalId, null, null, fecha);
     }
 
-    /** {@code especialidadId}: con "cualquier profesional", solo cuentan los que tienen esa especialidad. */
+    /**
+     * {@code especialidadId}: con "cualquier profesional", solo cuentan los que tienen esa especialidad.
+     * {@code coberturaId} (issue #67): solo cuentan los profesionales que atienden esa obra social / prepaga.
+     */
     @Transactional(readOnly = true)
     public DisponibilidadResponse consultar(UUID sucursalId, UUID servicioId, UUID profesionalId, UUID especialidadId,
-                                            LocalDate fecha) {
-        Contexto ctx = cargarContexto(sucursalId, servicioId, profesionalId, especialidadId);
+                                            UUID coberturaId, LocalDate fecha) {
+        Contexto ctx = cargarContexto(sucursalId, servicioId, profesionalId, especialidadId, coberturaId);
         return new DisponibilidadResponse(fecha, slotsDelDia(ctx, fecha));
     }
 
     @Transactional(readOnly = true)
     public DiasDisponiblesResponse consultarDias(UUID sucursalId, UUID servicioId, UUID profesionalId, LocalDate desde, LocalDate hasta) {
-        return consultarDias(sucursalId, servicioId, profesionalId, null, desde, hasta);
+        return consultarDias(sucursalId, servicioId, profesionalId, null, null, desde, hasta);
     }
 
-    /** {@code especialidadId}: con "cualquier profesional", solo cuentan los que tienen esa especialidad. */
+    /** Mismos filtros que {@link #consultar(UUID, UUID, UUID, UUID, UUID, LocalDate)}. */
     @Transactional(readOnly = true)
     public DiasDisponiblesResponse consultarDias(UUID sucursalId, UUID servicioId, UUID profesionalId, UUID especialidadId,
-                                                 LocalDate desde, LocalDate hasta) {
+                                                 UUID coberturaId, LocalDate desde, LocalDate hasta) {
         if (hasta.isBefore(desde)) {
             throw new DatosInvalidosException("hasta", "No puede ser anterior a «desde»");
         }
 
-        Contexto ctx = cargarContexto(sucursalId, servicioId, profesionalId, especialidadId);
+        Contexto ctx = cargarContexto(sucursalId, servicioId, profesionalId, especialidadId, coberturaId);
 
         // Tope fijo solo para no hacer consultas enormes. Los días más allá de la anticipación
         // máxima de la barbería no fallan: vuelven sin disponibilidad (ver slotsDelDia).
@@ -195,10 +201,11 @@ public class DisponibilidadService {
     }
 
     private Contexto cargarContexto(UUID sucursalId, UUID servicioId, UUID profesionalId) {
-        return cargarContexto(sucursalId, servicioId, profesionalId, null);
+        return cargarContexto(sucursalId, servicioId, profesionalId, null, null);
     }
 
-    private Contexto cargarContexto(UUID sucursalId, UUID servicioId, UUID profesionalId, UUID especialidadId) {
+    private Contexto cargarContexto(UUID sucursalId, UUID servicioId, UUID profesionalId, UUID especialidadId,
+                                    UUID coberturaId) {
         // Desactivados cuentan como inexistentes: no se pueden consultar ni reservar
         Sucursal sucursal = sucursalRepository.findById(sucursalId)
                 .filter(Sucursal::isActiva)
@@ -224,6 +231,12 @@ public class DisponibilidadService {
                         .filter(p -> especialidadId == null
                                 || p.getEspecialidades().stream().anyMatch(e -> e.getId().equals(especialidadId)))
                         .toList();
+
+        // Issue #67: con obra social elegida, los que no la atienden no ofrecen horarios (ni el puntual)
+        Cobertura cobertura = coberturaRepository.activaONull(sucursal.getNegocio().getId(), coberturaId);
+        if (cobertura != null) {
+            profesionales = profesionales.stream().filter(p -> p.atiende(cobertura)).toList();
+        }
 
         return new Contexto(sucursal, servicio, profesionales, sucursal.getNegocio(), ZoneId.of(sucursal.getNegocio().getZonaHoraria()));
     }

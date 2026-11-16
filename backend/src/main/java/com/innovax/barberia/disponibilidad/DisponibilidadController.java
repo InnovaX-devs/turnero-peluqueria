@@ -14,7 +14,8 @@ import java.util.UUID;
 
 /**
  * Horarios libres para la reserva pública. Sin {@code profesional} = "cualquiera"; en ese caso
- * {@code especialidad} (rubro salud) limita a los profesionales que la tienen.
+ * {@code especialidad} (rubro salud) limita a los profesionales que la tienen. Con {@code cobertura}
+ * (issue #67) solo cuentan los que atienden esa obra social / prepaga.
  */
 @RestController
 @RequestMapping("/api/public/disponibilidad")
@@ -30,9 +31,10 @@ public class DisponibilidadController {
             @RequestParam(required = false) UUID profesional,
             @RequestParam(name = "barbero", required = false) UUID profesionalAnterior,
             @RequestParam(required = false) UUID especialidad,
+            @RequestParam(required = false) UUID cobertura,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fecha) {
         return disponibilidadService.consultar(
-                sucursal, servicio, elegido(profesional, profesionalAnterior), especialidad, fecha);
+                sucursal, servicio, elegido(profesional, profesionalAnterior), especialidad, cobertura, fecha);
     }
 
     @GetMapping("/dias")
@@ -42,10 +44,11 @@ public class DisponibilidadController {
             @RequestParam(required = false) UUID profesional,
             @RequestParam(name = "barbero", required = false) UUID profesionalAnterior,
             @RequestParam(required = false) UUID especialidad,
+            @RequestParam(required = false) UUID cobertura,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate desde,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate hasta) {
         return disponibilidadService.consultarDias(
-                sucursal, servicio, elegido(profesional, profesionalAnterior), especialidad, desde, hasta);
+                sucursal, servicio, elegido(profesional, profesionalAnterior), especialidad, cobertura, desde, hasta);
     }
 
     /** ?barbero= es el nombre del parámetro antes del issue #64: se sigue aceptando como alias. */

@@ -51,6 +51,9 @@ public final class ProfesionalRequests {
 
             Set<UUID> especialidadIds,
 
+            /** Opcional (rubro salud): obras sociales / prepagas que atiende. */
+            Set<UUID> coberturaIds,
+
             @Valid
             CrearUsuario usuario) {
     }
@@ -75,7 +78,10 @@ public final class ProfesionalRequests {
             String matricula,
 
             /** null = no se tocan las que tiene; vacío = se le quitan todas. */
-            Set<UUID> especialidadIds) {
+            Set<UUID> especialidadIds,
+
+            /** Obras sociales / prepagas que atiende. null = no se tocan; vacío = solo particulares. */
+            Set<UUID> coberturaIds) {
     }
 
     public record CambiarActivo(

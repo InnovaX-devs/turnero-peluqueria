@@ -13,6 +13,8 @@ interface Props {
   servicioId: string | null
   /** Flujo por especialidad (rubro salud): los que tienen esa especialidad. */
   especialidadId?: string | null
+  /** Obra social elegida (issue #67): solo los que la atienden */
+  coberturaId?: string
   elegido: string | null
   onElegir: (id: string) => void
 }
@@ -30,11 +32,11 @@ function especialidadesDe(b: ProfesionalPublico): string | null {
   return b.especialidades.length > 0 ? b.especialidades.join(' · ') : null
 }
 
-export function PasoProfesional({ slug, sucursalId, servicioId, especialidadId = null, elegido, onElegir }: Props) {
+export function PasoProfesional({ slug, sucursalId, servicioId, especialidadId = null, coberturaId, elegido, onElegir }: Props) {
   const t = useTerminos()
   const { data: profesionales, isPending, error, refetch } = useQuery({
-    queryKey: ['profesionales-publicos', slug, sucursalId, servicioId, especialidadId],
-    queryFn: () => obtenerProfesionalesPublicos(slug, sucursalId, servicioId, especialidadId),
+    queryKey: ['profesionales-publicos', slug, sucursalId, servicioId, especialidadId, coberturaId ?? null],
+    queryFn: () => obtenerProfesionalesPublicos(slug, sucursalId, servicioId, especialidadId, coberturaId),
     staleTime: 60 * 1000, // la disponibilidad cambia: se refresca más seguido que los servicios
   })
 

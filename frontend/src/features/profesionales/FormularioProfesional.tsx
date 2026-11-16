@@ -14,6 +14,7 @@ interface Form {
   servicioIds: string[]
   matricula: string
   especialidadIds: string[]
+  coberturaIds: string[]
   conUsuario: boolean
   email: string
 }
@@ -44,6 +45,7 @@ export function FormularioProfesional({ profesional, opciones, onGuardado }: Pro
     servicioIds: profesional?.servicioIds ?? [],
     matricula: profesional?.matricula ?? '',
     especialidadIds: profesional?.especialidadIds ?? [],
+    coberturaIds: profesional?.coberturaIds ?? [],
     conUsuario: false,
     email: '',
   })
@@ -89,7 +91,9 @@ export function FormularioProfesional({ profesional, opciones, onGuardado }: Pro
         sucursalIds: form.sucursalIds,
         servicioIds: form.servicioIds,
         // Fuera de salud no se mandan: el backend conserva lo que hubiera
-        ...(esSalud ? { matricula: form.matricula.trim(), especialidadIds: form.especialidadIds } : {}),
+        ...(esSalud
+          ? { matricula: form.matricula.trim(), especialidadIds: form.especialidadIds, coberturaIds: form.coberturaIds }
+          : {}),
       }
       if (profesional) return actualizarProfesional(profesional.id, datos)
       return crearProfesional({
@@ -152,7 +156,8 @@ export function FormularioProfesional({ profesional, opciones, onGuardado }: Pro
     mismoConjunto(form.sucursalIds, profesional.sucursalIds) &&
     mismoConjunto(form.servicioIds, profesional.servicioIds) &&
     form.matricula.trim() === (profesional.matricula ?? '') &&
-    mismoConjunto(form.especialidadIds, profesional.especialidadIds)
+    mismoConjunto(form.especialidadIds, profesional.especialidadIds) &&
+    mismoConjunto(form.coberturaIds, profesional.coberturaIds ?? [])
 
   const errEmail = errores['usuario.email'] ?? errores.email
 
@@ -254,6 +259,34 @@ export function FormularioProfesional({ profesional, opciones, onGuardado }: Pro
           {errores.especialidadIds && (
             <span className="config-campo-error" role="alert">{errores.especialidadIds}</span>
           )}
+        </fieldset>
+      )}
+
+      {esSalud && (
+        <fieldset className="config-grupo">
+          <legend>Obras sociales y prepagas que atiende</legend>
+          <p className="config-ayuda">
+            A los particulares los atienden todos. Un paciente con obra social solo puede reservar con quien la atiende.
+          </p>
+          {(opciones.coberturas ?? []).length === 0 ? (
+            <p className="config-ayuda">
+              Todavía no cargaste obras sociales. Hacelo desde Gestión → Obras sociales.
+            </p>
+          ) : (
+            <div className="checks">
+              {(opciones.coberturas ?? []).map((c) => (
+                <label key={c.id} className="check">
+                  <input
+                    type="checkbox"
+                    checked={form.coberturaIds.includes(c.id)}
+                    onChange={() => cambiar('coberturaIds', alternar(form.coberturaIds, c.id))}
+                  />
+                  <span>{c.nombre}</span>
+                </label>
+              ))}
+            </div>
+          )}
+          {errores.coberturaIds && <span className="config-campo-error" role="alert">{errores.coberturaIds}</span>}
         </fieldset>
       )}
 

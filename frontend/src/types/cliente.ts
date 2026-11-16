@@ -1,4 +1,5 @@
 import type { EstadoAtencion } from './agenda'
+import type { TipoPago } from './cobertura'
 
 export type Sexo = 'FEMENINO' | 'MASCULINO' | 'OTRO'
 
@@ -38,6 +39,10 @@ export interface AtencionHistorial {
   servicioNombre: string
   /** En centavos */
   precioFinal: number
+  /** Issue #67. Puede faltar si el backend es anterior */
+  tipoPago?: TipoPago
+  /** Obra social con la que se atendió. null = particular */
+  coberturaNombre?: string | null
 }
 
 export interface FichaCliente {
@@ -54,4 +59,16 @@ export interface FichaCliente {
   ausencias: number
   /** De la más reciente a la más antigua. */
   historial: AtencionHistorial[]
+  /** Obra social / prepaga (issue #67, salud). null = particular */
+  coberturaId?: string | null
+  coberturaNombre?: string | null
+  numeroAfiliado?: string | null
+  plan?: string | null
+}
+
+export interface DatosCoberturaCliente {
+  /** null = particular */
+  coberturaId: string | null
+  numeroAfiliado: string
+  plan: string
 }

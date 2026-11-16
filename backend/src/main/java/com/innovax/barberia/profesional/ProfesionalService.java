@@ -16,6 +16,9 @@ import com.innovax.barberia.common.DatosInvalidosException;
 import com.innovax.barberia.common.RecursoNoEncontradoException;
 import com.innovax.barberia.consultorio.Consultorio;
 import com.innovax.barberia.consultorio.ConsultorioRepository;
+import com.innovax.barberia.cobertura.Cobertura;
+import com.innovax.barberia.cobertura.CoberturaRepository;
+import com.innovax.barberia.cobertura.dto.CoberturaResponse;
 import com.innovax.barberia.especialidad.Especialidad;
 import com.innovax.barberia.especialidad.EspecialidadRepository;
 import com.innovax.barberia.especialidad.dto.EspecialidadResponse;
@@ -62,6 +65,7 @@ public class ProfesionalService {
     private final SucursalRepository sucursales;
     private final ServicioRepository servicios;
     private final EspecialidadRepository especialidades;
+    private final CoberturaRepository coberturas;
     private final HorarioLaboralRepository horarios;
     private final ConsultorioRepository consultorios;
     private final UsuarioRepository usuarios;
@@ -102,6 +106,9 @@ public class ProfesionalService {
                 consultorios.findDelNegocio(negocioId).stream()
                         .filter(c -> c.isActivo() && c.getSucursal().isActiva())
                         .map(c -> new OpcionesProfesionalResponse.ConsultorioOpcion(c.getId(), c.getSucursal().getId(), c.getNombre()))
+                        .toList(),
+                coberturas.findByNegocioIdAndActivaTrueOrderByNombreAsc(negocioId).stream()
+                        .map(CoberturaResponse::de)
                         .toList());
     }
 
@@ -116,6 +123,7 @@ public class ProfesionalService {
         aplicarDatos(profesional, request.nombre(), request.apellido(), request.sucursalIds(), request.servicioIds());
         profesional.setMatricula(normalizarMatricula(request.matricula()));
         aplicarEspecialidades(profesional, request.especialidadIds() == null ? Set.of() : request.especialidadIds());
+        aplicarCoberturas(profesional, request.coberturaIds() == null ? Set.of() : request.coberturaIds());
 
         Usuario usuario = null;
         if (request.usuario() != null) {
@@ -139,6 +147,9 @@ public class ProfesionalService {
         }
         if (request.especialidadIds() != null) {
             aplicarEspecialidades(profesional, request.especialidadIds());
+        }
+        if (request.coberturaIds() != null) {
+            aplicarCoberturas(profesional, request.coberturaIds());
         }
 
         // Si le sacaron una sucursal, sus horarios en esa sucursal ya no tienen sentido
@@ -394,6 +405,25 @@ public class ProfesionalService {
         profesional.getSucursales().addAll(nuevasSucursales);
         profesional.getServicios().clear();
         profesional.getServicios().addAll(nuevosServicios);
+    }
+
+    /**
+     * Issue #67: las coberturas tienen que ser activas y del mismo negocio. Las inactivas que ya tenía se
+     * conservan (no se ven ni se ofrecen, pero si se reactiva la cobertura vuelve a quedar asignada).
+     */
+    private void aplicarCoberturas(Profesional profesional, Set<UUID> coberturaIds) {
+        Map<UUID, Cobertura> activas = coberturas
+                .findByNegocioIdAndActivaTrueOrderByNombreAsc(profesional.getNegocio().getId()).stream()
+                .collect(Collectors.toMap(Cobertura::getId, Function.identity()));
+        Set<Cobertura> nuevas = coberturaIds.stream().map(cid -> {
+            Cobertura c = activas.get(cid);
+            if (c == null) {
+                throw new DatosInvalidosException("coberturaIds", "Alguna obra social / prepaga elegida no existe o está desactivada");
+            }
+            return c;
+        }).collect(Collectors.toSet());
+        profesional.getCoberturas().removeIf(Cobertura::isActiva);
+        profesional.getCoberturas().addAll(nuevas);
     }
 
     /** Las especialidades tienen que ser del mismo negocio que el profesional. */

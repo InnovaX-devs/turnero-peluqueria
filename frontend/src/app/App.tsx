@@ -17,6 +17,7 @@ import { ReportesPage } from '../features/reportes/ReportesPage'
 import { ProfesionalEditarPage, ProfesionalNuevoPage } from '../features/profesionales/ProfesionalPage'
 import { ProfesionalesPage } from '../features/profesionales/ProfesionalesPage'
 import { ServiciosPage } from '../features/servicios/ServiciosPage'
+import { CoberturasPage } from '../features/coberturas/CoberturasPage'
 import { NotificacionesPage } from '../features/notificaciones/NotificacionesPage'
 import { RestablecerPage } from '../features/auth/RestablecerPage'
 
@@ -53,6 +54,7 @@ export function App() {
             <Route path="barberos/:id" element={<RedireccionProfesional />} />
             <Route path="caja" element={<CajaPage />} />
             <Route path="servicios" element={<ServiciosPage />} />
+            <Route path="coberturas" element={<CoberturasPage />} />
           </Route>
         </Route>
       </Route>

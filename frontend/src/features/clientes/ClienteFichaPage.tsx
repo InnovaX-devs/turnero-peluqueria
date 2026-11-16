@@ -8,6 +8,7 @@ import { formatearPrecio } from '../../lib/formato'
 import { ETIQUETAS_ESTADO, linkWhatsApp } from '../agenda/agenda'
 import { ETIQUETA_SEXO } from '../../types/cliente'
 import { NotasCliente } from './NotasCliente'
+import { CoberturaCliente } from './CoberturaCliente'
 import './clientes.css'
 import { useTerminos } from '../terminos/useTerminos'
 
@@ -29,6 +30,7 @@ function formatearFecha(iso: string): string {
 
 export function ClienteFichaPage() {
   const t = useTerminos()
+  const esSalud = t.rubro === 'SALUD'
   const { id = '' } = useParams()
 
   const ficha = useQuery({
@@ -76,6 +78,15 @@ export function ClienteFichaPage() {
         <h1 className="clientes-titulo">{cliente.nombre}</h1>
         <p className="ficha-telefono">{cliente.telefono}</p>
         {cliente.dni && <p className="ficha-dato">DNI {formatearDni(cliente.dni)}</p>}
+        {esSalud && (
+          <p className="ficha-dato">
+            {cliente.coberturaNombre
+              ? [cliente.coberturaNombre, cliente.numeroAfiliado && `Afiliado ${cliente.numeroAfiliado}`, cliente.plan && `Plan ${cliente.plan}`]
+                  .filter(Boolean)
+                  .join(' · ')
+              : 'Particular'}
+          </p>
+        )}
         {(cliente.fechaNacimiento || cliente.sexo) && (
           <p className="ficha-dato">
             {[
@@ -111,6 +122,9 @@ export function ClienteFichaPage() {
         </div>
       </div>
 
+      {/* key: si cambia la ficha (otro paciente o se guardó), el formulario arranca de nuevo */}
+      {esSalud && <CoberturaCliente key={`${cliente.id}-${cliente.coberturaId ?? ''}`} cliente={cliente} />}
+
       <NotasCliente cliente={cliente} />
 
       <section className="ficha-seccion">
@@ -128,6 +142,7 @@ export function ClienteFichaPage() {
                 <div className="ficha-historial-detalle">
                   <span>{formatearFecha(a.inicio)}</span>
                   <span>{a.profesionalNombre}</span>
+                  {a.coberturaNombre && <span className="ficha-historial-cobertura">{a.coberturaNombre}</span>}
                   <span className={`ficha-estado ficha-estado-${a.estado.toLowerCase()}`}>
                     {ETIQUETAS_ESTADO[a.estado]}
                   </span>

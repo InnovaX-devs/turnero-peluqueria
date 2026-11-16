@@ -1,0 +1,23 @@
+.coberturas { max-width: 960px; }
+.coberturas h1 { font-size: 1.5rem; margin: 0 0 8px; }
+.coberturas-bloque { margin-top: 24px; }
+.coberturas-cabecera { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
+.coberturas-cabecera h2 { font-size: 1.15rem; margin: 0; }
+
+.cobertura-inactiva > span { color: var(--texto-suave); }
+.cobertura-etiqueta {
+  margin-left: 8px; padding: 2px 8px; border-radius: 999px;
+  background: var(--borde); color: var(--texto-suave); font-size: 0.75rem;
+}
+
+.coberturas-tabla-envoltorio {
+  margin-top: 16px; overflow-x: auto;
+  background: var(--fondo-tarjeta); border: 1px solid var(--borde); border-radius: 16px;
+}
+.coberturas-tabla { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+.coberturas-tabla caption { text-align: left; font-weight: 700; padding: 14px 16px 6px; }
+.coberturas-tabla th, .coberturas-tabla td { padding: 8px 16px; text-align: left; border-top: 1px solid var(--borde); vertical-align: top; }
+.coberturas-tabla thead th { font-size: 0.8rem; color: var(--texto-suave); font-weight: 600; white-space: nowrap; }
+.coberturas-tabla tbody th { font-weight: 600; }
+.coberturas-tabla small { color: var(--texto-suave); }
+.coberturas-tabla .numero { text-align: right; white-space: nowrap; }

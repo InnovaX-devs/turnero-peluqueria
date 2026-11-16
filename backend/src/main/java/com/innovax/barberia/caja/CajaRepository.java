@@ -12,10 +12,14 @@ import java.util.UUID;
 
 public interface CajaRepository extends Repository<Atencion, UUID> {
 
-    /** Atenciones en un estado dado (la caja usa COMPLETADA) de una barbería, en [desde, hasta). */
+    /**
+     * Atenciones en un estado dado (la caja usa COMPLETADA) de una barbería, en [desde, hasta).
+     * Issue #67: las cubiertas enteras por la obra social no entran (no se cobró nada); las con copago
+     * entran por el copago (ver {@link FilaCaja}).
+     */
     @Query("""
             select new com.innovax.barberia.caja.FilaCaja(
-                a.inicio, a.precioFinal, a.metodoPago,
+                a.inicio, a.precioFinal, a.tipoPago, a.copago, a.metodoPago,
                 b.id, b.nombre, b.apellido,
                 s.id, s.nombre,
                 c.nombre)
@@ -25,6 +29,7 @@ public interface CajaRepository extends Repository<Atencion, UUID> {
             left join a.cliente c
             where a.negocio.id = :negocioId
               and a.estado = :estado
+              and a.tipoPago <> com.innovax.barberia.cobertura.TipoPago.COBERTURA
               and a.inicio >= :desde
               and a.inicio < :hasta
               and (:sucursalId is null or a.sucursal.id = :sucursalId)

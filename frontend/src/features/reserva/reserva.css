@@ -200,3 +200,5 @@
 .reserva-confirmada-sub { color: var(--texto-suave); margin: 0 0 24px; }
 .reserva-confirmada .reserva-resumen { text-align: left; }
 .reserva-otro-turno { width: 100%; padding: 14px; }
+/* Paso "¿Cómo vas a pagar?" (issue #67) */
+.reserva-subtitulo { font-size: 0.95rem; margin: 20px 0 10px; color: var(--texto-suave); font-weight: 600; }

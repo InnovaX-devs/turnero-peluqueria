@@ -64,7 +64,7 @@ export function BottomBar({ usuario, onRegistrar, onCerrarSesion }: Props) {
 
   const itemsMas = [
     ...visibles(ITEMS_NEGOCIO, usuario?.rol),
-    ...visibles(ITEMS_GESTION, usuario?.rol),
+    ...visibles(ITEMS_GESTION, usuario?.rol, t.rubro),
     ITEM_CUENTA,
   ]
   const masActivo = itemsMas.some((i) => pathname.startsWith(i.to))
