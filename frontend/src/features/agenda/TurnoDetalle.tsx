@@ -6,6 +6,7 @@ import { formatearDni } from '../../lib/dni'
 import { mensajeDeError } from '../../lib/errores'
 import { Selector } from '../../components/Selector'
 import type { CambiarEstadoTurno, MetodoPago, Turno } from '../../types/agenda'
+import { ETIQUETA_TIPO_PAGO, type TipoPago } from '../../types/cobertura'
 import {
   ETIQUETAS_ESTADO,
   ETIQUETAS_METODO_PAGO,
@@ -38,6 +39,11 @@ export function TurnoDetalle({ turno, onCerrar }: { turno: Turno; onCerrar: () =
   const [precioInput, setPrecioInput] = useState(() => String(turno.precioFinal / 100))
   const [metodoPago, setMetodoPago] = useState<MetodoPago | ''>(turno.metodoPago ?? '')
   const [errorValidacion, setErrorValidacion] = useState<string | null>(null)
+  // Obras sociales (issue #67, solo salud)
+  const esSalud = t.rubro === 'SALUD'
+  const [tipoPago, setTipoPago] = useState<TipoPago>(turno.tipoPago ?? 'PARTICULAR')
+  const [copagoInput, setCopagoInput] = useState('')
+  const [autorizacion, setAutorizacion] = useState(turno.numeroAutorizacion ?? '')
 
   // Cerrar con Escape, como cualquier modal
   useEffect(() => {
@@ -83,18 +89,48 @@ export function TurnoDetalle({ turno, onCerrar }: { turno: Turno; onCerrar: () =
     cambiar.mutate({ estado })
   }
 
+  /** Obra social con la que se puede cobrar: la del turno o, si se reservó como particular, la del paciente. */
+  const coberturaCobrable = turnoActual.coberturaNombre ?? turnoActual.clienteCoberturaNombre ?? null
+  const eligeTipoPago = esSalud && coberturaCobrable !== null
+  const pagaAlgo = !eligeTipoPago || tipoPago !== 'COBERTURA'
+
   function confirmarCompletar() {
     const precio = Number(precioInput.replace(',', '.'))
     if (precioInput.trim() === '' || Number.isNaN(precio) || precio < 0) {
       setErrorValidacion('Ingresá un precio válido.')
       return
     }
-    if (!metodoPago) {
-      setErrorValidacion('Elegí cómo pagó.')
+    if (!eligeTipoPago) {
+      if (!metodoPago) {
+        setErrorValidacion('Elegí cómo pagó.')
+        return
+      }
+      setErrorValidacion(null)
+      cambiar.mutate({ estado: 'COMPLETADA', precioFinal: Math.round(precio * 100), metodoPago })
+      return
+    }
+
+    let copago: number | undefined
+    if (tipoPago === 'COBERTURA_CON_COPAGO') {
+      copago = Number(copagoInput.replace(',', '.'))
+      if (copagoInput.trim() === '' || Number.isNaN(copago) || copago < 0) {
+        setErrorValidacion('Ingresá cuánto pagó de copago.')
+        return
+      }
+    }
+    if (pagaAlgo && !metodoPago) {
+      setErrorValidacion(tipoPago === 'COBERTURA_CON_COPAGO' ? 'Elegí cómo pagó el copago.' : 'Elegí cómo pagó.')
       return
     }
     setErrorValidacion(null)
-    cambiar.mutate({ estado: 'COMPLETADA', precioFinal: Math.round(precio * 100), metodoPago })
+    cambiar.mutate({
+      estado: 'COMPLETADA',
+      precioFinal: Math.round(precio * 100),
+      tipoPago,
+      ...(pagaAlgo && metodoPago ? { metodoPago } : {}),
+      ...(copago !== undefined ? { copago: Math.round(copago * 100) } : {}),
+      ...(tipoPago !== 'PARTICULAR' && autorizacion.trim() ? { numeroAutorizacion: autorizacion.trim() } : {}),
+    })
   }
 
   function generarMensajeWhatsApp() {
@@ -174,11 +210,33 @@ export function TurnoDetalle({ turno, onCerrar }: { turno: Turno; onCerrar: () =
               {turnoActual.sobreturno && ' · Sobreturno'}
             </dd>
           </div>
+          {esSalud && (
+            <div>
+              <dt>Obra social</dt>
+              <dd>
+                {turnoActual.coberturaNombre
+                  ? [
+                      turnoActual.coberturaNombre,
+                      turnoActual.clienteNumeroAfiliado && `Afiliado ${turnoActual.clienteNumeroAfiliado}`,
+                      turnoActual.clientePlan && `Plan ${turnoActual.clientePlan}`,
+                    ]
+                      .filter(Boolean)
+                      .join(' · ')
+                  : turnoActual.clienteCoberturaNombre
+                    ? `Particular (tiene ${turnoActual.clienteCoberturaNombre})`
+                    : 'Particular'}
+              </dd>
+            </div>
+          )}
           <div>
             <dt>Pago</dt>
             <dd>
               {ETIQUETAS_PAGO[turnoActual.estadoPago]}
+              {esSalud && turnoActual.estado === 'COMPLETADA' && turnoActual.tipoPago && turnoActual.tipoPago !== 'PARTICULAR' &&
+                ` · ${ETIQUETA_TIPO_PAGO[turnoActual.tipoPago]}`}
+              {turnoActual.copago != null && ` (${formatearPrecio(turnoActual.copago)})`}
               {turnoActual.metodoPago && ` · ${ETIQUETAS_METODO_PAGO[turnoActual.metodoPago]}`}
+              {turnoActual.numeroAutorizacion && ` · Autorización ${turnoActual.numeroAutorizacion}`}
             </dd>
           </div>
           <div>
@@ -274,15 +332,58 @@ export function TurnoDetalle({ turno, onCerrar }: { turno: Turno; onCerrar: () =
                     onChange={(e) => setPrecioInput(e.target.value)}
                   />
                 </label>
-                <label className="agenda-modal-campo">
-                  <span className="agenda-modal-campo-etiqueta">Método de pago</span>
-                  <Selector
-                    etiqueta="Método de pago"
-                    valor={metodoPago}
-                    onChange={(v) => setMetodoPago(v as MetodoPago)}
-                    opciones={METODOS_PAGO.map((m) => ({ valor: m, etiqueta: ETIQUETAS_METODO_PAGO[m] }))}
-                  />
-                </label>
+                {eligeTipoPago && (
+                  <label className="agenda-modal-campo">
+                    <span className="agenda-modal-campo-etiqueta">Cómo paga</span>
+                    <Selector
+                      etiqueta="Cómo paga"
+                      valor={tipoPago}
+                      onChange={(v) => setTipoPago(v as TipoPago)}
+                      opciones={[
+                        { valor: 'COBERTURA', etiqueta: `${coberturaCobrable} (sin cargo)` },
+                        { valor: 'COBERTURA_CON_COPAGO', etiqueta: `${coberturaCobrable} con copago` },
+                        { valor: 'PARTICULAR', etiqueta: 'Particular' },
+                      ]}
+                    />
+                  </label>
+                )}
+                {eligeTipoPago && tipoPago === 'COBERTURA_CON_COPAGO' && (
+                  <label className="agenda-modal-campo">
+                    <span className="agenda-modal-campo-etiqueta">Copago</span>
+                    <input
+                      type="number"
+                      inputMode="decimal"
+                      min={0}
+                      step="1"
+                      value={copagoInput}
+                      onChange={(e) => setCopagoInput(e.target.value)}
+                    />
+                  </label>
+                )}
+                {eligeTipoPago && tipoPago !== 'PARTICULAR' && (
+                  <label className="agenda-modal-campo">
+                    <span className="agenda-modal-campo-etiqueta">Nº de autorización (opcional)</span>
+                    <input
+                      type="text"
+                      maxLength={60}
+                      value={autorizacion}
+                      onChange={(e) => setAutorizacion(e.target.value)}
+                    />
+                  </label>
+                )}
+                {pagaAlgo && (
+                  <label className="agenda-modal-campo">
+                    <span className="agenda-modal-campo-etiqueta">
+                      {eligeTipoPago && tipoPago === 'COBERTURA_CON_COPAGO' ? 'Cómo pagó el copago' : 'Método de pago'}
+                    </span>
+                    <Selector
+                      etiqueta="Método de pago"
+                      valor={metodoPago}
+                      onChange={(v) => setMetodoPago(v as MetodoPago)}
+                      opciones={METODOS_PAGO.map((m) => ({ valor: m, etiqueta: ETIQUETAS_METODO_PAGO[m] }))}
+                    />
+                  </label>
+                )}
 
                 {(errorValidacion || cambiar.isError) && (
                   <p className="agenda-modal-error" role="alert">

@@ -18,7 +18,7 @@ export function PasoServicio({ slug, sucursalId, filtro, elegido, onElegir }: Pr
   const { data: servicios, isPending, error, refetch } = useQuery({
     // Sin filtro, la misma clave que usan el resumen del horario y de los datos (comparten caché)
     queryKey: filtro
-      ? ['servicios-publicos', slug, sucursalId, filtro.profesionalId ?? null, filtro.especialidadId ?? null]
+      ? ['servicios-publicos', slug, sucursalId, filtro.profesionalId ?? null, filtro.especialidadId ?? null, filtro.coberturaId ?? null]
       : ['servicios-publicos', slug, sucursalId],
     queryFn: () => obtenerServiciosPublicos(slug, sucursalId, filtro),
     staleTime: 5 * 60 * 1000,
@@ -42,9 +42,11 @@ export function PasoServicio({ slug, sucursalId, filtro, elegido, onElegir }: Pr
   if (servicios.length === 0) {
     return (
       <p className="reserva-vacio">
-        {filtro
+        {filtro?.profesionalId || filtro?.especialidadId
           ? <>Por ahora no hay {t.servicio.p} para reservar con {filtro.profesionalId ? t.profesional.este : 'esta especialidad'}.</>
-          : <>Por ahora no hay {t.servicio.p} para reservar en esta sucursal.</>}
+          : filtro?.coberturaId
+            ? <>Por ahora nadie de esta sucursal atiende esa obra social. Podés volver y reservar como particular.</>
+            : <>Por ahora no hay {t.servicio.p} para reservar en esta sucursal.</>}
       </p>
     )
   }

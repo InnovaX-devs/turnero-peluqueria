@@ -20,7 +20,8 @@ public class EspecialidadPublicoController {
     private final EspecialidadPublicoService especialidadPublicoService;
 
     @GetMapping
-    public List<EspecialidadResponse> listar(@PathVariable String slug, @RequestParam UUID sucursal) {
-        return especialidadPublicoService.listar(slug, sucursal);
+    public List<EspecialidadResponse> listar(@PathVariable String slug, @RequestParam UUID sucursal,
+                                             @RequestParam(required = false) UUID cobertura) {
+        return especialidadPublicoService.listar(slug, sucursal, cobertura);
     }
 }

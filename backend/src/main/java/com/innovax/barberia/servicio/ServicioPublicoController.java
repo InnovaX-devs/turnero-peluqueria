@@ -29,7 +29,9 @@ public class ServicioPublicoController {
             @PathVariable String slug,
             @RequestParam(required = false) UUID sucursal,
             @RequestParam(required = false) UUID profesional,
-            @RequestParam(required = false) UUID especialidad) {
-        return servicioPublicoService.listar(slug, sucursal, profesional, especialidad);
+            @RequestParam(required = false) UUID especialidad,
+            /* Issue #67: obra social / prepaga elegida (solo filtra cuando viene la sucursal). */
+            @RequestParam(required = false) UUID cobertura) {
+        return servicioPublicoService.listar(slug, sucursal, profesional, especialidad, cobertura);
     }
 }

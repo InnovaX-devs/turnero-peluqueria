@@ -10,6 +10,8 @@ import com.innovax.barberia.atencion.OrigenAtencion;
 import com.innovax.barberia.auth.UsuarioActual;
 import com.innovax.barberia.auth.UsuarioRepository;
 import com.innovax.barberia.cliente.Cliente;
+import com.innovax.barberia.cobertura.Cobertura;
+import com.innovax.barberia.cobertura.TipoPago;
 import com.innovax.barberia.cliente.ClienteRepository;
 import com.innovax.barberia.common.ConflictoException;
 import com.innovax.barberia.common.DatosInvalidosException;
@@ -136,6 +138,15 @@ public class TurnoPanelService {
         // Nota de consulta (issue #72): queda registrado quién la cargó, aunque sea recepción (que después no la puede leer)
         atencion.editarNotas(request.notas(), usuarios.findById(usuarioActual.id())
                 .orElseThrow(() -> new IllegalStateException("El usuario del token no existe")), Instant.now());
+        // Issue #67: si el paciente tiene obra social y el profesional la atiende, el turno va por la obra social.
+        // Si no la atiende, queda particular (el panel lo avisa antes de confirmar); al cobrar se puede cambiar.
+        Cobertura cobertura = cliente.getCobertura();
+        if (cobertura != null && cobertura.isActiva() && profesional.atiende(cobertura)) {
+            atencion.setTipoPago(TipoPago.COBERTURA);
+            atencion.setCobertura(cobertura);
+        }
+        String notas = request.notas() == null ? "" : request.notas().trim();
+        atencion.setNotas(notas.isEmpty() ? null : notas);
 
         try {
             // Si otro turno ganó ese horario justo en el medio, la regla de la base lo rechaza acá

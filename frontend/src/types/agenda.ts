@@ -1,3 +1,4 @@
+import type { TipoPago } from './cobertura'
 export type EstadoAtencion = 'RESERVADA' | 'COMPLETADA' | 'CANCELADA' | 'AUSENTE'
 export type OrigenAtencion = 'ONLINE' | 'MANUAL'
 export type EstadoPago = 'PAGADO' | 'PENDIENTE'
@@ -41,6 +42,18 @@ export interface Turno {
   sobreturno: boolean
   /** Consultorio donde se atiende (rubro salud). null = sin consultorio. Puede faltar en backends anteriores */
   consultorioNombre?: string | null
+  /** Issue #67 (salud): cómo se paga. Puede faltar en backends anteriores (= particular) */
+  tipoPago?: TipoPago
+  /** Obra social del turno. null = particular */
+  coberturaNombre?: string | null
+  /** Centavos. Solo COBERTURA_CON_COPAGO */
+  copago?: number | null
+  numeroAutorizacion?: string | null
+  /** La que tiene cargada el paciente en su ficha (puede no ser la del turno) */
+  clienteCoberturaId?: string | null
+  clienteCoberturaNombre?: string | null
+  clienteNumeroAfiliado?: string | null
+  clientePlan?: string | null
 }
 
 /** Turno dado desde el panel. Fecha (YYYY-MM-DD) y hora (HH:mm) en la zona del negocio. */
@@ -66,6 +79,11 @@ export interface CambiarEstadoTurno {
   estado: EstadoAtencion
   precioFinal?: number
   metodoPago?: MetodoPago
+  /** Issue #67 (salud). Sin mandar = el del turno */
+  tipoPago?: TipoPago
+  /** Centavos. Solo COBERTURA_CON_COPAGO */
+  copago?: number
+  numeroAutorizacion?: string
 }
 
 export interface Bloqueo {

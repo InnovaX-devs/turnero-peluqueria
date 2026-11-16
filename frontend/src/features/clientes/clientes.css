@@ -84,3 +84,11 @@
 .ficha-estado-completada { color: #1f7a4d; }
 .ficha-estado-ausente { color: var(--error); }
 .ficha-estado-cancelada { color: var(--texto-suave); }
+/* Obra social del paciente (issue #67) */
+.ficha-cobertura { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; }
+.ficha-cobertura-campo { display: flex; flex-direction: column; gap: 4px; font-size: 0.875rem; font-weight: 600; color: var(--texto-suave); }
+.ficha-cobertura-campo input {
+  padding: 10px 12px; border: 1px solid var(--borde); border-radius: 10px;
+  font: inherit; font-weight: 400; color: var(--texto); background: var(--fondo-tarjeta);
+}
+.ficha-historial-cobertura { color: var(--texto-suave); }

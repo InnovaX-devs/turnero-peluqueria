@@ -1,5 +1,7 @@
 package com.innovax.barberia.agenda.dto;
 
+import com.innovax.barberia.cobertura.Cobertura;
+import com.innovax.barberia.cobertura.TipoPago;
 import com.innovax.barberia.agenda.EstadoPago;
 import com.innovax.barberia.atencion.Atencion;
 import com.innovax.barberia.atencion.EstadoAtencion;
@@ -51,7 +53,19 @@ public record TurnoAgendaResponse(
         /** Cargado a propósito encima de otro turno o fuera de horario. */
         boolean sobreturno,
         /** Consultorio donde se atiende (issue #69). Null = sin consultorio. */
-        String consultorioNombre
+        String consultorioNombre,
+        /** Issue #67: cómo se paga (PARTICULAR fuera de salud). */
+        TipoPago tipoPago,
+        /** Obra social / prepaga del turno. Null = particular. */
+        String coberturaNombre,
+        /** Centavos. Solo COBERTURA_CON_COPAGO. */
+        Long copago,
+        String numeroAutorizacion,
+        /** Cobertura que tiene cargada el paciente en su ficha (puede no ser la del turno). */
+        UUID clienteCoberturaId,
+        String clienteCoberturaNombre,
+        String clienteNumeroAfiliado,
+        String clientePlan
 ) {
 
     /**
@@ -66,7 +80,7 @@ public record TurnoAgendaResponse(
                 a.getFin(),
                 a.getEstado(),
                 a.getOrigen(),
-                a.getMetodoPago() != null ? EstadoPago.PAGADO : EstadoPago.PENDIENTE,
+                estadoPago(a),
                 a.getMetodoPago(),
                 a.getProfesional().getId(),
                 a.getProfesional().getNombre() + " " + a.getProfesional().getApellido(),
@@ -86,6 +100,24 @@ public record TurnoAgendaResponse(
                 a.getEstadoCambiadoEn(),
                 a.getLlegadaEn(),
                 a.isSobreturno(),
-                a.getConsultorio() != null ? a.getConsultorio().getNombre() : null);
+                a.getConsultorio() != null ? a.getConsultorio().getNombre() : null,
+                a.getTipoPago(),
+                a.getCobertura() != null ? a.getCobertura().getNombre() : null,
+                a.getCopago(),
+                a.getNumeroAutorizacion(),
+                coberturaCliente(a) != null ? coberturaCliente(a).getId() : null,
+                coberturaCliente(a) != null ? coberturaCliente(a).getNombre() : null,
+                a.getCliente() != null ? a.getCliente().getNumeroAfiliado() : null,
+                a.getCliente() != null ? a.getCliente().getPlan() : null);
+    }
+
+    /** Pagado: se cobró algo, o lo cubre entero la obra social (no hay nada que cobrar). */
+    private static EstadoPago estadoPago(Atencion a) {
+        boolean cubiertoEntero = a.getEstado() == EstadoAtencion.COMPLETADA && a.getTipoPago() == TipoPago.COBERTURA;
+        return a.getMetodoPago() != null || cubiertoEntero ? EstadoPago.PAGADO : EstadoPago.PENDIENTE;
+    }
+
+    private static Cobertura coberturaCliente(Atencion a) {
+        return a.getCliente() != null ? a.getCliente().getCobertura() : null;
     }
 }

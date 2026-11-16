@@ -4,6 +4,8 @@ import com.innovax.barberia.auth.Usuario;
 import com.innovax.barberia.negocio.Negocio;
 import com.innovax.barberia.profesional.Profesional;
 import com.innovax.barberia.cliente.Cliente;
+import com.innovax.barberia.cobertura.Cobertura;
+import com.innovax.barberia.cobertura.TipoPago;
 import com.innovax.barberia.consultorio.Consultorio;
 import com.innovax.barberia.servicio.Servicio;
 import com.innovax.barberia.sucursal.Sucursal;
@@ -124,6 +126,26 @@ public class Atencion {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "consultorio_id")
     private Consultorio consultorio;
+
+    /**
+     * Cómo se paga (issue #67). PARTICULAR para todo lo que no es salud. La base exige que PARTICULAR
+     * vaya sin cobertura y los otros dos con cobertura ({@code chk_atencion_cobertura}).
+     */
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 25)
+    private TipoPago tipoPago = TipoPago.PARTICULAR;
+
+    /** Obra social / prepaga con la que se atiende. Se copia acá para que el reporte no cambie si el paciente cambia de cobertura. */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "cobertura_id")
+    private Cobertura cobertura;
+
+    /** En centavos. Solo en COBERTURA_CON_COPAGO: lo que paga el paciente en el momento. */
+    private Long copago;
+
+    /** Número de autorización / orden que da la obra social, si corresponde. */
+    @Column(length = 60)
+    private String numeroAutorizacion;
 
     @CreationTimestamp
     @Column(nullable = false, updatable = false)

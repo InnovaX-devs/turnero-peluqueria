@@ -1,5 +1,6 @@
 package com.innovax.barberia.cliente.dto;
 
+import com.innovax.barberia.cobertura.TipoPago;
 import com.innovax.barberia.atencion.Atencion;
 import com.innovax.barberia.atencion.EstadoAtencion;
 import com.innovax.barberia.cliente.Cliente;
@@ -24,7 +25,12 @@ public record FichaClienteResponse(
         String notas,
         Instant creadoEn,
         long ausencias,
-        List<AtencionHistorial> historial
+        List<AtencionHistorial> historial,
+        /** Issue #67: obra social / prepaga. Null = particular. */
+        UUID coberturaId,
+        String coberturaNombre,
+        String numeroAfiliado,
+        String plan
 ) {
 
     /** Una atención del historial. Incluye todos los estados para que se vean también ausencias y cancelaciones. */
@@ -34,7 +40,10 @@ public record FichaClienteResponse(
             EstadoAtencion estado,
             String profesionalNombre,
             String servicioNombre,
-            long precioFinal
+            long precioFinal,
+            /** Issue #67: cómo se pagó y con qué cobertura (null = particular). */
+            TipoPago tipoPago,
+            String coberturaNombre
     ) {
         public static AtencionHistorial de(Atencion a) {
             return new AtencionHistorial(
@@ -43,7 +52,9 @@ public record FichaClienteResponse(
                     a.getEstado(),
                     a.getProfesional().getNombre() + " " + a.getProfesional().getApellido(),
                     a.getServicio().getNombre(),
-                    a.getPrecioFinal());
+                    a.getPrecioFinal(),
+                    a.getTipoPago(),
+                    a.getCobertura() != null ? a.getCobertura().getNombre() : null);
         }
     }
 
@@ -59,6 +70,10 @@ public record FichaClienteResponse(
                 cliente.getNotas(),
                 cliente.getCreatedAt(),
                 ausencias,
-                atenciones.stream().map(AtencionHistorial::de).toList());
+                atenciones.stream().map(AtencionHistorial::de).toList(),
+                cliente.getCobertura() != null ? cliente.getCobertura().getId() : null,
+                cliente.getCobertura() != null ? cliente.getCobertura().getNombre() : null,
+                cliente.getNumeroAfiliado(),
+                cliente.getPlan());
     }
 }

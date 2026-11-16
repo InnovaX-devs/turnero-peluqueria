@@ -1,5 +1,6 @@
 package com.innovax.barberia.profesional.dto;
 
+import com.innovax.barberia.cobertura.Cobertura;
 import com.innovax.barberia.especialidad.Especialidad;
 import com.innovax.barberia.profesional.Profesional;
 import com.innovax.barberia.servicio.Servicio;
@@ -19,7 +20,9 @@ public record ProfesionalResponse(
         List<UUID> sucursalIds,
         List<UUID> servicioIds,
         List<UUID> especialidadIds,
-        String usuarioEmail) {
+        String usuarioEmail,
+        /** Obras sociales / prepagas activas que atiende (issue #67). Al final para no romper clientes viejos. */
+        List<UUID> coberturaIds) {
 
     /** Accede a colecciones lazy: llamarlo siempre dentro de una transacción. */
     public static ProfesionalResponse de(Profesional b) {
@@ -33,6 +36,7 @@ public record ProfesionalResponse(
                 b.getSucursales().stream().map(Sucursal::getId).toList(),
                 b.getServicios().stream().filter(Servicio::isActivo).map(Servicio::getId).toList(),
                 b.getEspecialidades().stream().map(Especialidad::getId).toList(),
-                b.getUsuario() == null ? null : b.getUsuario().getEmail());
+                b.getUsuario() == null ? null : b.getUsuario().getEmail(),
+                b.getCoberturas().stream().filter(Cobertura::isActiva).map(Cobertura::getId).toList());
     }
 }

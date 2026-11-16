@@ -57,6 +57,17 @@ public record CrearReservaRequest(
         Sexo clienteSexo,
 
         @Size(max = 2000, message = "Las notas pueden tener hasta 2000 caracteres")
-        String notas
+        String notas,
+
+        /** Issue #67 (salud): obra social / prepaga con la que se atiende. Null = particular. */
+        UUID coberturaId,
+
+        /** Solo con cobertura. Se guarda en la ficha del paciente. */
+        @Size(max = 40, message = "El número de afiliado puede tener hasta 40 caracteres")
+        String numeroAfiliado,
+
+        /** Solo con cobertura, opcional (ej. "210", "Plata"). */
+        @Size(max = 60, message = "El plan puede tener hasta 60 caracteres")
+        String plan
 ) {
 }

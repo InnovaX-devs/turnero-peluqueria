@@ -80,6 +80,10 @@ export interface CrearReservaRequest {
   /** Solo salud, opcional. */
   clienteSexo?: Sexo
   notas: string | null
+  /** Issue #67 (salud): obra social elegida. Sin mandar = particular */
+  coberturaId?: string
+  numeroAfiliado?: string
+  plan?: string
 }
 
 export interface ReservaCreada {
