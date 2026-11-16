@@ -24,8 +24,14 @@ export interface Turno {
   clienteDni: string | null
   /** Nota de la ficha del cliente (ej. "degradé en 2, arriba tijera"). */
   clienteNotas: string | null
-  /** Nota de este turno en particular (la que dejó quien reservó). */
+  /**
+   * Nota de consulta (issue #72). Solo la reciben el admin y el profesional que atendió: para recepción
+   * siempre es null, haya nota o no.
+   */
   notas: string | null
+  /** Quién editó la nota por última vez desde el panel. Null si no se editó o no se puede ver. */
+  notasEditadasPorEmail?: string | null
+  notasEditadasEn?: string | null
   /** Quién marcó el turno como completado/ausente/cancelado. Null = nunca se cambió. */
   estadoCambiadoPorEmail: string | null
   estadoCambiadoEn: string | null

@@ -3,6 +3,7 @@ package com.innovax.barberia.agenda;
 import com.innovax.barberia.agenda.dto.NuevoTurnoRequest;
 import com.innovax.barberia.agenda.dto.TurnoAgendaResponse;
 import com.innovax.barberia.atencion.AtencionService;
+import com.innovax.barberia.atencion.dto.ActualizarNotasTurnoRequest;
 import com.innovax.barberia.atencion.dto.CambiarEstadoTurnoRequest;
 import com.innovax.barberia.atencion.dto.MarcarLlegadaRequest;
 import jakarta.validation.Valid;
@@ -47,5 +48,14 @@ public class AgendaTurnoController {
     @PatchMapping("/{id}/llegada")
     public TurnoAgendaResponse marcarLlegada(@PathVariable UUID id, @Valid @RequestBody MarcarLlegadaRequest request) {
         return atencionService.marcarLlegada(id, request);
+    }
+
+    /**
+     * Notas de consulta (issue #72): solo el profesional que atendió y el admin. Recepción recibe 403.
+     * No reemplazan la historia clínica.
+     */
+    @PatchMapping("/{id}/notas")
+    public TurnoAgendaResponse actualizarNotas(@PathVariable UUID id, @Valid @RequestBody ActualizarNotasTurnoRequest request) {
+        return atencionService.actualizarNotas(id, request);
     }
 }

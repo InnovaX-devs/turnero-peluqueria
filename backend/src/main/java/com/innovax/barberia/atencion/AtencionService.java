@@ -1,6 +1,7 @@
 package com.innovax.barberia.atencion;
 
 import com.innovax.barberia.agenda.dto.TurnoAgendaResponse;
+import com.innovax.barberia.atencion.dto.ActualizarNotasTurnoRequest;
 import com.innovax.barberia.atencion.dto.AtencionResponse;
 import com.innovax.barberia.atencion.dto.CambiarEstadoTurnoRequest;
 import com.innovax.barberia.atencion.dto.CrearReservaRequest;
@@ -28,6 +29,7 @@ import com.innovax.barberia.notificacion.NotificacionService;
 import com.innovax.barberia.listaespera.ListaEsperaService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -195,7 +197,7 @@ public class AtencionService {
         atencion.setEstadoCambiadoPor(usuario);
         atencion.setEstadoCambiadoEn(Instant.now());
 
-        return TurnoAgendaResponse.de(atenciones.save(atencion));
+        return respuestaDePanel(atenciones.save(atencion));
     }
 
     /**
@@ -223,7 +225,36 @@ public class AtencionService {
         } else {
             atencion.setLlegadaEn(null);
         }
-        return TurnoAgendaResponse.de(atenciones.save(atencion));
+        return respuestaDePanel(atenciones.save(atencion));
+    }
+
+    /**
+     * Nota de consulta (issue #72): la escribe o edita el profesional que atendió, o el admin. Recepción no:
+     * 403, aunque haya sido ella quien dio el turno. Se guarda quién y cuándo la tocó por última vez; una nota
+     * en blanco la borra. Se puede editar en cualquier estado del turno (lo normal es hacerlo después de atender).
+     *
+     * <p>Un turno de otro negocio responde 404, igual que si no existiera.
+     */
+    @Transactional
+    public TurnoAgendaResponse actualizarNotas(UUID turnoId, ActualizarNotasTurnoRequest request) {
+        Atencion atencion = atenciones.findById(turnoId)
+                .orElseThrow(() -> new RecursoNoEncontradoException("Turno no encontrado"));
+        if (!atencion.getNegocio().getId().equals(usuarioActual.negocioId())) {
+            throw new RecursoNoEncontradoException("Turno no encontrado");
+        }
+        if (!usuarioActual.puedeVerNotasDeConsulta(atencion.getProfesional().getId())) {
+            throw new AccessDeniedException("No tenés permiso para ver ni editar las notas de esta consulta");
+        }
+
+        Usuario usuario = usuarios.findById(usuarioActual.id())
+                .orElseThrow(() -> new IllegalStateException("El usuario del token no existe"));
+        atencion.editarNotas(request.notas(), usuario, Instant.now());
+        return respuestaDePanel(atenciones.save(atencion));
+    }
+
+    /** Respuesta del panel: las notas de consulta solo van si quien pide puede leerlas. */
+    private TurnoAgendaResponse respuestaDePanel(Atencion atencion) {
+        return TurnoAgendaResponse.de(atencion, usuarioActual.puedeVerNotasDeConsulta(atencion.getProfesional().getId()));
     }
 
     /**

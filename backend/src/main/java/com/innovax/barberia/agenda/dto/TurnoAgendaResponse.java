@@ -35,8 +35,14 @@ public record TurnoAgendaResponse(
         String clienteDni,
         /** Nota de la ficha del cliente (ej. "degradé en 2, arriba tijera"), para tenerla a mano al atenderlo. */
         String clienteNotas,
-        /** Nota de este turno en particular (la que dejó quien reservó). */
+        /**
+         * Nota de consulta (issue #72). Null si quien pide no puede leerla (recepción, o un profesional
+         * que no atendió este turno) y también si no hay nota: el backend no revela que existe.
+         */
         String notas,
+        /** Quién editó la nota por última vez desde el panel. Null si no hay nota, no se editó o no se puede ver. */
+        String notasEditadasPorEmail,
+        Instant notasEditadasEn,
         /** Quién marcó el turno como completado/ausente/cancelado. Null = nunca se cambió. */
         String estadoCambiadoPorEmail,
         Instant estadoCambiadoEn,
@@ -48,7 +54,12 @@ public record TurnoAgendaResponse(
         String consultorioNombre
 ) {
 
-    public static TurnoAgendaResponse de(Atencion a) {
+    /**
+     * @param puedeVerNotas si quien pide puede leer las notas de consulta de este turno
+     *                      ({@code UsuarioActual.puedeVerNotasDeConsulta}). Es obligatorio decidirlo: no hay
+     *                      versión sin este parámetro para que ningún endpoint nuevo exponga notas sin querer.
+     */
+    public static TurnoAgendaResponse de(Atencion a, boolean puedeVerNotas) {
         return new TurnoAgendaResponse(
                 a.getId(),
                 a.getInicio(),
@@ -67,7 +78,10 @@ public record TurnoAgendaResponse(
                 a.getCliente() != null ? a.getCliente().getTelefono() : null,
                 a.getCliente() != null ? a.getCliente().getDni() : null,
                 a.getCliente() != null ? a.getCliente().getNotas() : null,
-                a.getNotas(),
+                puedeVerNotas ? a.getNotas() : null,
+                puedeVerNotas && a.getNotas() != null && a.getNotasEditadasPor() != null
+                        ? a.getNotasEditadasPor().getEmail() : null,
+                puedeVerNotas && a.getNotas() != null ? a.getNotasEditadasEn() : null,
                 a.getEstadoCambiadoPor() != null ? a.getEstadoCambiadoPor().getEmail() : null,
                 a.getEstadoCambiadoEn(),
                 a.getLlegadaEn(),

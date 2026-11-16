@@ -34,3 +34,9 @@ export async function cambiarEstadoTurno(id: string, datos: CambiarEstadoTurno):
   const { data } = await api.patch<Turno>(`/api/agenda/turnos/${id}/estado`, datos)
   return data
 }
+
+/** Nota de consulta (issue #72). Solo admin y el profesional que atendió; una nota en blanco la borra. */
+export async function actualizarNotasTurno(id: string, notas: string): Promise<Turno> {
+  const { data } = await api.patch<Turno>(`/api/agenda/turnos/${id}/notas`, { notas })
+  return data
+}

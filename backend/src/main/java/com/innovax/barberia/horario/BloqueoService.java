@@ -59,7 +59,7 @@ public class BloqueoService {
                         .findOcupadas(profesional.getId(), Set.of(EstadoAtencion.RESERVADA), rango.inicio(), rango.fin())
                         .stream())
                 .sorted(Comparator.comparing(Atencion::getInicio))
-                .map(TurnoAgendaResponse::de)
+                .map(a -> TurnoAgendaResponse.de(a, usuarioActual.puedeVerNotasDeConsulta(a.getProfesional().getId())))
                 .toList();
     }
 

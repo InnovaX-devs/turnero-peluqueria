@@ -15,6 +15,7 @@ import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.Instant;
+import java.util.Objects;
 import java.util.UUID;
 
 /**
@@ -81,8 +82,20 @@ public class Atencion {
     @Column(nullable = false, unique = true, updatable = false)
     private UUID tokenGestion = UUID.randomUUID();
 
+    /**
+     * Nota de consulta (issue #72). Solo la leen el admin y el profesional que atendió: nunca recepción,
+     * ni endpoints públicos, ni mails. No reemplaza la historia clínica.
+     */
     @Column(length = 2000)
     private String notas;
+
+    /** Quién escribió o editó por última vez la nota desde el panel. Null: nadie (la dejó el cliente al reservar). */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "notas_editadas_por")
+    private Usuario notasEditadasPor;
+
+    /** Cuándo se hizo esa última edición. */
+    private Instant notasEditadasEn;
 
     /** Quién marcó el turno como completado, ausente o cancelado. Null: nunca se cambió. */
     @ManyToOne(fetch = FetchType.LAZY)
@@ -119,4 +132,18 @@ public class Atencion {
     @UpdateTimestamp
     @Column(nullable = false)
     private Instant updatedAt;
+
+    /**
+     * Escribe o edita la nota de consulta y deja constancia de quién y cuándo (issue #72). Una nota en blanco
+     * la borra. Si el texto no cambia no toca nada, para que reenviar lo mismo no pise la auditoría.
+     */
+    public void editarNotas(String texto, Usuario editor, Instant cuando) {
+        String limpio = texto == null || texto.isBlank() ? null : texto.trim();
+        if (Objects.equals(limpio, this.notas)) {
+            return;
+        }
+        this.notas = limpio;
+        this.notasEditadasPor = editor;
+        this.notasEditadasEn = cuando;
+    }
 }

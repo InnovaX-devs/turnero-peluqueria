@@ -4,6 +4,7 @@ import com.innovax.barberia.atencion.dto.AtencionResponse;
 import com.innovax.barberia.atencion.dto.OpcionesRegistroResponse;
 import com.innovax.barberia.atencion.dto.RegistrarCorteRequest;
 import com.innovax.barberia.auth.UsuarioActual;
+import com.innovax.barberia.auth.UsuarioRepository;
 import com.innovax.barberia.negocio.Negocio;
 import com.innovax.barberia.negocio.NegocioRepository;
 import com.innovax.barberia.profesional.Profesional;
@@ -51,6 +52,7 @@ public class RegistroCorteService {
     private static final DateTimeFormatter HORA = DateTimeFormatter.ofPattern("HH:mm");
 
     private final UsuarioActual usuarioActual;
+    private final UsuarioRepository usuarios;
     private final NegocioRepository negocios;
     private final ProfesionalRepository profesionales;
     private final ServicioRepository servicios;
@@ -108,7 +110,9 @@ public class RegistroCorteService {
         atencion.setOrigen(OrigenAtencion.MANUAL);
         atencion.setPrecioFinal(request.precioFinal());
         atencion.setMetodoPago(request.metodoPago());
-        atencion.setNotas(request.notas() == null || request.notas().isBlank() ? null : request.notas().trim());
+        // Nota de consulta (issue #72): queda registrado quién la cargó
+        atencion.editarNotas(request.notas(), usuarios.findById(usuarioActual.id())
+                .orElseThrow(() -> new IllegalStateException("El usuario del token no existe")), Instant.now());
         Consultorio consultorio = asignadorConsultorio.paraTurno(profesional.getId(), sucursal.getId(), inicio, zona);
         atencion.setConsultorio(consultorio);
 

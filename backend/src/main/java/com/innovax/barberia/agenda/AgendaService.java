@@ -68,7 +68,7 @@ public class AgendaService {
 
         List<TurnoAgendaResponse> turnos = atenciones.findParaAgenda(negocioId, profesionalId, inicioRango, finRango)
                 .stream()
-                .map(TurnoAgendaResponse::de)
+                .map(a -> TurnoAgendaResponse.de(a, usuarioActual.puedeVerNotasDeConsulta(a.getProfesional().getId())))
                 .toList();
 
         List<BloqueoAgendaResponse> bloqueosDelRango = bloqueos.findParaAgenda(negocioId, profesionalId, inicioRango, finRango)

@@ -8,6 +8,7 @@ import com.innovax.barberia.atencion.AtencionRepository;
 import com.innovax.barberia.atencion.EstadoAtencion;
 import com.innovax.barberia.atencion.OrigenAtencion;
 import com.innovax.barberia.auth.UsuarioActual;
+import com.innovax.barberia.auth.UsuarioRepository;
 import com.innovax.barberia.cliente.Cliente;
 import com.innovax.barberia.cliente.ClienteRepository;
 import com.innovax.barberia.common.ConflictoException;
@@ -70,6 +71,7 @@ public class TurnoPanelService {
     private static final Set<EstadoAtencion> OCUPAN = EnumSet.of(EstadoAtencion.RESERVADA, EstadoAtencion.COMPLETADA);
 
     private final UsuarioActual usuarioActual;
+    private final UsuarioRepository usuarios;
     private final NegocioRepository negocios;
     private final ProfesionalRepository profesionales;
     private final ServicioRepository servicios;
@@ -131,8 +133,9 @@ public class TurnoPanelService {
         atencion.setPrecioFinal(servicio.getPrecio());
         atencion.setSobreturno(sobreturno);
         atencion.setConsultorio(consultorio);
-        String notas = request.notas() == null ? "" : request.notas().trim();
-        atencion.setNotas(notas.isEmpty() ? null : notas);
+        // Nota de consulta (issue #72): queda registrado quién la cargó, aunque sea recepción (que después no la puede leer)
+        atencion.editarNotas(request.notas(), usuarios.findById(usuarioActual.id())
+                .orElseThrow(() -> new IllegalStateException("El usuario del token no existe")), Instant.now());
 
         try {
             // Si otro turno ganó ese horario justo en el medio, la regla de la base lo rechaza acá
@@ -148,7 +151,7 @@ public class TurnoPanelService {
         }
 
         notificaciones.crearConfirmacion(atencion);
-        return TurnoAgendaResponse.de(atencion);
+        return TurnoAgendaResponse.de(atencion, usuarioActual.puedeVerNotasDeConsulta(profesional.getId()));
     }
 
     // ------------------------------------------------------------------ reglas

@@ -347,6 +347,9 @@ function Formulario({ opciones, fechaInicial, profesionalInicialId, onListo }: F
           placeholder={modo === 'turno' ? 'Ej: viene con el hijo' : 'Ej: puede después de las 18'}
           onChange={(e) => setNotas(e.target.value)}
         />
+        {modo === 'turno' && usuario?.rol === 'RECEPCION' && (
+          <small className="registro-ayuda">Esta nota la ven solo {t.profesional.el} y el admin, no recepción.</small>
+        )}
       </label>
 
       <div className="registro-pie">
