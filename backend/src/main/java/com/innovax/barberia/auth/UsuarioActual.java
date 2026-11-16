@@ -65,6 +65,18 @@ public class UsuarioActual {
     }
 
     /**
+     * Notas de consulta (issue #72): las leen y editan el admin y el profesional que atendió. Recepción nunca,
+     * ni siquiera en turnos que ella misma dio. Ojo: igual hay que verificar que el turno sea de {@link #negocioId()}.
+     */
+    public boolean puedeVerNotasDeConsulta(UUID profesionalIdDelTurno) {
+        return switch (rol()) {
+            case ADMIN -> true;
+            case PROFESIONAL -> profesionalId().map(profesionalIdDelTurno::equals).orElse(false);
+            case RECEPCION -> false;
+        };
+    }
+
+    /**
      * Admin y recepción pueden operar sobre cualquier profesional; un profesional, solo sobre sí mismo.
      * Ojo: igual hay que verificar que el profesional sea de {@link #negocioId()} al buscarlo en la base.
      */

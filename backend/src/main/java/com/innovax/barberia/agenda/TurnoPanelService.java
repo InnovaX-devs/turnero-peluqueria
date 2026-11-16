@@ -8,6 +8,7 @@ import com.innovax.barberia.atencion.AtencionRepository;
 import com.innovax.barberia.atencion.EstadoAtencion;
 import com.innovax.barberia.atencion.OrigenAtencion;
 import com.innovax.barberia.auth.UsuarioActual;
+import com.innovax.barberia.auth.UsuarioRepository;
 import com.innovax.barberia.cliente.Cliente;
 import com.innovax.barberia.cobertura.Cobertura;
 import com.innovax.barberia.cobertura.TipoPago;
@@ -72,6 +73,7 @@ public class TurnoPanelService {
     private static final Set<EstadoAtencion> OCUPAN = EnumSet.of(EstadoAtencion.RESERVADA, EstadoAtencion.COMPLETADA);
 
     private final UsuarioActual usuarioActual;
+    private final UsuarioRepository usuarios;
     private final NegocioRepository negocios;
     private final ProfesionalRepository profesionales;
     private final ServicioRepository servicios;
@@ -133,6 +135,9 @@ public class TurnoPanelService {
         atencion.setPrecioFinal(servicio.getPrecio());
         atencion.setSobreturno(sobreturno);
         atencion.setConsultorio(consultorio);
+        // Nota de consulta (issue #72): queda registrado quién la cargó, aunque sea recepción (que después no la puede leer)
+        atencion.editarNotas(request.notas(), usuarios.findById(usuarioActual.id())
+                .orElseThrow(() -> new IllegalStateException("El usuario del token no existe")), Instant.now());
         // Issue #67: si el paciente tiene obra social y el profesional la atiende, el turno va por la obra social.
         // Si no la atiende, queda particular (el panel lo avisa antes de confirmar); al cobrar se puede cambiar.
         Cobertura cobertura = cliente.getCobertura();
@@ -157,7 +162,7 @@ public class TurnoPanelService {
         }
 
         notificaciones.crearConfirmacion(atencion);
-        return TurnoAgendaResponse.de(atencion);
+        return TurnoAgendaResponse.de(atencion, usuarioActual.puedeVerNotasDeConsulta(profesional.getId()));
     }
 
     // ------------------------------------------------------------------ reglas

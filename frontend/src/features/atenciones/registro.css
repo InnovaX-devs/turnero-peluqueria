@@ -274,3 +274,9 @@ textarea.registro-input {
 .registro-sobreturno + .registro-input {
   margin-top: 10px;
 }
+
+.registro-ayuda {
+  display: block;
+  margin-top: 4px;
+  color: var(--texto-suave);
+}

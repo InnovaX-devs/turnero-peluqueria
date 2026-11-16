@@ -19,6 +19,8 @@ import {
   linkWhatsApp,
 } from './agenda'
 import { useTerminos } from '../terminos/useTerminos'
+import { useAuth } from '../auth/useAuth'
+import { NotasConsulta } from './NotasConsulta'
 
 /** Estados a los que se puede pasar un turno desde el detalle (RESERVADA no es un destino). */
 type AccionEstado = 'COMPLETADA' | 'AUSENTE' | 'CANCELADA'
@@ -27,6 +29,7 @@ const METODOS_PAGO: MetodoPago[] = ['EFECTIVO', 'TRANSFERENCIA', 'MERCADOPAGO', 
 
 export function TurnoDetalle({ turno, onCerrar }: { turno: Turno; onCerrar: () => void }) {
   const t = useTerminos()
+  const { usuario } = useAuth()
   const queryClient = useQueryClient()
 
   // Arranca con lo que vino del listado y se actualiza al confirmar un cambio de estado,
@@ -240,12 +243,6 @@ export function TurnoDetalle({ turno, onCerrar }: { turno: Turno; onCerrar: () =
             <dt>Precio</dt>
             <dd>{formatearPrecio(turnoActual.precioFinal)}</dd>
           </div>
-          {turnoActual.notas && (
-            <div>
-              <dt>Notas del turno</dt>
-              <dd>{turnoActual.notas}</dd>
-            </div>
-          )}
           {turnoActual.estadoCambiadoPorEmail && turnoActual.estadoCambiadoEn && (
             <div>
               <dt>Actualizado</dt>
@@ -255,6 +252,15 @@ export function TurnoDetalle({ turno, onCerrar }: { turno: Turno; onCerrar: () =
             </div>
           )}
         </dl>
+
+        {/* Notas de consulta (issue #72): recepción no las ve ni las edita; el backend tampoco se las manda */}
+        {usuario?.rol !== 'RECEPCION' && (
+          <NotasConsulta
+            turno={turnoActual}
+            rubro={usuario?.rubro}
+            onActualizado={(actualizado) => setTurnoActual(actualizado)}
+          />
+        )}
 
         {puedeCambiarEstado && (
           <div className="agenda-modal-llegada">
