@@ -14,6 +14,9 @@ import com.innovax.barberia.profesional.ProfesionalRepository;
 import com.innovax.barberia.cliente.Cliente;
 import com.innovax.barberia.cliente.Dni;
 import com.innovax.barberia.cliente.ClienteRepository;
+import com.innovax.barberia.cobertura.Cobertura;
+import com.innovax.barberia.cobertura.CoberturaRepository;
+import com.innovax.barberia.cobertura.TipoPago;
 import com.innovax.barberia.common.ConflictoException;
 import com.innovax.barberia.common.DatosInvalidosException;
 import com.innovax.barberia.common.RecursoNoEncontradoException;
@@ -71,6 +74,7 @@ public class AtencionService {
     private final NotificacionService notificaciones;
     private final ListaEsperaService listaEspera;
     private final AsignadorConsultorio asignadorConsultorio;
+    private final CoberturaRepository coberturas;
 
     @Transactional
     public AtencionResponse reservarOnline(CrearReservaRequest request) {
@@ -95,6 +99,18 @@ public class AtencionService {
             throw new DatosInvalidosException("profesional", "No atiende " + negocio.getRubro().servicio().ese() + " en esa sucursal");
         }
 
+        // Issue #67: con obra social / prepaga, el profesional tiene que atenderla
+        Cobertura cobertura = null;
+        if (request.coberturaId() != null) {
+            cobertura = coberturas.findByIdAndNegocioId(request.coberturaId(), negocio.getId())
+                    .filter(Cobertura::isActiva)
+                    .orElseThrow(() -> new DatosInvalidosException("coberturaId", "Esa obra social / prepaga no está disponible"));
+            if (!profesional.atiende(cobertura)) {
+                throw new DatosInvalidosException("coberturaId",
+                        profesional.getNombre() + " " + profesional.getApellido() + " no atiende " + cobertura.getNombre());
+            }
+        }
+
         // 1) Chequeo rápido dentro de la transacción: mismo criterio que la grilla pública.
         if (!disponibilidadService.estaDisponible(sucursal.getId(), servicio.getId(), profesional.getId(),
                 request.fecha(), request.hora())) {
@@ -106,6 +122,18 @@ public class AtencionService {
         Instant fin = inicio.plus(Duration.ofMinutes(servicio.getDuracionMin()));
 
         Cliente cliente = obtenerOCrearCliente(negocio, request);
+        if (cobertura != null) {
+            // Queda en la ficha para el próximo turno. Si reserva como particular no se le borra la que tenía.
+            cliente.setCobertura(cobertura);
+            String afiliado = textoOpcional(request.numeroAfiliado());
+            if (afiliado != null) {
+                cliente.setNumeroAfiliado(afiliado);
+            }
+            String plan = textoOpcional(request.plan());
+            if (plan != null) {
+                cliente.setPlan(plan);
+            }
+        }
 
         Atencion atencion = new Atencion();
         atencion.setNegocio(negocio);
@@ -119,6 +147,10 @@ public class AtencionService {
         atencion.setOrigen(OrigenAtencion.ONLINE);
         atencion.setPrecioFinal(servicio.getPrecio());
         atencion.setNotas(request.notas());
+        if (cobertura != null) {
+            atencion.setTipoPago(TipoPago.COBERTURA);
+            atencion.setCobertura(cobertura);
+        }
         atencion.setConsultorio(asignadorConsultorio.paraTurno(profesional.getId(), sucursal.getId(), inicio, zonaHoraria));
 
         try {
@@ -176,13 +208,7 @@ public class AtencionService {
         }
 
         if (nuevoEstado == EstadoAtencion.COMPLETADA) {
-            if (request.metodoPago() == null) {
-                throw new DatosInvalidosException("metodoPago", "Es obligatorio para marcar el turno como completado");
-            }
-            if (request.precioFinal() != null) {
-                atencion.setPrecioFinal(request.precioFinal());
-            }
-            atencion.setMetodoPago(request.metodoPago());
+            aplicarCobro(atencion, request);
         }
 
         atencion.setEstado(nuevoEstado);
@@ -196,6 +222,60 @@ public class AtencionService {
         atencion.setEstadoCambiadoEn(Instant.now());
 
         return TurnoAgendaResponse.de(atenciones.save(atencion));
+    }
+
+    /**
+     * Al completar: precio, tipo de pago (issue #67) y cómo pagó. {@code precioFinal} es siempre el valor de la
+     * prestación; lo que entra a la caja es el precio (particular), el copago, o nada (cobertura total).
+     */
+    private void aplicarCobro(Atencion atencion, CambiarEstadoTurnoRequest request) {
+        if (request.precioFinal() != null) {
+            atencion.setPrecioFinal(request.precioFinal());
+        }
+        TipoPago tipo = request.tipoPago() != null ? request.tipoPago() : atencion.getTipoPago();
+
+        if (tipo == TipoPago.PARTICULAR) {
+            if (request.metodoPago() == null) {
+                throw new DatosInvalidosException("metodoPago", "Es obligatorio para marcar el turno como completado");
+            }
+            atencion.setTipoPago(TipoPago.PARTICULAR);
+            atencion.setCobertura(null);
+            atencion.setCopago(null);
+            atencion.setNumeroAutorizacion(null);
+            atencion.setMetodoPago(request.metodoPago());
+            return;
+        }
+
+        Cobertura cobertura = atencion.getCobertura() != null ? atencion.getCobertura()
+                : atencion.getCliente() == null ? null : atencion.getCliente().getCobertura();
+        if (cobertura == null) {
+            throw new DatosInvalidosException("tipoPago",
+                    "El paciente no tiene obra social / prepaga cargada: cargala en su ficha o cobrale como particular");
+        }
+        if (atencion.getCobertura() == null && !cobertura.isActiva()) {
+            throw new DatosInvalidosException("tipoPago", cobertura.getNombre() + " está desactivada");
+        }
+
+        if (tipo == TipoPago.COBERTURA_CON_COPAGO) {
+            if (request.copago() == null) {
+                throw new DatosInvalidosException("copago", "Indicá cuánto pagó de copago");
+            }
+            if (request.metodoPago() == null) {
+                throw new DatosInvalidosException("metodoPago", "Indicá cómo pagó el copago");
+            }
+            atencion.setCopago(request.copago());
+            atencion.setMetodoPago(request.metodoPago());
+        } else {
+            atencion.setCopago(null);
+            atencion.setMetodoPago(null); // no se cobra nada en el momento
+        }
+        atencion.setTipoPago(tipo);
+        atencion.setCobertura(cobertura);
+        atencion.setNumeroAutorizacion(textoOpcional(request.numeroAutorizacion()));
+    }
+
+    private static String textoOpcional(String texto) {
+        return texto == null || texto.isBlank() ? null : texto.trim();
     }
 
     /**

@@ -3,6 +3,8 @@ package com.innovax.barberia.profesional;
 import com.innovax.barberia.common.DatosInvalidosException;
 import com.innovax.barberia.common.RecursoNoEncontradoException;
 import com.innovax.barberia.disponibilidad.DisponibilidadService;
+import com.innovax.barberia.cobertura.Cobertura;
+import com.innovax.barberia.cobertura.CoberturaRepository;
 import com.innovax.barberia.especialidad.Especialidad;
 import com.innovax.barberia.especialidad.EspecialidadRepository;
 import com.innovax.barberia.negocio.Negocio;
@@ -32,6 +34,7 @@ public class ProfesionalPublicoService {
     private final EspecialidadRepository especialidades;
     private final ProfesionalRepository profesionales;
     private final DisponibilidadService disponibilidadService;
+    private final CoberturaRepository coberturas;
 
     /**
      * Profesionales activos de la sucursal, con su próximo día libre.
@@ -41,9 +44,16 @@ public class ProfesionalPublicoService {
      *       El próximo día libre es el de su prestación más corta: si entra la más larga, entra la más corta,
      *       así que es el primer día en que se le puede reservar algo.</li>
      * </ul>
+     * Si viene {@code coberturaId} (issue #67, rubro salud), solo los que atienden esa obra social / prepaga.
      */
     @Transactional(readOnly = true)
     public List<ProfesionalPublicoResponse> listar(String slug, UUID sucursalId, UUID servicioId, UUID especialidadId) {
+        return listar(slug, sucursalId, servicioId, especialidadId, null);
+    }
+
+    @Transactional(readOnly = true)
+    public List<ProfesionalPublicoResponse> listar(String slug, UUID sucursalId, UUID servicioId, UUID especialidadId,
+                                                   UUID coberturaId) {
         if (servicioId == null && especialidadId == null) {
             throw new DatosInvalidosException("servicio", "Indicá el servicio o la especialidad");
         }
@@ -57,9 +67,11 @@ public class ProfesionalPublicoService {
         Especialidad especialidad = especialidadId == null ? null : especialidades
                 .findByIdAndNegocioId(especialidadId, negocio.getId())
                 .orElseThrow(() -> new RecursoNoEncontradoException("Especialidad no encontrada"));
+        Cobertura cobertura = coberturas.activaONull(negocio.getId(), coberturaId);
 
         if (servicioId == null) {
             return profesionales.findActivosDeSucursalConEspecialidad(sucursal.getId(), especialidad.getId()).stream()
+                    .filter(p -> p.atiende(cobertura))
                     .sorted(Comparator.comparing(Profesional::getNombre).thenComparing(Profesional::getApellido))
                     .map(p -> ProfesionalPublicoResponse.de(p, proximoDiaConAlgunServicio(sucursal, p)))
                     .toList();
@@ -72,6 +84,7 @@ public class ProfesionalPublicoService {
 
         return profesionales.findByActivoTrueAndSucursalesContainingAndServiciosContaining(sucursal, servicio).stream()
                 .filter(p -> especialidad == null || p.getEspecialidades().contains(especialidad))
+                .filter(p -> p.atiende(cobertura))
                 .sorted(Comparator.comparing(Profesional::getNombre).thenComparing(Profesional::getApellido))
                 .map(b -> ProfesionalPublicoResponse.de(b,
                         disponibilidadService.proximoDiaDisponible(sucursal.getId(), servicio.getId(), b.getId())

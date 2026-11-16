@@ -1,6 +1,7 @@
 package com.innovax.barberia.profesional;
 
 import com.innovax.barberia.auth.Usuario;
+import com.innovax.barberia.cobertura.Cobertura;
 import com.innovax.barberia.especialidad.Especialidad;
 import com.innovax.barberia.negocio.Negocio;
 import com.innovax.barberia.servicio.Servicio;
@@ -74,7 +75,20 @@ public class Profesional {
             inverseJoinColumns = @JoinColumn(name = "especialidad_id"))
     private Set<Especialidad> especialidades = new HashSet<>();
 
+    /** Obras sociales / prepagas que atiende (issue #67). A los particulares los atienden todos. */
+    @ManyToMany
+    @JoinTable(
+            name = "profesional_cobertura",
+            joinColumns = @JoinColumn(name = "profesional_id"),
+            inverseJoinColumns = @JoinColumn(name = "cobertura_id"))
+    private Set<Cobertura> coberturas = new HashSet<>();
+
     @CreationTimestamp
     @Column(nullable = false, updatable = false)
     private Instant createdAt;
+
+    /** Null = particular: lo atiende cualquiera. Se compara por id (la cobertura puede venir como proxy). */
+    public boolean atiende(Cobertura cobertura) {
+        return cobertura == null || coberturas.stream().anyMatch(c -> c.getId().equals(cobertura.getId()));
+    }
 }

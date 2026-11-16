@@ -140,7 +140,7 @@ export function TopBar({ usuario, onRegistrar, onCerrarSesion }: Props) {
               claseBoton={`${ITEM_BASE} ${gestionActiva ? ITEM_ACTIVO : ITEM_INACTIVO}`}
             >
               {(cerrar) =>
-                ITEMS_GESTION.map((i) => (
+                visibles(ITEMS_GESTION, usuario?.rol, t.rubro).map((i) => (
                   <NavLink key={i.to} to={i.to} role="menuitem" className={claseItemMenu} onClick={cerrar}>
                     <i.icono size={14} strokeWidth={1.75} aria-hidden="true" />
                     {i.etiqueta(t)}

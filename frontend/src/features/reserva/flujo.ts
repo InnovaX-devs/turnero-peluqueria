@@ -1,12 +1,22 @@
 import type { Terminos } from '../../lib/terminos'
 
-export type Paso = 'sucursal' | 'especialidad' | 'servicio' | 'profesional' | 'horario' | 'datos'
+export type Paso = 'sucursal' | 'cobertura' | 'especialidad' | 'servicio' | 'profesional' | 'horario' | 'datos'
+
+/** Valor de coberturaId cuando el paciente elige "Particular" (issue #67). */
+export const COBERTURA_PARTICULAR = 'particular'
+
+/** El id real para la API: undefined si es particular o todavía no se eligió. */
+export function coberturaReal(coberturaId: string | null): string | undefined {
+  return coberturaId && coberturaId !== COBERTURA_PARTICULAR ? coberturaId : undefined
+}
 
 /** Valor de profesionalId cuando el cliente elige "Cualquier profesional". */
 export const PROFESIONAL_CUALQUIERA = 'cualquiera'
 
 export interface Selecciones {
   sucursalId: string | null
+  /** Rubro salud con obras sociales cargadas (issue #67): una cobertura o COBERTURA_PARTICULAR */
+  coberturaId: string | null
   /** Solo en la reserva por especialidad (rubro salud) */
   especialidadId: string | null
   servicioId: string | null
@@ -18,7 +28,7 @@ export interface Selecciones {
 }
 
 export const SELECCIONES_VACIAS: Selecciones = {
-  sucursalId: null, especialidadId: null, servicioId: null, profesionalId: null, fecha: null, hora: null, profesionalAsignadoId: null,
+  sucursalId: null, coberturaId: null, especialidadId: null, servicioId: null, profesionalId: null, fecha: null, hora: null, profesionalAsignadoId: null,
 }
 
 interface DefinicionPaso {
@@ -29,6 +39,7 @@ interface DefinicionPaso {
 }
 
 const SUCURSAL: DefinicionPaso = { paso: 'sucursal', titulo: () => 'Elegí la sucursal', campos: ['sucursalId'] }
+const COBERTURA: DefinicionPaso = { paso: 'cobertura', titulo: () => '¿Cómo vas a pagar?', campos: ['coberturaId'] }
 const ESPECIALIDAD: DefinicionPaso = { paso: 'especialidad', titulo: () => 'Elegí la especialidad', campos: ['especialidadId'] }
 const SERVICIO: DefinicionPaso = { paso: 'servicio', titulo: (t) => `Elegí ${t.servicio.el}`, campos: ['servicioId'] }
 const PROFESIONAL: DefinicionPaso = { paso: 'profesional', titulo: (t) => `Elegí ${t.profesional.el}`, campos: ['profesionalId'] }
@@ -38,22 +49,26 @@ const HORARIO: DefinicionPaso = {
 const DATOS: DefinicionPaso = { paso: 'datos', titulo: () => 'Tus datos', campos: [] }
 
 /** Flujo de siempre: servicio → profesional → horario. */
-const PASOS_GENERAL: DefinicionPaso[] = [SUCURSAL, SERVICIO, PROFESIONAL, HORARIO, DATOS]
+const PASOS_GENERAL: DefinicionPaso[] = [SUCURSAL, COBERTURA, SERVICIO, PROFESIONAL, HORARIO, DATOS]
 
 /**
  * Rubro salud con especialidades (issue #68): el paciente busca "Kinesiología" sin conocer al profesional.
  * especialidad → profesional (o cualquiera) → prestación → horario.
  */
-const PASOS_POR_ESPECIALIDAD: DefinicionPaso[] = [SUCURSAL, ESPECIALIDAD, PROFESIONAL, SERVICIO, HORARIO, DATOS]
+const PASOS_POR_ESPECIALIDAD: DefinicionPaso[] = [SUCURSAL, COBERTURA, ESPECIALIDAD, PROFESIONAL, SERVICIO, HORARIO, DATOS]
 
 function todosLosPasos(porEspecialidad: boolean): DefinicionPaso[] {
   return porEspecialidad ? PASOS_POR_ESPECIALIDAD : PASOS_GENERAL
 }
 
-/** Con una sola sucursal, el paso se saltea y se elige sola. */
-export function pasosDelFlujo(cantidadSucursales: number, porEspecialidad = false): DefinicionPaso[] {
-  const pasos = todosLosPasos(porEspecialidad)
-  return cantidadSucursales <= 1 ? pasos.filter((p) => p.paso !== 'sucursal') : pasos
+/**
+ * Con una sola sucursal, el paso se saltea y se elige sola. "¿Cómo vas a pagar?" (obra social o particular,
+ * issue #67) solo aparece si el negocio tiene obras sociales cargadas.
+ */
+export function pasosDelFlujo(cantidadSucursales: number, porEspecialidad = false, conCobertura = false): DefinicionPaso[] {
+  return todosLosPasos(porEspecialidad)
+    .filter((p) => cantidadSucursales > 1 || p.paso !== 'sucursal')
+    .filter((p) => conCobertura || p.paso !== 'cobertura')
 }
 
 export function esPaso(valor: string | null): valor is Paso {

@@ -29,6 +29,8 @@ interface Props {
   profesionalId: string
   /** Rubro salud: con "cualquiera", solo los profesionales de esta especialidad */
   especialidadId?: string | null
+  /** Obra social elegida (issue #67): solo los horarios de quienes la atienden */
+  coberturaId?: string
   fechaElegida: string | null
   horaElegida: string | null
   onElegir: (eleccion: EleccionHorario) => void
@@ -44,6 +46,7 @@ export function PasoHorario(props: Props) {
     servicioId,
     profesionalId: esCualquiera ? null : profesionalId,
     especialidadId: esCualquiera ? especialidadId : null,
+    coberturaId: props.coberturaId ?? null,
   }
 
   const hoy = hoyISO()
@@ -63,7 +66,7 @@ export function PasoHorario(props: Props) {
   const haySiguiente = sumarDias(inicio, DIAS_POR_SEMANA) <= ultimoDia
 
   const qDias = useQuery({
-    queryKey: ['dias-disponibles', sucursalId, servicioId, consulta.profesionalId, consulta.especialidadId, inicio, fin],
+    queryKey: ['dias-disponibles', sucursalId, servicioId, consulta.profesionalId, consulta.especialidadId, consulta.coberturaId, inicio, fin],
     queryFn: () => obtenerDiasDisponibles(consulta, inicio, fin),
     staleTime: 30 * 1000,
   })
@@ -73,7 +76,7 @@ export function PasoHorario(props: Props) {
   const diaActivo = diaTocado && diasLibres.includes(diaTocado) ? diaTocado : (diasLibres[0] ?? null)
 
   const qSlots = useQuery({
-    queryKey: ['disponibilidad', sucursalId, servicioId, consulta.profesionalId, consulta.especialidadId, diaActivo],
+    queryKey: ['disponibilidad', sucursalId, servicioId, consulta.profesionalId, consulta.especialidadId, consulta.coberturaId, diaActivo],
     queryFn: () => obtenerDisponibilidad(consulta, diaActivo as string),
     enabled: diaActivo !== null,
     staleTime: 30 * 1000,

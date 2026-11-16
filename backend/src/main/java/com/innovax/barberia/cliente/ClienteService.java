@@ -6,7 +6,10 @@ import com.innovax.barberia.auth.UsuarioActual;
 import com.innovax.barberia.negocio.Negocio;
 import com.innovax.barberia.negocio.NegocioRepository;
 import com.innovax.barberia.negocio.Rubro;
+import com.innovax.barberia.cliente.dto.ActualizarCoberturaRequest;
 import com.innovax.barberia.cliente.dto.ActualizarNotasRequest;
+import com.innovax.barberia.cobertura.Cobertura;
+import com.innovax.barberia.cobertura.CoberturaRepository;
 import com.innovax.barberia.cliente.dto.ClienteListadoResponse;
 import com.innovax.barberia.cliente.dto.ClienteResponse;
 import com.innovax.barberia.cliente.dto.CrearClienteRequest;
@@ -40,6 +43,7 @@ public class ClienteService {
     private final NegocioRepository negocios;
     private final AtencionRepository atenciones;
     private final UsuarioActual usuarioActual;
+    private final CoberturaRepository coberturas;
 
     @Transactional(readOnly = true)
     public List<ClienteResponse> buscar(String consulta) {
@@ -154,6 +158,31 @@ public class ClienteService {
         cliente.setNotas(notas.isEmpty() ? null : notas);
         clientes.save(cliente);
         return armarFicha(cliente, negocioId);
+    }
+
+    /** Issue #67: obra social / prepaga del paciente. Sin cobertura = particular. */
+    @Transactional
+    public FichaClienteResponse actualizarCobertura(UUID id, ActualizarCoberturaRequest request) {
+        UUID negocioId = usuarioActual.negocioId();
+        Cliente cliente = buscarDeMiNegocio(id, negocioId);
+        if (request.coberturaId() == null) {
+            cliente.setCobertura(null);
+            cliente.setNumeroAfiliado(null);
+            cliente.setPlan(null);
+        } else {
+            Cobertura cobertura = coberturas.findByIdAndNegocioId(request.coberturaId(), negocioId)
+                    .filter(Cobertura::isActiva)
+                    .orElseThrow(() -> new DatosInvalidosException("coberturaId", "Esa obra social / prepaga no está disponible"));
+            cliente.setCobertura(cobertura);
+            cliente.setNumeroAfiliado(textoOpcional(request.numeroAfiliado()));
+            cliente.setPlan(textoOpcional(request.plan()));
+        }
+        clientes.save(cliente);
+        return armarFicha(cliente, negocioId);
+    }
+
+    private static String textoOpcional(String texto) {
+        return texto == null || texto.isBlank() ? null : texto.trim();
     }
 
     /** Si el cliente es de otra barbería se responde igual que si no existiera. */

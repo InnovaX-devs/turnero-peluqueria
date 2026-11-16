@@ -1,5 +1,5 @@
 import { api } from './client'
-import type { FichaCliente, OrdenClientes, PaginaClientes } from '../types/cliente'
+import type { DatosCoberturaCliente, FichaCliente, OrdenClientes, PaginaClientes } from '../types/cliente'
 
 export const CLIENTES_POR_PAGINA = 50
 
@@ -13,6 +13,12 @@ export async function listarClientes(q: string, pagina: number, orden: OrdenClie
 
 export async function obtenerFichaCliente(id: string): Promise<FichaCliente> {
   const { data } = await api.get<FichaCliente>(`/api/clientes/${id}`)
+  return data
+}
+
+/** Obra social / prepaga del paciente (issue #67). coberturaId null = particular. */
+export async function actualizarCoberturaCliente(id: string, datos: DatosCoberturaCliente): Promise<FichaCliente> {
+  const { data } = await api.patch<FichaCliente>(`/api/clientes/${id}/cobertura`, datos)
   return data
 }
 

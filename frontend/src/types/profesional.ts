@@ -1,3 +1,5 @@
+import type { Cobertura } from './cobertura'
+
 export interface Profesional {
   id: string
   nombre: string
@@ -11,6 +13,8 @@ export interface Profesional {
   /** Rubro salud */
   especialidadIds: string[]
   usuarioEmail: string | null
+  /** Rubro salud: obras sociales / prepagas activas que atiende. Puede faltar si el backend es anterior al issue #67 */
+  coberturaIds?: string[]
 }
 
 export interface Especialidad {
@@ -52,6 +56,8 @@ export interface OpcionesProfesional {
   especialidades: Especialidad[]
   /** Los activos (rubro salud). Puede faltar si el backend es anterior al issue #69 */
   consultorios?: ConsultorioOpcion[]
+  /** Obras sociales / prepagas activas (rubro salud). Puede faltar si el backend es anterior al issue #67 */
+  coberturas?: Cobertura[]
 }
 
 /** diaSemana: 1 = lunes ... 7 = domingo. Horas en formato "HH:mm". */
@@ -78,6 +84,8 @@ export interface DatosProfesional {
   matricula?: string
   /** Rubro salud. Sin mandar = no se tocan; [] = se quitan todas */
   especialidadIds?: string[]
+  /** Rubro salud. Sin mandar = no se tocan; [] = solo particulares */
+  coberturaIds?: string[]
 }
 
 export interface CrearProfesional extends DatosProfesional {

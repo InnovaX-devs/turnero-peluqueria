@@ -6,6 +6,8 @@ import { mensajeDeError } from '../../lib/errores'
 interface Props {
   slug: string
   sucursalId: string
+  /** Obra social elegida (issue #67): solo las especialidades de quienes la atienden */
+  coberturaId?: string
   elegida: string | null
   onElegir: (id: string) => void
 }
@@ -19,11 +21,11 @@ function normalizar(texto: string): string {
 }
 
 /** Rubro salud (issue #68): el paciente elige qué necesita sin tener que conocer al profesional. */
-export function PasoEspecialidad({ slug, sucursalId, elegida, onElegir }: Props) {
+export function PasoEspecialidad({ slug, sucursalId, coberturaId, elegida, onElegir }: Props) {
   const [busqueda, setBusqueda] = useState('')
   const { data: especialidades, isPending, error, refetch } = useQuery({
-    queryKey: ['especialidades-publicas', slug, sucursalId],
-    queryFn: () => obtenerEspecialidadesPublicas(slug, sucursalId),
+    queryKey: ['especialidades-publicas', slug, sucursalId, coberturaId ?? null],
+    queryFn: () => obtenerEspecialidadesPublicas(slug, sucursalId, coberturaId),
     staleTime: 5 * 60 * 1000,
   })
 
@@ -43,7 +45,13 @@ export function PasoEspecialidad({ slug, sucursalId, elegida, onElegir }: Props)
   }
 
   if (especialidades.length === 0) {
-    return <p className="reserva-vacio">Por ahora no hay especialidades para reservar en esta sucursal.</p>
+    return (
+      <p className="reserva-vacio">
+        {coberturaId
+          ? 'Por ahora nadie de esta sucursal atiende esa obra social. Podés volver y reservar como particular.'
+          : 'Por ahora no hay especialidades para reservar en esta sucursal.'}
+      </p>
+    )
   }
 
   const filtro = normalizar(busqueda)

@@ -1,5 +1,6 @@
 package com.innovax.barberia.cliente;
 
+import com.innovax.barberia.cobertura.Cobertura;
 import com.innovax.barberia.negocio.Negocio;
 import jakarta.persistence.*;
 import lombok.Getter;
@@ -46,6 +47,17 @@ public class Cliente {
 
     @Column(length = 2000)
     private String notas;
+
+    /** Obra social / prepaga del paciente (issue #67). Null = particular. */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "cobertura_id")
+    private Cobertura cobertura;
+
+    @Column(length = 40)
+    private String numeroAfiliado;
+
+    @Column(length = 60)
+    private String plan;
 
     @CreationTimestamp
     @Column(nullable = false, updatable = false)

@@ -29,7 +29,9 @@ public class ProfesionalPublicoController {
             @PathVariable String slug,
             @RequestParam UUID sucursal,
             @RequestParam(required = false) UUID servicio,
-            @RequestParam(required = false) UUID especialidad) {
-        return profesionalPublicoService.listar(slug, sucursal, servicio, especialidad);
+            @RequestParam(required = false) UUID especialidad,
+            /* Issue #67: obra social / prepaga elegida. Sin este parámetro = particular (todos). */
+            @RequestParam(required = false) UUID cobertura) {
+        return profesionalPublicoService.listar(slug, sucursal, servicio, especialidad, cobertura);
     }
 }

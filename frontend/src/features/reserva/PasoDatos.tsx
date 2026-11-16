@@ -10,6 +10,7 @@ import { errorDeDni, soloDigitosDni } from '../../lib/dni'
 import { armarTelefono, PAISES } from '../../lib/telefono'
 import { ETIQUETA_SEXO, type Sexo } from '../../types/cliente'
 import type { ReservaCreada, SucursalPublica } from '../../types/reserva'
+import type { Cobertura } from '../../types/cobertura'
 import { useTerminos } from '../terminos/useTerminos'
 
 interface Props {
@@ -19,15 +20,20 @@ interface Props {
   profesionalId: string
   fecha: string
   hora: string
+  /** Obra social elegida (issue #67). Sin mandar = particular */
+  cobertura?: Cobertura
   onConfirmada: (reserva: ReservaCreada) => void
   onElegirOtroHorario: () => void
 }
 
-const CAMPOS_DEL_FORMULARIO = ['clienteNombre', 'clienteTelefono', 'clienteDni', 'clienteFechaNacimiento']
+const CAMPOS_DEL_FORMULARIO = [
+  'clienteNombre', 'clienteTelefono', 'clienteDni', 'clienteFechaNacimiento', 'numeroAfiliado', 'plan',
+]
 
 const esHorarioOcupado = (e: unknown) => axios.isAxiosError(e) && e.response?.status === 409
 
-export function PasoDatos({ slug, sucursal, servicioId, profesionalId, fecha, hora, onConfirmada, onElegirOtroHorario }: Props) {
+export function PasoDatos(props: Props) {
+  const { slug, sucursal, servicioId, profesionalId, fecha, hora, cobertura, onConfirmada, onElegirOtroHorario } = props
   const t = useTerminos()
   const queryClient = useQueryClient()
   const [nombre, setNombre] = useState('')
@@ -37,7 +43,16 @@ export function PasoDatos({ slug, sucursal, servicioId, profesionalId, fecha, ho
   const [fechaNacimiento, setFechaNacimiento] = useState('')
   const [sexo, setSexo] = useState<Sexo | ''>('')
   const [notas, setNotas] = useState('')
-  const [errores, setErrores] = useState<{ nombre?: string; telefono?: string; dni?: string; fechaNacimiento?: string }>({})
+  const [afiliado, setAfiliado] = useState('')
+  const [plan, setPlan] = useState('')
+  const [errores, setErrores] = useState<{
+    nombre?: string
+    telefono?: string
+    dni?: string
+    fechaNacimiento?: string
+    afiliado?: string
+    plan?: string
+  }>({})
 
   const pais = PAISES.find((p) => p.codigo === codigoPais) ?? PAISES[0]
 
@@ -70,6 +85,8 @@ export function PasoDatos({ slug, sucursal, servicioId, profesionalId, fecha, ho
         telefono: campos.clienteTelefono,
         dni: campos.clienteDni,
         fechaNacimiento: campos.clienteFechaNacimiento,
+        afiliado: campos.numeroAfiliado,
+        plan: campos.plan,
       })
     },
   })
@@ -91,9 +108,11 @@ export function PasoDatos({ slug, sucursal, servicioId, profesionalId, fecha, ho
       telefono: tel.ok ? undefined : tel.error,
       dni: t.pideDni ? errorDeDni(dni) : undefined,
       fechaNacimiento: undefined,
+      afiliado: cobertura && afiliado.trim() === '' ? 'Ingresá tu número de afiliado.' : undefined,
+      plan: undefined,
     }
     setErrores(nuevosErrores)
-    if (nuevosErrores.nombre || nuevosErrores.dni || !tel.ok) return
+    if (nuevosErrores.nombre || nuevosErrores.dni || nuevosErrores.afiliado || !tel.ok) return
 
     mutacion.mutate({
       sucursalId: sucursal.id,
@@ -110,6 +129,11 @@ export function PasoDatos({ slug, sucursal, servicioId, profesionalId, fecha, ho
         clienteSexo: sexo || undefined,
       }),
       notas: notas.trim() || null,
+      ...(cobertura && {
+        coberturaId: cobertura.id,
+        numeroAfiliado: afiliado.trim(),
+        plan: plan.trim() || undefined,
+      }),
     })
   }
 
@@ -140,6 +164,12 @@ export function PasoDatos({ slug, sucursal, servicioId, profesionalId, fecha, ho
             {profesional?.matricula && <small> · Matrícula {profesional.matricula}</small>}
           </dd>
         </div>
+        {cobertura && (
+          <div>
+            <dt>Obra social</dt>
+            <dd>{cobertura.nombre}</dd>
+          </div>
+        )}
         <div>
           <dt>Cuándo</dt>
           <dd>{fechaLarga(fecha)} · {hora} hs</dd>
@@ -148,7 +178,7 @@ export function PasoDatos({ slug, sucursal, servicioId, profesionalId, fecha, ho
           <dt>Dónde</dt>
           <dd>{sucursal.nombre} · {sucursal.direccion}, {sucursal.ciudad}</dd>
         </div>
-        {servicio && (
+        {servicio && !cobertura && (
           <div className="reserva-resumen-total">
             <dt>Total</dt>
             <dd>{formatearPrecio(servicio.precio)}</dd>
@@ -252,6 +282,40 @@ export function PasoDatos({ slug, sucursal, servicioId, profesionalId, fecha, ho
             </>
           )}
 
+          {cobertura && (
+            <>
+              <label className="reserva-campo">
+                <span>Nº de afiliado de {cobertura.nombre}</span>
+                <input
+                  type="text"
+                  autoComplete="off"
+                  maxLength={40}
+                  value={afiliado}
+                  onChange={(e) => setAfiliado(e.target.value)}
+                  aria-invalid={errores.afiliado ? true : undefined}
+                />
+                {errores.afiliado ? (
+                  <small className="reserva-campo-error">{errores.afiliado}</small>
+                ) : (
+                  <small>Está en tu credencial.</small>
+                )}
+              </label>
+              <label className="reserva-campo">
+                <span>Plan (opcional)</span>
+                <input
+                  type="text"
+                  autoComplete="off"
+                  maxLength={60}
+                  placeholder="Ej. 210"
+                  value={plan}
+                  onChange={(e) => setPlan(e.target.value)}
+                  aria-invalid={errores.plan ? true : undefined}
+                />
+                {errores.plan && <small className="reserva-campo-error">{errores.plan}</small>}
+              </label>
+            </>
+          )}
+
           <label className="reserva-campo">
             <span>Notas para {t.profesional.el} (opcional)</span>
             <textarea
@@ -263,7 +327,11 @@ export function PasoDatos({ slug, sucursal, servicioId, profesionalId, fecha, ho
             />
           </label>
 
-          <p className="reserva-pago">💵 El pago se hace en {t.negocio.el}.</p>
+          <p className="reserva-pago">
+            {cobertura
+              ? <>🪪 Llevá tu credencial de {cobertura.nombre}. Si tu plan tiene copago, se abona en {t.negocio.el}.</>
+              : <>💵 El pago se hace en {t.negocio.el}.</>}
+          </p>
 
           {errorGeneral && (
             <p className="reserva-campo-error" role="alert">{errorGeneral}</p>

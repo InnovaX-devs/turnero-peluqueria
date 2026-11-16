@@ -2,6 +2,7 @@ import {
   CalendarDays,
   ChartColumn,
   CircleUser,
+  HeartPulse,
   MessageSquare,
   Scissors,
   Settings,
@@ -10,7 +11,7 @@ import {
   Wallet,
   type LucideIcon,
 } from 'lucide-react'
-import type { Terminos } from '../../lib/terminos'
+import type { Rubro, Terminos } from '../../lib/terminos'
 import type { Rol } from '../../types/auth'
 
 export interface ItemNav {
@@ -22,6 +23,8 @@ export interface ItemNav {
   soloAdmin?: boolean
   /** true = no lo ve recepción (ej. Reportes) */
   sinRecepcion?: boolean
+  /** true = solo en el rubro salud (ej. Obras sociales) */
+  soloSalud?: boolean
   /** true = NavLink exacto (para "/panel", que si no queda activo siempre) */
   exacto?: boolean
 }
@@ -43,13 +46,15 @@ export const ITEMS_NEGOCIO: ItemNav[] = [
 export const ITEMS_GESTION: ItemNav[] = [
   { to: '/panel/profesionales', etiqueta: (t) => t.profesional.P, icono: Scissors, soloAdmin: true },
   { to: '/panel/servicios', etiqueta: (t) => t.servicio.P, icono: Tag, soloAdmin: true },
+  { to: '/panel/coberturas', etiqueta: () => 'Obras sociales', icono: HeartPulse, soloAdmin: true, soloSalud: true },
   { to: '/panel/configuracion', etiqueta: () => 'Configuración', icono: Settings, soloAdmin: true },
 ]
 
 export const ITEM_CUENTA: ItemNav = { to: '/panel/cuenta', etiqueta: () => 'Mi cuenta', icono: CircleUser }
 
-export function visibles(items: ItemNav[], rol: Rol | undefined) {
+export function visibles(items: ItemNav[], rol: Rol | undefined, rubro?: Rubro) {
   return items
     .filter((i) => !i.soloAdmin || rol === 'ADMIN')
     .filter((i) => !i.sinRecepcion || rol !== 'RECEPCION')
+    .filter((i) => !i.soloSalud || rubro === 'SALUD')
 }
