@@ -96,7 +96,7 @@ class PacienteDniIntegrationTest {
         String campoDni = dni == null ? "" : ",\"clienteDni\":\"%s\"".formatted(dni);
         return """
                 {"sucursalId":"%s","servicioId":"%s","profesionalId":"%s",
-                 "fecha":"%s","hora":"%s","clienteNombre":"%s","clienteTelefono":"%s"%s}
+                 "fecha":"%s","hora":"%s","clienteNombre":"%s","clienteTelefono":"%s"%s,"consentimiento":true}
                 """.formatted(SUCURSAL, SERVICIO, PROFESIONAL, fecha, hora, nombre, telefono, campoDni);
     }
 
@@ -165,7 +165,8 @@ class PacienteDniIntegrationTest {
         String body = """
                 {"sucursalId":"%s","servicioId":"%s","profesionalId":"%s",
                  "fecha":"%s","hora":"10:00","clienteNombre":"Con Datos","clienteTelefono":"%s",
-                 "clienteDni":"30777888","clienteFechaNacimiento":"1990-05-17","clienteSexo":"FEMENINO"}
+                 "clienteDni":"30777888","clienteFechaNacimiento":"1990-05-17","clienteSexo":"FEMENINO",
+                 "consentimiento":true}
                 """.formatted(SUCURSAL, SERVICIO, PROFESIONAL, fecha, PREFIJO_TELEFONO + "06");
         mvc.perform(post("/api/public/reservas").contentType(MediaType.APPLICATION_JSON).content(body))
                 .andExpect(status().isCreated());
@@ -173,6 +174,54 @@ class PacienteDniIntegrationTest {
         Cliente paciente = clientes.findByNegocioIdAndDni(NEGOCIO, "30777888").orElseThrow();
         assertThat(paciente.getFechaNacimiento()).isEqualTo(LocalDate.of(1990, 5, 17));
         assertThat(paciente.getSexo()).isEqualTo(Sexo.FEMENINO);
+    }
+
+    // ---------- Consentimiento (issue #73) ----------
+
+    private String reservaSinConsentimiento(String dni, String telefono, String consentimiento) {
+        return """
+                {"sucursalId":"%s","servicioId":"%s","profesionalId":"%s",
+                 "fecha":"%s","hora":"10:00","clienteNombre":"Sin Consentimiento","clienteTelefono":"%s",
+                 "clienteDni":"%s"%s}
+                """.formatted(SUCURSAL, SERVICIO, PROFESIONAL, fecha, telefono, dni, consentimiento);
+    }
+
+    @Test
+    void enSaludNoSeReservaSinAceptarElTratamientoDeDatos() throws Exception {
+        conRubro(Rubro.SALUD);
+        String telefono = PREFIJO_TELEFONO + "09";
+
+        // Sin el campo (página de reserva vieja) y con false: los dos se rechazan con un error en "consentimiento"
+        for (String consentimiento : List.of("", ",\"consentimiento\":false")) {
+            mvc.perform(post("/api/public/reservas").contentType(MediaType.APPLICATION_JSON)
+                            .content(reservaSinConsentimiento("30888999", telefono, consentimiento)))
+                    .andExpect(status().isBadRequest())
+                    .andExpect(jsonPath("$.errores.consentimiento").exists());
+        }
+        assertThat(cuantosConTelefono(telefono)).isZero();
+    }
+
+    @Test
+    void enSaludSeGuardaCuandoYConQueVersionAceptoElPaciente() throws Exception {
+        conRubro(Rubro.SALUD);
+        reservar(LocalTime.of(10, 0), "Con Consentimiento", PREFIJO_TELEFONO + "10", "30999111", 201);
+
+        Cliente paciente = clientes.findByNegocioIdAndDni(NEGOCIO, "30999111").orElseThrow();
+        assertThat(paciente.getConsentimientoEn()).isNotNull();
+        assertThat(paciente.getConsentimientoVersion()).isEqualTo(com.innovax.barberia.common.TerminosSalud.VERSION);
+    }
+
+    @Test
+    void enBarberiaNoSePideNiSeGuardaElConsentimiento() throws Exception {
+        String telefono = PREFIJO_TELEFONO + "11";
+        mvc.perform(post("/api/public/reservas").contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"sucursalId":"%s","servicioId":"%s","profesionalId":"%s",
+                                 "fecha":"%s","hora":"10:00","clienteNombre":"Cliente Barberia","clienteTelefono":"%s"}
+                                """.formatted(SUCURSAL, SERVICIO, PROFESIONAL, fecha, telefono)))
+                .andExpect(status().isCreated());
+
+        assertThat(clientes.findByNegocioIdAndTelefono(NEGOCIO, telefono).orElseThrow().getConsentimientoEn()).isNull();
     }
 
     // ---------- Rubros que no son salud: todo sigue igual ----------

@@ -3,6 +3,7 @@ package com.innovax.barberia.notificacion;
 import com.innovax.barberia.atencion.Atencion;
 import com.innovax.barberia.atencion.EstadoAtencion;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -11,6 +12,27 @@ import java.util.List;
 import java.util.UUID;
 
 public interface NotificacionRepository extends JpaRepository<Notificacion, UUID> {
+
+    /** Issue #73: los mensajes que todavía no salieron a un paciente anonimizado ya no se mandan. */
+    @Modifying(flushAutomatically = true)
+    @Query("""
+            update Notificacion n
+            set n.estado = com.innovax.barberia.notificacion.EstadoNotificacion.OMITIDA,
+                n.error = 'Paciente anonimizado'
+            where n.estado = com.innovax.barberia.notificacion.EstadoNotificacion.PENDIENTE
+              and n.atencion.id in (select a.id from Atencion a where a.cliente.id = :clienteId)
+            """)
+    int omitirPendientesDeCliente(@Param("clienteId") UUID clienteId);
+
+    /** Issue #73: el mensaje y el destinatario tienen el nombre y el teléfono del paciente. */
+    @Modifying(flushAutomatically = true)
+    @Query("""
+            update Notificacion n
+            set n.destinatario = 'anonimizado',
+                n.mensaje = '(contenido eliminado a pedido del titular)'
+            where n.atencion.id in (select a.id from Atencion a where a.cliente.id = :clienteId)
+            """)
+    int borrarContenidoDeCliente(@Param("clienteId") UUID clienteId);
 
     /** Lo que el job tiene que procesar: pendientes cuya hora ya llegó. */
     List<Notificacion> findByEstadoAndProgramadaParaLessThanEqual(EstadoNotificacion estado, Instant hasta);

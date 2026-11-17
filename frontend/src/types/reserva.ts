@@ -84,6 +84,8 @@ export interface CrearReservaRequest {
   coberturaId?: string
   numeroAfiliado?: string
   plan?: string
+  /** Issue #73 (salud): el paciente aceptó el tratamiento de sus datos. Obligatorio en salud; en los demás rubros no se manda. */
+  consentimiento?: boolean
 }
 
 export interface ReservaCreada {

@@ -64,6 +64,18 @@ export interface FichaCliente {
   coberturaNombre?: string | null
   numeroAfiliado?: string | null
   plan?: string | null
+  /** Issue #73: cuándo se borraron sus datos personales a pedido suyo. null = datos vigentes */
+  anonimizadoEn?: string | null
+}
+
+export type AccionPaciente = 'VER_FICHA' | 'EDITAR_NOTAS' | 'EDITAR_COBERTURA' | 'EXPORTAR' | 'ANONIMIZAR'
+
+/** Una fila del registro de accesos a la ficha (issue #73). */
+export interface AccesoPaciente {
+  usuarioEmail: string
+  accion: AccionPaciente
+  /** ISO */
+  fecha: string
 }
 
 export interface DatosCoberturaCliente {

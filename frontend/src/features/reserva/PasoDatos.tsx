@@ -27,7 +27,7 @@ interface Props {
 }
 
 const CAMPOS_DEL_FORMULARIO = [
-  'clienteNombre', 'clienteTelefono', 'clienteDni', 'clienteFechaNacimiento', 'numeroAfiliado', 'plan',
+  'clienteNombre', 'clienteTelefono', 'clienteDni', 'clienteFechaNacimiento', 'numeroAfiliado', 'plan', 'consentimiento',
 ]
 
 const esHorarioOcupado = (e: unknown) => axios.isAxiosError(e) && e.response?.status === 409
@@ -35,6 +35,7 @@ const esHorarioOcupado = (e: unknown) => axios.isAxiosError(e) && e.response?.st
 export function PasoDatos(props: Props) {
   const { slug, sucursal, servicioId, profesionalId, fecha, hora, cobertura, onConfirmada, onElegirOtroHorario } = props
   const t = useTerminos()
+  const esSalud = t.rubro === 'SALUD'
   const queryClient = useQueryClient()
   const [nombre, setNombre] = useState('')
   const [codigoPais, setCodigoPais] = useState('AR')
@@ -45,6 +46,8 @@ export function PasoDatos(props: Props) {
   const [notas, setNotas] = useState('')
   const [afiliado, setAfiliado] = useState('')
   const [plan, setPlan] = useState('')
+  // Issue #73: en salud hay que aceptar el tratamiento de datos para reservar
+  const [consentimiento, setConsentimiento] = useState(false)
   const [errores, setErrores] = useState<{
     nombre?: string
     telefono?: string
@@ -52,6 +55,7 @@ export function PasoDatos(props: Props) {
     fechaNacimiento?: string
     afiliado?: string
     plan?: string
+    consentimiento?: string
   }>({})
 
   const pais = PAISES.find((p) => p.codigo === codigoPais) ?? PAISES[0]
@@ -87,6 +91,7 @@ export function PasoDatos(props: Props) {
         fechaNacimiento: campos.clienteFechaNacimiento,
         afiliado: campos.numeroAfiliado,
         plan: campos.plan,
+        consentimiento: campos.consentimiento,
       })
     },
   })
@@ -110,9 +115,10 @@ export function PasoDatos(props: Props) {
       fechaNacimiento: undefined,
       afiliado: cobertura && afiliado.trim() === '' ? 'Ingresá tu número de afiliado.' : undefined,
       plan: undefined,
+      consentimiento: esSalud && !consentimiento ? 'Tenés que aceptarlo para poder reservar.' : undefined,
     }
     setErrores(nuevosErrores)
-    if (nuevosErrores.nombre || nuevosErrores.dni || nuevosErrores.afiliado || !tel.ok) return
+    if (nuevosErrores.nombre || nuevosErrores.dni || nuevosErrores.afiliado || nuevosErrores.consentimiento || !tel.ok) return
 
     mutacion.mutate({
       sucursalId: sucursal.id,
@@ -129,6 +135,7 @@ export function PasoDatos(props: Props) {
         clienteSexo: sexo || undefined,
       }),
       notas: notas.trim() || null,
+      ...(esSalud && { consentimiento: true }),
       ...(cobertura && {
         coberturaId: cobertura.id,
         numeroAfiliado: afiliado.trim(),
@@ -333,6 +340,31 @@ export function PasoDatos(props: Props) {
               : <>💵 El pago se hace en {t.negocio.el}.</>}
           </p>
 
+          {esSalud && (
+            <div className="reserva-consentimiento">
+              <label>
+                <input
+                  type="checkbox"
+                  checked={consentimiento}
+                  onChange={(e) => {
+                    setConsentimiento(e.target.checked)
+                    setErrores((anteriores) => ({ ...anteriores, consentimiento: undefined }))
+                  }}
+                  aria-invalid={errores.consentimiento ? true : undefined}
+                />
+                <span>
+                  Acepto que {t.negocio.el} trate mis datos personales, incluidos datos de salud, para gestionar mis
+                  turnos, según la{' '}
+                  <a href={`/b/${encodeURIComponent(slug)}/privacidad`} target="_blank" rel="noreferrer">
+                    política de privacidad
+                  </a>
+                  .
+                </span>
+              </label>
+              {errores.consentimiento && <small className="reserva-campo-error">{errores.consentimiento}</small>}
+            </div>
+          )}
+
           {errorGeneral && (
             <p className="reserva-campo-error" role="alert">{errorGeneral}</p>
           )}
@@ -341,9 +373,11 @@ export function PasoDatos(props: Props) {
             {mutacion.isPending ? 'Reservando…' : 'Confirmar turno'}
           </button>
 
-          <p className="reserva-legal">
-            Al confirmar, aceptás que {t.negocio.el} use tus datos para gestionar este turno.
-          </p>
+          {!esSalud && (
+            <p className="reserva-legal">
+              Al confirmar, aceptás que {t.negocio.el} use tus datos para gestionar este turno.
+            </p>
+          )}
         </form>
       )}
     </div>

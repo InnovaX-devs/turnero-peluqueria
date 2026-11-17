@@ -63,6 +63,17 @@
 .ficha-seccion { display: flex; flex-direction: column; gap: 10px; }
 .ficha-seccion h2 { margin: 0; font-size: 1.05rem; }
 
+/* Datos personales (issue #73) */
+.ficha-privacidad-acciones { display: flex; flex-wrap: wrap; gap: 10px; align-items: flex-start; }
+.ficha-privacidad-confirmar { display: flex; flex-direction: column; gap: 10px; padding: 12px 14px; border-radius: 12px; background: var(--error-fondo); color: var(--error); }
+.ficha-privacidad-confirmar p { margin: 0; font-size: 0.9rem; }
+.ficha-privacidad-botones { display: flex; gap: 12px; align-items: center; }
+.ficha-peligro { color: var(--error); border-color: var(--error); }
+.ficha-privacidad-toggle { align-self: flex-start; }
+.ficha-accesos { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.ficha-accesos li { display: flex; flex-direction: column; gap: 2px; padding-bottom: 8px; border-bottom: 1px solid var(--borde, rgba(127,127,127,.25)); }
+.ficha-accesos small { color: var(--texto-suave); }
+
 .ficha-notas {
   width: 100%; padding: 12px 14px; border: 1px solid var(--borde); border-radius: 12px;
   background: var(--fondo-tarjeta); color: var(--texto); font: inherit; resize: vertical; min-height: 96px;

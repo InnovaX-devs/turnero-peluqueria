@@ -13,3 +13,6 @@ spring:
 app:
   jwt:
     secret: dev-secret-solo-para-desarrollo-local-123456
+  mail:
+    # Local: sin RESEND_API_KEY, imprime el email completo (con el link de recuperación) para poder copiarlo.
+    log-contenido: true

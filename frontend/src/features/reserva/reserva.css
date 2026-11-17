@@ -184,6 +184,10 @@
 
 .reserva-pago { margin: 0 0 16px; color: var(--texto-suave); font-size: 0.9rem; }
 .reserva-legal { margin: 14px 0 0; color: var(--texto-suave); font-size: 0.8rem; text-align: center; }
+.reserva-consentimiento { margin: 0 0 16px; display: flex; flex-direction: column; gap: 6px; }
+.reserva-consentimiento label { display: flex; align-items: flex-start; gap: 10px; font-size: 0.9rem; line-height: 1.4; cursor: pointer; }
+.reserva-consentimiento input[type="checkbox"] { flex: none; width: 20px; height: 20px; margin-top: 2px; accent-color: var(--acento); }
+.reserva-consentimiento a { color: var(--acento); text-decoration: underline; }
 .reserva-aviso {
   display: flex; flex-direction: column; gap: 14px; padding: 16px; border-radius: 14px;
   background: var(--error-fondo); color: var(--error);

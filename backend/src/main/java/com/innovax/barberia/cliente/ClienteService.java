@@ -2,6 +2,8 @@ package com.innovax.barberia.cliente;
 
 import com.innovax.barberia.atencion.AtencionRepository;
 import com.innovax.barberia.atencion.EstadoAtencion;
+import com.innovax.barberia.auditoria.AccionPaciente;
+import com.innovax.barberia.auditoria.AuditoriaPacienteService;
 import com.innovax.barberia.auth.UsuarioActual;
 import com.innovax.barberia.negocio.Negocio;
 import com.innovax.barberia.negocio.NegocioRepository;
@@ -44,6 +46,7 @@ public class ClienteService {
     private final AtencionRepository atenciones;
     private final UsuarioActual usuarioActual;
     private final CoberturaRepository coberturas;
+    private final AuditoriaPacienteService auditoria;
 
     @Transactional(readOnly = true)
     public List<ClienteResponse> buscar(String consulta) {
@@ -144,10 +147,16 @@ public class ClienteService {
         return new PaginaClientesResponse(filas, total, paginaPedida, porPagina, desde + filas.size() < total);
     }
 
-    @Transactional(readOnly = true)
+    /**
+     * Abrir la ficha deja constancia (issue #73). No puede ser {@code readOnly}: registrar el acceso escribe
+     * en la base y Postgres rechaza un INSERT dentro de una transacción de solo lectura.
+     */
+    @Transactional
     public FichaClienteResponse ficha(UUID id) {
         UUID negocioId = usuarioActual.negocioId();
-        return armarFicha(buscarDeMiNegocio(id, negocioId), negocioId);
+        Cliente cliente = buscarDeMiNegocio(id, negocioId);
+        auditoria.registrar(cliente.getId(), AccionPaciente.VER_FICHA);
+        return armarFicha(cliente, negocioId);
     }
 
     @Transactional
@@ -157,6 +166,7 @@ public class ClienteService {
         String notas = request.notas() == null ? "" : request.notas().strip();
         cliente.setNotas(notas.isEmpty() ? null : notas);
         clientes.save(cliente);
+        auditoria.registrar(cliente.getId(), AccionPaciente.EDITAR_NOTAS);
         return armarFicha(cliente, negocioId);
     }
 
@@ -178,6 +188,7 @@ public class ClienteService {
             cliente.setPlan(textoOpcional(request.plan()));
         }
         clientes.save(cliente);
+        auditoria.registrar(cliente.getId(), AccionPaciente.EDITAR_COBERTURA);
         return armarFicha(cliente, negocioId);
     }
 
