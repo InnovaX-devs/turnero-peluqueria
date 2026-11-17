@@ -4,9 +4,9 @@ import {
   CircleUser,
   HeartPulse,
   MessageSquare,
-  Scissors,
   Settings,
   Tag,
+  UserRoundCheck,
   Users,
   Wallet,
   type LucideIcon,
@@ -44,7 +44,7 @@ export const ITEMS_NEGOCIO: ItemNav[] = [
 
 /** Configuración del negocio: desplegable "Gestión" en desktop. */
 export const ITEMS_GESTION: ItemNav[] = [
-  { to: '/panel/profesionales', etiqueta: (t) => t.profesional.P, icono: Scissors, soloAdmin: true },
+  { to: '/panel/profesionales', etiqueta: (t) => t.profesional.P, icono: UserRoundCheck, soloAdmin: true },
   { to: '/panel/servicios', etiqueta: (t) => t.servicio.P, icono: Tag, soloAdmin: true },
   { to: '/panel/coberturas', etiqueta: () => 'Obras sociales', icono: HeartPulse, soloAdmin: true, soloSalud: true },
   { to: '/panel/configuracion', etiqueta: () => 'Configuración', icono: Settings, soloAdmin: true },

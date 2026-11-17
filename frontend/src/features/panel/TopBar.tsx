@@ -1,6 +1,6 @@
 import { useRef, useState, type ReactNode } from 'react'
 import { NavLink, useLocation } from 'react-router-dom'
-import { ChevronDown, CircleUser, LogOut, Plus, Scissors } from 'lucide-react'
+import { CalendarCheck, ChevronDown, CircleUser, LogOut, Plus } from 'lucide-react'
 import { useCerrarAfuera } from '../../hooks/useCerrarAfuera'
 import { etiquetaRol } from '../../lib/roles'
 import type { Usuario } from '../../types/auth'
@@ -37,7 +37,7 @@ function Logo({ usuario }: { usuario: Usuario | null }) {
         className="size-8 rounded-[9px] bg-white object-cover"
         alternativa={
           <span className="bg-grad grid size-8 place-items-center rounded-[9px] text-sobre-acento">
-            <Scissors size={17} strokeWidth={2.2} aria-hidden="true" />
+            <CalendarCheck size={17} strokeWidth={2.2} aria-hidden="true" />
           </span>
         }
       />
