@@ -1,0 +1,6 @@
+.privacidad { max-width: 720px; margin: 0 auto; padding: 24px 20px 48px; line-height: 1.55; }
+.privacidad h1 { margin: 0 0 4px; font-size: 1.6rem; }
+.privacidad h2 { margin: 28px 0 6px; font-size: 1.05rem; }
+.privacidad p { margin: 0; }
+.privacidad-sub { color: var(--texto-suave); font-size: 0.9rem; }
+.privacidad-legal { font-size: 0.85rem; color: var(--texto-suave); }

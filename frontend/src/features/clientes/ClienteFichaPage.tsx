@@ -8,6 +8,8 @@ import { formatearPrecio } from '../../lib/formato'
 import { ETIQUETAS_ESTADO, linkWhatsApp } from '../agenda/agenda'
 import { ETIQUETA_SEXO } from '../../types/cliente'
 import { NotasCliente } from './NotasCliente'
+import { DatosPersonalesAdmin } from './DatosPersonalesAdmin'
+import { useAuth } from '../auth/useAuth'
 import { CoberturaCliente } from './CoberturaCliente'
 import './clientes.css'
 import { useTerminos } from '../terminos/useTerminos'
@@ -31,6 +33,7 @@ function formatearFecha(iso: string): string {
 export function ClienteFichaPage() {
   const t = useTerminos()
   const esSalud = t.rubro === 'SALUD'
+  const esAdmin = useAuth().usuario?.rol === 'ADMIN'
   const { id = '' } = useParams()
 
   const ficha = useQuery({
@@ -69,6 +72,8 @@ export function ClienteFichaPage() {
   }
 
   const cliente = ficha.data
+  // Issue #73: si se borraron sus datos personales no hay a quién escribir ni qué editar
+  const anonimizado = Boolean(cliente.anonimizadoEn)
 
   return (
     <section className="clientes">
@@ -101,14 +106,16 @@ export function ClienteFichaPage() {
           {t.cliente.S} desde{' '}
           {new Date(cliente.creadoEn).toLocaleDateString('es-AR', { month: 'long', year: 'numeric' })}
         </p>
-        <a
-          className="boton-principal ficha-whatsapp"
-          href={linkWhatsApp(cliente.telefono)}
-          target="_blank"
-          rel="noreferrer"
-        >
-          Escribir por WhatsApp
-        </a>
+        {!anonimizado && (
+          <a
+            className="boton-principal ficha-whatsapp"
+            href={linkWhatsApp(cliente.telefono)}
+            target="_blank"
+            rel="noreferrer"
+          >
+            Escribir por WhatsApp
+          </a>
+        )}
       </header>
 
       <div className="ficha-resumen">
@@ -123,9 +130,9 @@ export function ClienteFichaPage() {
       </div>
 
       {/* key: si cambia la ficha (otro paciente o se guardó), el formulario arranca de nuevo */}
-      {esSalud && <CoberturaCliente key={`${cliente.id}-${cliente.coberturaId ?? ''}`} cliente={cliente} />}
+      {esSalud && !anonimizado && <CoberturaCliente key={`${cliente.id}-${cliente.coberturaId ?? ''}`} cliente={cliente} />}
 
-      <NotasCliente cliente={cliente} />
+      {!anonimizado && <NotasCliente cliente={cliente} />}
 
       <section className="ficha-seccion">
         <h2>Historial</h2>
@@ -152,6 +159,8 @@ export function ClienteFichaPage() {
           </ul>
         )}
       </section>
+
+      {esAdmin && <DatosPersonalesAdmin cliente={cliente} />}
     </section>
   )
 }

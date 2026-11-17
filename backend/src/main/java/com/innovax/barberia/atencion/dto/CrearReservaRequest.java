@@ -68,6 +68,13 @@ public record CrearReservaRequest(
 
         /** Solo con cobertura, opcional (ej. "210", "Plata"). */
         @Size(max = 60, message = "El plan puede tener hasta 60 caracteres")
-        String plan
+        String plan,
+
+        /**
+         * Issue #73 (Ley 25.326): el paciente aceptó el tratamiento de sus datos personales. Obligatorio en salud;
+         * en los demás rubros se ignora. Es Boolean (no boolean) para que las páginas de reserva viejas, que no lo
+         * mandan, lleguen como null y reciban un error claro en vez de un 400 de formato.
+         */
+        Boolean consentimiento
 ) {
 }

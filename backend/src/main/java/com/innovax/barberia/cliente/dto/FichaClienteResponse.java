@@ -30,7 +30,9 @@ public record FichaClienteResponse(
         UUID coberturaId,
         String coberturaNombre,
         String numeroAfiliado,
-        String plan
+        String plan,
+        /** Issue #73: cuándo se borraron sus datos personales a pedido suyo. Null = datos vigentes. */
+        Instant anonimizadoEn
 ) {
 
     /** Una atención del historial. Incluye todos los estados para que se vean también ausencias y cancelaciones. */
@@ -74,6 +76,7 @@ public record FichaClienteResponse(
                 cliente.getCobertura() != null ? cliente.getCobertura().getId() : null,
                 cliente.getCobertura() != null ? cliente.getCobertura().getNombre() : null,
                 cliente.getNumeroAfiliado(),
-                cliente.getPlan());
+                cliente.getPlan(),
+                cliente.getAnonimizadoEn());
     }
 }

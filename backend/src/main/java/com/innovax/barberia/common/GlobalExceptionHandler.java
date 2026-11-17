@@ -1,6 +1,9 @@
 package com.innovax.barberia.common;
 
 import com.innovax.barberia.auth.CredencialesInvalidasException;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.core.NestedExceptionUtils;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -12,6 +15,7 @@ import org.springframework.web.multipart.MaxUploadSizeExceededException;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+@Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
@@ -52,6 +56,20 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ApiError> conflicto(ConflictoException ex) {
         return ResponseEntity.status(HttpStatus.CONFLICT)
                 .body(new ApiError(409, ex.getMessage(), Map.of(ex.getCampo(), ex.getMessage())));
+    }
+
+    /**
+     * Una restricción de la base que el código no esperaba (ej. dos reservas de un mismo DNI al mismo tiempo).
+     * Issue #73: el mensaje de Postgres trae los valores que chocaron (ej. el DNI del paciente), así que
+     * NO se loguea ni se devuelve: solo la clase de la causa y el código SQLSTATE, que alcanzan para diagnosticar.
+     */
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ResponseEntity<ApiError> integridadDeDatos(DataIntegrityViolationException ex) {
+        Throwable causa = NestedExceptionUtils.getMostSpecificCause(ex);
+        String sqlState = causa instanceof java.sql.SQLException sql ? sql.getSQLState() : "n/a";
+        log.warn("Violación de integridad de datos (causa: {}, SQLSTATE: {})", causa.getClass().getSimpleName(), sqlState);
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(ApiError.of(409, "Los datos entran en conflicto con otros ya cargados"));
     }
 
     @ExceptionHandler(MaxUploadSizeExceededException.class)

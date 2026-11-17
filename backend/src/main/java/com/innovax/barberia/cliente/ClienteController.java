@@ -1,14 +1,20 @@
 package com.innovax.barberia.cliente;
 
+import com.innovax.barberia.cliente.dto.AccesoPacienteResponse;
 import com.innovax.barberia.cliente.dto.ActualizarCoberturaRequest;
 import com.innovax.barberia.cliente.dto.ActualizarNotasRequest;
 import com.innovax.barberia.cliente.dto.ClienteResponse;
 import com.innovax.barberia.cliente.dto.CrearClienteRequest;
+import com.innovax.barberia.cliente.dto.ExportacionPacienteResponse;
 import com.innovax.barberia.cliente.dto.FichaClienteResponse;
 import com.innovax.barberia.cliente.dto.PaginaClientesResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ContentDisposition;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -29,6 +35,7 @@ import java.util.UUID;
 public class ClienteController {
 
     private final ClienteService clienteService;
+    private final PacienteDatosService pacienteDatos;
 
     @GetMapping
     public List<ClienteResponse> buscar(@RequestParam(defaultValue = "") String q) {
@@ -68,5 +75,30 @@ public class ClienteController {
     @PatchMapping("/{id}/cobertura")
     public FichaClienteResponse actualizarCobertura(@PathVariable UUID id, @Valid @RequestBody ActualizarCoberturaRequest request) {
         return clienteService.actualizarCobertura(id, request);
+    }
+
+    /** Issue #73: quién vio o tocó los datos de este paciente (solo admin). */
+    @GetMapping("/{id}/accesos")
+    @PreAuthorize("hasRole('ADMIN')")
+    public List<AccesoPacienteResponse> accesos(@PathVariable UUID id) {
+        return pacienteDatos.accesos(id);
+    }
+
+    /** Issue #73, derecho de acceso: todos los datos del paciente en un JSON descargable (solo admin). */
+    @GetMapping("/{id}/exportar")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ExportacionPacienteResponse> exportar(@PathVariable UUID id) {
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION,
+                        ContentDisposition.attachment().filename("datos-paciente-" + id + ".json").build().toString())
+                .body(pacienteDatos.exportar(id));
+    }
+
+    /** Issue #73, derecho de supresión: borra los datos personales del paciente y conserva sus turnos sin identificarlo (solo admin). */
+    @PostMapping("/{id}/anonimizar")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    @PreAuthorize("hasRole('ADMIN')")
+    public void anonimizar(@PathVariable UUID id) {
+        pacienteDatos.anonimizar(id);
     }
 }

@@ -19,6 +19,7 @@ import com.innovax.barberia.cobertura.Cobertura;
 import com.innovax.barberia.cobertura.CoberturaRepository;
 import com.innovax.barberia.cobertura.TipoPago;
 import com.innovax.barberia.common.ConflictoException;
+import com.innovax.barberia.common.TerminosSalud;
 import com.innovax.barberia.common.DatosInvalidosException;
 import com.innovax.barberia.common.RecursoNoEncontradoException;
 import com.innovax.barberia.consultorio.AsignadorConsultorio;
@@ -101,6 +102,13 @@ public class AtencionService {
             throw new DatosInvalidosException("profesional", "No atiende " + negocio.getRubro().servicio().ese() + " en esa sucursal");
         }
 
+        // Issue #73: datos de salud = datos sensibles, hace falta el consentimiento explícito del paciente
+        boolean pideConsentimiento = negocio.getRubro().pideConsentimientoDeDatos();
+        if (pideConsentimiento && !Boolean.TRUE.equals(request.consentimiento())) {
+            throw new DatosInvalidosException("consentimiento",
+                    "Tenés que aceptar el tratamiento de tus datos personales para reservar");
+        }
+
         // Issue #67: con obra social / prepaga, el profesional tiene que atenderla
         Cobertura cobertura = null;
         if (request.coberturaId() != null) {
@@ -124,6 +132,9 @@ public class AtencionService {
         Instant fin = inicio.plus(Duration.ofMinutes(servicio.getDuracionMin()));
 
         Cliente cliente = obtenerOCrearCliente(negocio, request);
+        if (pideConsentimiento) {
+            cliente.registrarConsentimiento(TerminosSalud.VERSION, Instant.now());
+        }
         if (cobertura != null) {
             // Queda en la ficha para el próximo turno. Si reserva como particular no se le borra la que tenía.
             cliente.setCobertura(cobertura);

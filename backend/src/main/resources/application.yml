@@ -35,6 +35,13 @@ spring:
 server:
   port: ${PORT:8080}
 
+# Issue #73: los logs no pueden llevar datos de pacientes (DNI, cobertura, notas).
+# Hibernate no imprime SQL ni valores de parámetros: no subir estos niveles en producción.
+logging:
+  level:
+    org.hibernate.SQL: warn
+    org.hibernate.orm.jdbc.bind: warn
+
 management:
   endpoints:
     web:
@@ -53,6 +60,9 @@ app:
   mail:
     resend-api-key: ${RESEND_API_KEY:}
     remitente: ${MAIL_REMITENTE:}
+    # Solo para desarrollo: sin RESEND_API_KEY, imprime el cuerpo completo del email en el log.
+    # Dejarlo en false en producción: tiene datos de pacientes y links de recuperación (issue #73).
+    log-contenido: ${MAIL_LOG_CONTENIDO:false}
 
   cors:
     origenes: ${CORS_ORIGENES:http://localhost:5173}

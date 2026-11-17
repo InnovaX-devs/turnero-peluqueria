@@ -10,6 +10,7 @@ import { ClientesPage } from '../features/clientes/ClientesPage'
 import { CuentaPage } from '../features/cuenta/CuentaPage'
 import { PanelInicio } from '../features/panel/PanelInicio'
 import { PanelLayout } from '../features/panel/PanelLayout'
+import { PrivacidadSaludPage } from '../features/reserva/PrivacidadSaludPage'
 import { ReservaPage } from '../features/reserva/ReservaPage'
 import { GestionTurnoPage } from '../features/turno/GestionTurnoPage'
 import { CajaPage } from '../features/caja/CajaPage'
@@ -61,6 +62,7 @@ export function App() {
 
       {/* Reserva pública: sin login */}
       <Route path="/b/:slug" element={<ReservaPage />} />
+      <Route path="/b/:slug/privacidad" element={<PrivacidadSaludPage />} />
       <Route path="/turno/:token" element={<GestionTurnoPage />} />
 
       <Route path="*" element={<Navigate to="/panel" replace />} />

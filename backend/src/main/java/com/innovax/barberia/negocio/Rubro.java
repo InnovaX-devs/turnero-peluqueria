@@ -85,6 +85,14 @@ public enum Rubro {
         return this == SALUD;
     }
 
+    /**
+     * Datos de salud: son datos sensibles (Ley 25.326), así que la reserva online exige que el paciente
+     * acepte el tratamiento de sus datos (issue #73). En los demás rubros no se pide.
+     */
+    public boolean pideConsentimientoDeDatos() {
+        return this == SALUD;
+    }
+
     public record Termino(String singular, String plural, boolean femenino) {
 
         /** "barbero" → "Barbero". */

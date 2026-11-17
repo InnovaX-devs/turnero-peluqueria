@@ -1,6 +1,7 @@
 package com.innovax.barberia.atencion;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -10,6 +11,18 @@ import java.util.List;
 import java.util.UUID;
 
 public interface AtencionRepository extends JpaRepository<Atencion, UUID> {
+
+    /** ¿El paciente tiene turnos en ese estado? (issue #73: no se anonimiza con turnos reservados). */
+    boolean existsByClienteIdAndEstado(UUID clienteId, EstadoAtencion estado);
+
+    /** Issue #73: borra las notas de consulta de todos los turnos del paciente (pueden tener datos de salud). */
+    @Modifying(flushAutomatically = true)
+    @Query("""
+            update Atencion a
+            set a.notas = null, a.notasEditadasPor = null, a.notasEditadasEn = null
+            where a.cliente.id = :clienteId
+            """)
+    int borrarNotasDeCliente(@Param("clienteId") UUID clienteId);
 
     /** Atenciones del barbero, en alguno de los estados dados, que se solapan con [inicioRango, finRango). */
     @Query("""
